@@ -13,8 +13,13 @@ export default [
     rules: {
       indent: ['error', 2],
       quotes: ['error', 'single'],
+      semi: ['error', 'never'],
       'jsx-quotes': ['error', 'prefer-single'],
       'react/react-in-jsx-scope': 'off',
+      'react/jsx-max-props-per-line': ['error', { when: 'always' }],
+      'react/jsx-first-prop-new-line': ['error', 'multiline'],
+      'react/jsx-closing-bracket-location': ['error', 'line-aligned'],
+      'react/jsx-closing-tag-location': ['error', 'line-aligned'],
     },
   },
 ]
