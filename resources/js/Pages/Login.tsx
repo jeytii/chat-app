@@ -36,7 +36,7 @@ export default function LoginPage() {
         onBefore() {
           setSubmitting(true)
         },
-        onFinish() {
+        onError() {
           setSubmitting(false)
         },
       }
@@ -45,7 +45,7 @@ export default function LoginPage() {
 
   return (
     <main className='min-h-screen flex items-center justify-center bg-gray-100'>
-      <Card className='max-w-lg w-full shadow-lg'>
+      <Card className='max-w-sm w-full shadow-lg'>
         <CardHeader>
           <CardTitle className='text-primary text-xl font-bold'>Welcome to Chat App</CardTitle>
         </CardHeader>
@@ -54,48 +54,48 @@ export default function LoginPage() {
             <div>
               <Label
                 htmlFor='username'
-                className='text-base font-semibold'
+                className='font-semibold'
               >
                 Username
               </Label>
               <Input
                 id='username'
-                className='text-base mt-1'
+                className='mt-1'
                 type='text'
                 name='username'
                 disabled={submitting}
+                autoFocus
                 onChange={handleValue}
               />
-              { errors.username && <p className='text-destructive mt-1'>{errors.username}</p> }
+              { errors.username && <p className='text-sm text-destructive mt-1'>{errors.username}</p> }
             </div>
             <div className='mt-8'>
               <Label
                 htmlFor='password'
-                className='text-base font-semibold'
+                className='font-semibold'
               >
                 Password
               </Label>
               <Input
                 id='password'
-                className='text-base mt-1'
+                className='mt-1'
                 type='password'
                 name='password'
                 disabled={submitting}
                 onChange={handleValue}
               />
-              { errors.password && <p className='text-destructive mt-1'>{errors.password}</p> }
+              { errors.password && <p className='text-sm text-destructive mt-1'>{errors.password}</p> }
             </div>
 
             {submitting ? (
               <Button
-                className='text-base mt-8'
+                className='w-full mt-8'
                 disabled
               >
                 <Loader2 className='animate-spin' />
-                <span className='ml-2'>Signing in</span>
               </Button>
             ) : (
-              <Button className='text-base mt-8'>Sign in</Button>
+              <Button className='w-full mt-8'>Sign in</Button>
             )}
           </form>
         </CardContent>
