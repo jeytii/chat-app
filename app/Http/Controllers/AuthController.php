@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class AuthController extends Controller
 {
@@ -22,7 +23,7 @@ class AuthController extends Controller
         if (Auth::attempt($data, true)) {
             $request->session()->regenerate();
 
-            return to_route('index');
+            return Inertia::location(route('index'));
         }
 
         return back()->withErrors([
@@ -38,6 +39,6 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return to_route('login.page');
+        return Inertia::location(route('login.page'));
     }
 }
