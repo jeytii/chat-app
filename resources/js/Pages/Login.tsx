@@ -44,7 +44,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className='min-h-screen flex items-center justify-center bg-gray-100'>
+    <main className='min-h-screen flex items-center justify-center bg-primary-foreground'>
       <Card className='max-w-sm w-full shadow-lg'>
         <CardHeader>
           <CardTitle className='text-primary text-xl font-bold'>Welcome to Chat App</CardTitle>
