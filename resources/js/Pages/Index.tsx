@@ -1,10 +1,12 @@
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, UserMinus } from 'lucide-react'
 import SettingsMenu from '@/components/SettingsMenu'
 import AvatarWithInfo from '@/components/AvatarWithInfo'
 import MessageBox from '@/components/MessageBox'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
 export default function Index() {
   return (
@@ -41,6 +43,7 @@ export default function Index() {
               <AvatarWithInfo
                 name='John Doe'
                 url='https://github.com/shadcn.png'
+                secondaryText='johndoe'
                 isOnline
               />
               <span className='w-[25px] h-[25px] inline-flex items-center justify-center bg-primary text-primary-foreground text-xs rounded-full ml-auto'>
@@ -51,13 +54,37 @@ export default function Index() {
         </div>
       </aside>
       <div className='flex-1 h-screen flex flex-col'>
-        <header className='border-b border-border shadow p-4'>
+        <header className='flex items-center justify-between border-b border-border shadow p-4'>
           <AvatarWithInfo
             name='John Doe'
             url='https://github.com/shadcn.png'
-            status='Online'
+            secondaryText='Last seen 25 minutes ago'
             isOnline
           />
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                className='rounded-full text-destructive hover:text-destructive'
+                variant='ghost'
+              >
+                <UserMinus size='20' />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Remove from contacts</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to remove John Doe from your contacts?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant='outline'>Cancel</Button>
+                </DialogClose>
+                <Button variant='destructive'>Remove</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </header>
         <section className='flex-1 flex flex-col gap-2 justify-end overflow-y-auto p-4'>
           <div>
@@ -66,6 +93,7 @@ export default function Index() {
                 <p>hello</p>
               </CardContent>
             </Card>
+            <span className='block text-xs text-gray-500 mt-0.5'>7:30 PM</span>
           </div>
           <div>
             <Card className='inline-block max-w-[80%] border-border text-primary text-sm'>
@@ -73,6 +101,7 @@ export default function Index() {
                 <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
               </CardContent>
             </Card>
+            <span className='block text-xs text-gray-500 mt-0.5'>7:30 PM</span>
           </div>
           <div className='text-right'>
             <Card className='inline-block max-w-[80%] bg-primary text-primary-foreground border-0 text-sm text-left'>
@@ -80,6 +109,7 @@ export default function Index() {
                 <p>Hi</p>
               </CardContent>
             </Card>
+            <span className='block text-xs text-gray-500 mt-0.5'>7:30 PM</span>
           </div>
           <div className='text-right'>
             <Card className='inline-block max-w-[80%] bg-primary text-primary-foreground border-0 text-sm text-left'>
@@ -87,7 +117,9 @@ export default function Index() {
                 <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Suscipit alias ratione, fugiat nesciunt, eos, excepturi autem quam delectus quasi incidunt. Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellat voluptatem minus ea aspernatur similique dicta laudantium soluta, neque voluptatum recusandae nulla, in error autem sint laborum non. Ex, culpa harum?</p>
               </CardContent>
             </Card>
+            <span className='block text-xs text-gray-500 mt-0.5'>7:30 PM</span>
           </div>
+          <p className='text-gray-500'>Typing...</p>
         </section>
         <MessageBox />
       </div>
