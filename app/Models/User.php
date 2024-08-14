@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
+    use Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -18,9 +19,11 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'username',
         'profile_photo_url',
+        'dark_mode',
         'password',
     ];
 
@@ -49,8 +52,14 @@ class User extends Authenticatable
     }
 
     protected $appends = [
+        'name',
         'profile_photo',
     ];
+
+    public function name(): Attribute
+    {
+        return Attribute::get(fn () => "{$this->first_name} {$this->last_name}");
+    }
 
     public function profilePhoto(): Attribute
     {
