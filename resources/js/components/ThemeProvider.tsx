@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { router } from '@inertiajs/react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 
 type Theme = 'dark' | 'light'
 
@@ -26,9 +27,12 @@ export function ThemeProvider({
   storageKey = 'vite-ui-theme',
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  )
+  const [theme, setTheme] = useState<Theme>(defaultTheme)
+  const timer = useRef<number>()
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, defaultTheme)
+  }, [])
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -42,7 +46,14 @@ export function ThemeProvider({
     theme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme)
+
       setTheme(theme)
+
+      clearTimeout(timer.current)
+
+      timer.current = setTimeout(function() {
+        router.put('/toggle-dark-mode')
+      }, 1000)
     },
   }
 
