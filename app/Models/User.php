@@ -25,6 +25,7 @@ class User extends Authenticatable
         'profile_photo_url',
         'dark_mode',
         'password',
+        'last_seen_at',
     ];
 
     /**
