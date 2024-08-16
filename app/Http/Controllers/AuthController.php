@@ -8,11 +8,6 @@ use Inertia\Inertia;
 
 class AuthController extends Controller
 {
-    public function showLoginPage()
-    {
-        return inertia('Login');
-    }
-
     public function login(Request $request)
     {
         $data = $request->validate([

@@ -8,6 +8,8 @@ class ChatController extends Controller
 {
     public function index()
     {
-        return inertia('Index');
+        return inertia('Index', [
+            'users' => [],
+        ]);
     }
 }

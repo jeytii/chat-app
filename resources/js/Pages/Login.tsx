@@ -33,7 +33,7 @@ export default function LoginPage() {
       '/login',
       values as Record<keyof Fields, string>,
       {
-        onBefore() {
+        onStart() {
           setSubmitting(true)
         },
         onError() {
