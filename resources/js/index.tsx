@@ -2,6 +2,7 @@ import { createInertiaApp } from '@inertiajs/react'
 import { type PageProps } from '@inertiajs/core'
 import { createRoot } from 'react-dom/client'
 import { ThemeProvider } from './components/ThemeProvider'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 interface Props {
   user?: {
@@ -21,15 +22,25 @@ createInertiaApp<PageProps & Props>({
     return pages[`./Pages/${name}.tsx`]
   },
   setup({ el, App, props }) {
+    const queryClient = new QueryClient()
     const { user } = props.initialPage.props
-
-    createRoot(el).render(
+    const root = (
       <ThemeProvider
         defaultTheme={user?.dark_mode ? 'dark' : 'light'}
         storageKey='vite-ui-theme'
       >
         <App {...props} />
       </ThemeProvider>
+    )
+
+    createRoot(el).render(
+      user ? (
+        <QueryClientProvider client={queryClient}>
+          {root}
+        </QueryClientProvider>
+      ) : (
+        root
+      )
     )
   },
 })
