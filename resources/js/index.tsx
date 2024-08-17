@@ -1,8 +1,9 @@
-import { createInertiaApp } from '@inertiajs/react'
-import { type PageProps } from '@inertiajs/core'
 import { createRoot } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { type PageProps } from '@inertiajs/core'
+import { createInertiaApp } from '@inertiajs/react'
 import { ThemeProvider } from './components/ThemeProvider'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 interface Props {
   user?: {
@@ -37,6 +38,11 @@ createInertiaApp<PageProps & Props>({
       user ? (
         <QueryClientProvider client={queryClient}>
           {root}
+
+          <ReactQueryDevtools
+            initialIsOpen={false}
+            position='right'
+          />
         </QueryClientProvider>
       ) : (
         root
