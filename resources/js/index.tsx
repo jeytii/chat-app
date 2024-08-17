@@ -11,7 +11,7 @@ interface Props {
     name: string;
     username: string;
     dark_mode: boolean;
-    profile_photo: string|null;
+    profile_photo_url?: string;
   };
 }
 

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('username')->unique();
-            $table->string('profile_photo_url')->nullable();
+            $table->string('profile_photo')->nullable();
             $table->boolean('dark_mode')->default(false);
             $table->string('password');
             $table->timestamp('last_seen_at')->nullable();

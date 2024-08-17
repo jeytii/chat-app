@@ -22,7 +22,7 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'username',
-        'profile_photo_url',
+        'profile_photo',
         'dark_mode',
         'password',
         'last_seen_at',
@@ -40,6 +40,11 @@ class User extends Authenticatable
         'updated_at',
     ];
 
+    protected $appends = [
+        'name',
+        'profile_photo_url',
+    ];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -52,20 +57,21 @@ class User extends Authenticatable
         ];
     }
 
-    protected $appends = [
-        'name',
-        'profile_photo',
-    ];
-
     public function name(): Attribute
     {
         return Attribute::get(fn () => "{$this->first_name} {$this->last_name}");
     }
 
-    public function profilePhoto(): Attribute
+    public function profilePhotoUrl(): Attribute
     {
-        $url = $this->profile_photo_url;
+        return Attribute::get(function () {
+            $url = $this->profile_photo;
 
-        return Attribute::get(fn () => $url ? Storage::url($url) : null);
+            if (! $url) {
+                return null;
+            }
+
+            return str_starts_with($url, 'http') ? $url : Storage::url($url);
+        });
     }
 }

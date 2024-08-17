@@ -17,7 +17,7 @@ interface User {
   last_name: string;
   name: string;
   username: string;
-  profile_photo?: string;
+  profile_photo_url?: string;
   dark_mode: boolean;
 };
 
@@ -63,7 +63,7 @@ export default function Index() {
                 >
                   <AvatarWithInfo
                     name={user.name}
-                    url={user.profile_photo}
+                    url={user.profile_photo_url}
                     secondaryText={user.username}
                     isOnline
                   />
