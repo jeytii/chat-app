@@ -23,10 +23,10 @@ interface User {
 
 export default function Index() {
   const { users } = usePage<PageProps & { users: User[]; }>().props
-  const { data } = useQuery<User[]>({ queryKey: ['search-results'] })
+  const { data: searchResults } = useQuery<User[]>({ queryKey: ['search-results'] })
   const people = useMemo<User[]>(
-    () => data?.length ? data : users,
-    [data]
+    () => searchResults?.length ? searchResults : users,
+    [searchResults?.length]
   )
 
   return (
