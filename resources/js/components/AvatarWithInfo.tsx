@@ -29,10 +29,16 @@ export default function AvatarWithInfo({
       alignment === 'horizontal' && 'flex items-center'
     )}>
       <div className='relative'>
-        <Avatar className={clsx(
-          `w-[${imageSize}px] h-[${imageSize}px] border border-border`,
-          alignment === 'vertical' && 'inline-block'
-        )}>
+        <Avatar
+          className={clsx(
+            'border border-border',
+            alignment === 'vertical' && 'inline-block'
+          )}
+          style={{
+            width: `${imageSize}px`,
+            height: `${imageSize}px`,
+          }}
+        >
           <AvatarImage
             className='rounded-full'
             src={url}
