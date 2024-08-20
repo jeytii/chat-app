@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react'
-import { Sun, Moon, LogOut } from 'lucide-react'
+import { Sun, Moon, Settings, LogOut } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 import { Button } from './ui/button'
 
@@ -7,27 +7,28 @@ export default function SettingsMenu() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <div>
+    <div className='flex items-center justify-between mt-4'>
       <Button
-        className='h-auto w-full flex items-center justify-start rounded-b-none'
-        variant='ghost'
+        className='h-auto rounded-full border-gray-400 p-3 hover:bg-gray-200 dark:border-gray-500 dark:hover:bg-gray-800'
+        variant='outline'
+        size='icon'
+      >
+        <Settings size='15' />
+      </Button>
+      <Button
+        className='h-auto rounded-full border-gray-400 p-3 hover:bg-gray-200 dark:border-gray-500 dark:hover:bg-gray-800'
+        variant='outline'
+        size='icon'
         onClick={setTheme.bind(null, theme === 'dark' ? 'light' : 'dark')}
       >
-        { theme === 'dark' ? <Sun size='20' /> : <Moon size='20' /> }
-
-        <span className='ml-4'>
-          {theme === 'dark' ? 'Light' : 'Dark'} mode
-        </span>
+        { theme === 'dark' ? <Sun size='15' /> : <Moon size='15' /> }
       </Button>
       <Link
+        className='rounded-full border border-gray-400 p-3 hover:bg-gray-200 dark:border-gray-500 dark:hover:bg-gray-800'
         href='/logout'
         method='post'
-        as='button'
-        type='button'
-        className='h-auto w-full flex items-center justify-start text-sm font-medium px-4 py-2 hover:bg-accent hover:text-accent-foreground'
       >
-        <LogOut size='20' />
-        <span className='ml-4'>Sign out</span>
+        <LogOut size='15' />
       </Link>
     </div>
   )
