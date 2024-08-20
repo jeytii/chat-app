@@ -1,29 +1,44 @@
 import { useMemo } from 'react'
+import clsx from 'clsx'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 interface Props {
   name: string;
   url?: string;
+  imageSize?: number;
   secondaryText?: string;
   isOnline?: boolean;
+  alignment?: 'horizontal' | 'vertical';
 }
 
-export default function AvatarWithInfo({ name, url, secondaryText, isOnline }: Props) {
+export default function AvatarWithInfo({
+  name,
+  url,
+  secondaryText,
+  isOnline,
+  imageSize = 40,
+  alignment = 'horizontal'
+}: Props) {
   const initials = useMemo<string>(
     () => name.split(' ', 2).map(text => text[0]).join(''),
     [name]
   )
 
   return (
-    <div className='flex items-center'>
+    <div className={clsx(
+      alignment === 'horizontal' && 'flex items-center'
+    )}>
       <div className='relative'>
-        <Avatar className='w-[40px] h-[40px] border border-border'>
+        <Avatar className={clsx(
+          `w-[${imageSize}px] h-[${imageSize}px] border border-border`,
+          alignment === 'vertical' && 'inline-block'
+        )}>
           <AvatarImage
             className='rounded-full'
             src={url}
             alt={initials}
-            width={40}
-            height={40}
+            width={imageSize}
+            height={imageSize}
           />
           <AvatarFallback className='rounded-full'>{initials}</AvatarFallback>
         </Avatar>
@@ -31,7 +46,7 @@ export default function AvatarWithInfo({ name, url, secondaryText, isOnline }: P
           <span className='absolute bottom-0 right-0 w-[10px] h-[10px] rounded-full bg-green-500 border border-black'></span>
         )}
       </div>
-      <div className='ml-2'>
+      <div className={clsx(alignment === 'horizontal' && 'ml-2')}>
         <label className='text-primary'>{name}</label>
         {secondaryText && (
           <span className='block text-gray-500 text-sm'>{secondaryText}</span>
