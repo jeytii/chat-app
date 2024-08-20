@@ -4,19 +4,13 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { type PageProps } from '@inertiajs/core'
 import { createInertiaApp } from '@inertiajs/react'
 import { ThemeProvider } from './components/ThemeProvider'
+import { type User } from '@/types'
 
-interface Props {
-  user?: {
-    first_name: string;
-    last_name: string;
-    name: string;
-    username: string;
-    dark_mode: boolean;
-    profile_photo_url?: string;
-  };
+interface Props extends PageProps {
+  user?: User;
 }
 
-createInertiaApp<PageProps & Props>({
+createInertiaApp<Props>({
   resolve: name => {
     const pages = import.meta.glob('./Pages/**/*.tsx', { eager: true })
 
