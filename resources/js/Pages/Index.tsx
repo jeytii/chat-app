@@ -3,7 +3,7 @@ import { Link, usePage } from '@inertiajs/react'
 import AvatarWithInfo from '@/components/AvatarWithInfo'
 import SettingsMenu from '@/components/SettingsMenu'
 import SearchBox from '@/components/SearchBox'
-import { Card, CardContent } from '@/components/ui/card'
+import UsersList from '@/components/UsersList'
 import { type User } from '@/types'
 
 interface Props extends PageProps {
@@ -57,21 +57,7 @@ export default function Index() {
       <section className='flex-1 px-4'>
         <div>
           <SearchBox />
-          <div className='grid grid-cols-4 gap-4 mt-4'>
-            {Array.from({ length: 10 }, () => (
-              <Card>
-                <CardContent className='text-center p-4'>
-                  <AvatarWithInfo
-                    name='John Doe'
-                    url='https://github.com/shadcn.png'
-                    imageSize={80}
-                    secondaryText='@johndoe'
-                    alignment='vertical'
-                  />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <UsersList />
         </div>
       </section>
     </main>
