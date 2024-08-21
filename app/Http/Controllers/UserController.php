@@ -11,15 +11,26 @@ class UserController extends Controller
 {
     public function search(Request $request)
     {
+        $username = Auth::user()->username;
         $query = $request->get('query');
 
         $users = User::query()
-            ->whereNot('id', Auth::id())
-            ->where(fn (Builder $builder) => (
-                $builder->where('first_name', 'like', "%{$query}%")
-                    ->orWhere('last_name', 'like', "%{$query}%")
-                    ->orWhere('username', 'like', "%{$query}%")
+            ->whereNot('username', $username)
+            ->whereDoesntHave('initiatedConversations', fn (Builder $query): Builder => (
+                $query->where('username', $username)
             ))
+            ->whereDoesntHave('joinedConversations', fn (Builder $query): Builder => (
+                $query->where('username', $username)
+            ))
+            ->when(
+                (bool) $query,
+                fn (Builder $builder) => $builder->where(fn (Builder $builder): Builder => (
+                    $builder->whereRaw('CONCAT(first_name, last_name) RLIKE ?', ["%{$query}%"])
+                        ->orWhere('username', 'like', "%{$query}%")
+                )),
+                fn (Builder $builder): Builder => $builder->limit(10),
+            )
+            ->orderByRaw('CONCAT(first_name, last_name)')
             ->get();
 
         return compact('users');

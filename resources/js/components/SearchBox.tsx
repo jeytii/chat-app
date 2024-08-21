@@ -8,10 +8,6 @@ export default function SearchBox() {
   const { refetch } = useQuery({
     queryKey: ['search-results'],
     async queryFn() {
-      if (! search.length) {
-        return []
-      }
-
       const response = await fetch(`/users/search?query=${search}`)
       const data = await response.json()
 
