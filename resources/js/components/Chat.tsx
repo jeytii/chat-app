@@ -1,24 +1,39 @@
-import { UserMinus } from 'lucide-react'
+import { type MouseEventHandler } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { UserMinus, X } from 'lucide-react'
 import AvatarWithInfo from './AvatarWithInfo'
 import MessageBox from './MessageBox'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
+import { User } from '@/types'
 
-export default function Chat() {
+interface Props {
+  user: User;
+  close: MouseEventHandler<HTMLButtonElement>;
+}
+
+export default function Chat({ user, close }: Props) {
+  const { data } = useQuery<any, Error, User>({
+    queryKey: ['chat', { username: user.username }],
+    queryFn() {
+      return user
+    },
+  })
+
   return (
     <div className='flex-1 h-screen flex flex-col'>
-      <header className='flex items-center justify-between border-b border-border shadow p-4'>
+      <header className='flex items-center border-b border-border shadow p-4'>
         <AvatarWithInfo
-          name='John Doe'
-          url='https://github.com/shadcn.png'
+          name={user.name}
+          url={user.profile_photo_url}
           secondaryText='Last seen 25 minutes ago'
           isOnline
         />
         <Dialog>
           <DialogTrigger asChild>
             <Button
-              className='rounded-full text-destructive hover:text-destructive'
+              className='rounded-full ml-auto text-destructive hover:text-destructive'
               variant='ghost'
             >
               <UserMinus size='20' />
@@ -39,6 +54,13 @@ export default function Chat() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <Button
+          className='rounded-full'
+          variant='ghost'
+          onClick={close}
+        >
+          <X size='20' />
+        </Button>
       </header>
       <section className='flex-1 flex overflow-y-auto p-4'>
         <div className='flex flex-col gap-2 mt-auto'>
