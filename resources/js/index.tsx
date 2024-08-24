@@ -33,10 +33,7 @@ createInertiaApp<Props>({
         <QueryClientProvider client={queryClient}>
           {root}
 
-          <ReactQueryDevtools
-            initialIsOpen={false}
-            position='right'
-          />
+          <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
       ) : (
         root

@@ -49,7 +49,7 @@ export default function AvatarWithInfo({
           <AvatarFallback className='rounded-full'>{initials}</AvatarFallback>
         </Avatar>
         {isOnline && (
-          <span className='absolute bottom-0 right-0 w-[10px] h-[10px] rounded-full bg-green-500 border border-black'></span>
+          <span className='absolute bottom-0.5 right-0.5 w-[10px] h-[10px] rounded-full bg-green-500 border border-black'></span>
         )}
       </div>
       <div className={clsx(alignment === 'horizontal' && 'ml-2')}>

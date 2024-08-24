@@ -15,7 +15,7 @@ export default function UsersList() {
   return (
     <div className='grid grid-cols-4 gap-4 mt-4'>
       {users?.map(user => (
-        <Card>
+        <Card key={user.username}>
           <CardContent className='text-center p-4'>
             <AvatarWithInfo
               name={user.name}
