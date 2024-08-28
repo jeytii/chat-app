@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { type PageProps } from '@inertiajs/core'
 import { usePage } from '@inertiajs/react'
 import AvatarWithInfo from '@/components/AvatarWithInfo'
@@ -11,14 +12,22 @@ import { type User } from '@/types'
 
 interface Props extends PageProps {
   user: User;
-  users: User[];
 }
 
 export default function Index() {
-  const { user, users } = usePage<Props>().props
+  const { user } = usePage<Props>().props
   const [currentUsername, setCurrentUsername] = useState<string | null>(null)
+  const { data: contacts, isSuccess } = useQuery<any, Error, User[]>({
+    queryKey: ['contacts'],
+    async queryFn() {
+      const response = await fetch('/users/contacts')
+      const data = await response.json()
+
+      return data.users
+    }
+  })
   const currentUser = useMemo(
-    () => currentUsername ? users.find(user => user.username === currentUsername) : null,
+    () => currentUsername ? contacts?.find(contact => contact.username === currentUsername) : null,
     [currentUsername]
   )
 
@@ -34,19 +43,19 @@ export default function Index() {
 
             <SettingsMenu />
           </div>
-          {users.length ? (
+          {isSuccess ? (
             <div className='flex-1 overflow-y-auto'>
-              {users.map(user => (
+              {contacts.map(contact => (
                 <Button
-                  key={user.username}
-                  className='w-full h-auto flex items-center text-left p-4 hover:bg-secondary'
+                  key={contact.username}
+                  className='w-full h-auto flex items-center text-left rounded-none p-4 hover:bg-secondary'
                   variant='ghost'
-                  onClick={setCurrentUsername.bind(null, user.username)}
+                  onClick={setCurrentUsername.bind(null, contact.username)}
                 >
                   <AvatarWithInfo
-                    name={user.name}
-                    url={user.profile_photo_url}
-                    secondaryText={user.username}
+                    name={contact.name}
+                    url={contact.profile_photo_url}
+                    secondaryText={`@${contact.username}`}
                     isOnline
                   />
                   <span className='w-[25px] h-[25px] inline-flex items-center justify-center bg-primary text-primary-foreground text-xs rounded-full ml-auto'>
