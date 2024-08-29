@@ -59,14 +59,14 @@ class User extends Authenticatable
         ];
     }
 
-    public function initiatedConversations(): BelongsToMany
+    public function addedContacts(): BelongsToMany
     {
         return $this->belongsToMany(self::class, 'conversations', 'inviter_id', 'invited_id')
             ->using(Conversation::class)
             ->withTimestamps();
     }
 
-    public function joinedConversations(): BelongsToMany
+    public function linkedContacts(): BelongsToMany
     {
         return $this->belongsToMany(self::class, 'conversations', 'invited_id', 'inviter_id')
             ->using(Conversation::class)

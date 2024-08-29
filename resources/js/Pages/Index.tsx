@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { type PageProps } from '@inertiajs/core'
 import { usePage } from '@inertiajs/react'
-import AvatarWithInfo from '@/components/AvatarWithInfo'
-import SettingsMenu from '@/components/SettingsMenu'
+import MiniProfile from '@/components/MiniProfile'
+import UserSettings from '@/components/UserSettings'
 import SearchBox from '@/components/SearchBox'
 import UsersList from '@/components/UsersList'
-import Chat from '@/components/Chat'
+import ChatPanel from '@/components/ChatPanel'
 import { Button } from '@/components/ui/button'
-import { type User } from '@/types'
+import type { User } from '@/types'
 
 interface Props extends PageProps {
   user: User;
@@ -36,12 +36,12 @@ export default function Index() {
       <aside className='w-72'>
         <div className='fixed w-72 flex flex-col h-screen left-0 top-0 border-r border-border'>
           <div className='border-b border-border p-4'>
-            <AvatarWithInfo
+            <MiniProfile
               name={user.name}
               url={user.profile_photo_url}
             />
 
-            <SettingsMenu />
+            <UserSettings />
           </div>
           {isSuccess ? (
             <div className='flex-1 overflow-y-auto'>
@@ -52,7 +52,7 @@ export default function Index() {
                   variant='ghost'
                   onClick={setCurrentUsername.bind(null, contact.username)}
                 >
-                  <AvatarWithInfo
+                  <MiniProfile
                     name={contact.name}
                     url={contact.profile_photo_url}
                     secondaryText={`@${contact.username}`}
@@ -73,7 +73,7 @@ export default function Index() {
       </aside>
 
       {currentUser ? (
-        <Chat
+        <ChatPanel
           user={currentUser}
           close={setCurrentUsername.bind(null, null)}
         />

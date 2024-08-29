@@ -31,10 +31,10 @@ class UserController extends Controller
 
         $users = User::query()
             ->whereNot('username', $username)
-            ->whereDoesntHave('initiatedConversations', fn (Builder $query): Builder => (
+            ->whereDoesntHave('addedContacts', fn (Builder $query): Builder => (
                 $query->where('username', $username)
             ))
-            ->whereDoesntHave('joinedConversations', fn (Builder $query): Builder => (
+            ->whereDoesntHave('linkedContacts', fn (Builder $query): Builder => (
                 $query->where('username', $username)
             ))
             ->when(
