@@ -1,7 +1,7 @@
 import { type MouseEventHandler } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { UserMinus, X } from 'lucide-react'
-import AvatarWithInfo from './AvatarWithInfo'
+import MiniProfile from './MiniProfile'
 import MessageBox from './MessageBox'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -13,7 +13,7 @@ interface Props {
   close: MouseEventHandler<HTMLButtonElement>;
 }
 
-export default function Chat({ user, close }: Props) {
+export default function ChatPanel({ user, close }: Props) {
   const { data } = useQuery<any, Error, User>({
     queryKey: ['chat', { username: user.username }],
     queryFn() {
@@ -24,7 +24,7 @@ export default function Chat({ user, close }: Props) {
   return (
     <div className='flex-1 h-screen flex flex-col'>
       <header className='flex items-center border-b border-border shadow p-4'>
-        <AvatarWithInfo
+        <MiniProfile
           name={user.name}
           url={user.profile_photo_url}
           secondaryText='Last seen 25 minutes ago'

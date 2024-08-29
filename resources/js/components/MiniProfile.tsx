@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import clsx from 'clsx'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Root, Image, Fallback } from '@radix-ui/react-avatar'
+import { cn } from '@/lib/utils'
 
 interface Props {
   name: string;
@@ -11,7 +11,7 @@ interface Props {
   alignment?: 'horizontal' | 'vertical';
 }
 
-export default function AvatarWithInfo({
+export default function MiniProfile({
   name,
   url,
   secondaryText,
@@ -25,34 +25,34 @@ export default function AvatarWithInfo({
   )
 
   return (
-    <div className={clsx(
-      alignment === 'horizontal' && 'flex items-center'
-    )}>
+    <div className={cn( alignment === 'horizontal' && 'flex items-center' )}>
       <div className='relative'>
-        <Avatar
-          className={clsx(
-            'border border-border',
-            alignment === 'vertical' && 'inline-block'
+        <Root
+          className={cn(
+            'relative shrink-0 overflow-hidden rounded-full border border-border',
+            alignment === 'vertical' ? 'inline-block' : 'flex'
           )}
           style={{
             width: `${imageSize}px`,
             height: `${imageSize}px`,
           }}
         >
-          <AvatarImage
-            className='rounded-full'
+          <Image
+            className='h-full w-full aspect-square rounded-full'
             src={url}
             alt={initials}
             width={imageSize}
             height={imageSize}
           />
-          <AvatarFallback className='rounded-full'>{initials}</AvatarFallback>
-        </Avatar>
+          <Fallback className='flex h-full w-full items-center justify-center rounded-full bg-muted'>
+            {initials}
+          </Fallback>
+        </Root>
         {isOnline && (
           <span className='absolute bottom-0.5 right-0.5 w-[10px] h-[10px] rounded-full bg-green-500 border border-black'></span>
         )}
       </div>
-      <div className={clsx(alignment === 'horizontal' && 'ml-2')}>
+      <div className={cn(alignment === 'horizontal' && 'ml-2')}>
         <label className='text-primary'>{name}</label>
         {secondaryText && (
           <span className='block text-gray-500 text-sm'>{secondaryText}</span>

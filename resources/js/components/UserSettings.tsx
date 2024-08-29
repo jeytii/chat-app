@@ -3,7 +3,7 @@ import { Sun, Moon, Settings, LogOut } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 import { Button } from './ui/button'
 
-export default function SettingsMenu() {
+export default function UserSettings() {
   const { theme, setTheme } = useTheme()
 
   return (
