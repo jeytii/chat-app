@@ -16,12 +16,28 @@ class UserController extends Controller
         $users = Conversation::query()
             ->where('inviter_id', $id)
             ->orWhere('invited_id', $id)
+            ->orderByDesc('created_at')
             ->get()
             ->map(fn (Conversation $conversation) => (
                 $conversation->inviter_id !== $id ? $conversation->inviter : $conversation->invited
             ));
 
         return compact('users');
+    }
+
+    public function addToContacts(Request $request)
+    {
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'exists:users'],
+        ]);
+
+        /** @var User */
+        $user = Auth::user();
+        $addedUser = User::query()->firstWhere('username', $validated['username']);
+
+        $user->addedContacts()->attach($addedUser);
+
+        return ['user' => $addedUser];
     }
 
     public function search(Request $request)
