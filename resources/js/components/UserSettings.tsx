@@ -27,6 +27,7 @@ export default function UserSettings() {
         className='rounded-full border border-gray-400 p-3 hover:bg-gray-200 dark:border-gray-500 dark:hover:bg-gray-800'
         href='/logout'
         method='post'
+        as='button'
       >
         <LogOut size='15' />
       </Link>
