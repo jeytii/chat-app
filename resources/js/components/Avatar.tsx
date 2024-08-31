@@ -11,7 +11,7 @@ interface Props {
   alignment?: 'horizontal' | 'vertical';
 }
 
-export default function MiniProfile({
+export default function Avatar({
   name,
   url,
   secondaryText,

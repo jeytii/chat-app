@@ -1,7 +1,7 @@
 import { type MouseEventHandler } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { UserMinus, X } from 'lucide-react'
-import MiniProfile from './MiniProfile'
+import Avatar from './Avatar'
 import MessageBox from './MessageBox'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -24,7 +24,7 @@ export default function ChatPanel({ user, close }: Props) {
   return (
     <div className='flex-1 h-screen flex flex-col'>
       <header className='flex items-center border-b border-border shadow p-4'>
-        <MiniProfile
+        <Avatar
           name={user.name}
           url={user.profile_photo_url}
           secondaryText='Last seen 25 minutes ago'

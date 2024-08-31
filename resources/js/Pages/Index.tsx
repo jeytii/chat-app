@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { type PageProps } from '@inertiajs/core'
 import { usePage } from '@inertiajs/react'
-import MiniProfile from '@/components/MiniProfile'
+import Avatar from '@/components/Avatar'
 import UserSettings from '@/components/UserSettings'
 import SearchBox from '@/components/SearchBox'
 import UsersList from '@/components/UsersList'
@@ -36,7 +36,7 @@ export default function Index() {
       <aside className='w-72'>
         <div className='fixed w-72 flex flex-col h-screen left-0 top-0 border-r border-border'>
           <div className='border-b border-border p-4'>
-            <MiniProfile
+            <Avatar
               name={user.name}
               url={user.profile_photo_url}
             />
@@ -52,7 +52,7 @@ export default function Index() {
                   variant='ghost'
                   onClick={setCurrentUsername.bind(null, contact.username)}
                 >
-                  <MiniProfile
+                  <Avatar
                     name={contact.name}
                     url={contact.profile_photo_url}
                     secondaryText={`@${contact.username}`}

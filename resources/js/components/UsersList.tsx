@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import MiniProfile from './MiniProfile'
+import Avatar from './Avatar'
 import { Card, CardContent, CardFooter } from './ui/card'
 import { Button } from './ui/button'
 import type { User } from '@/types'
@@ -49,7 +49,7 @@ export default function UsersList() {
       {users?.map(user => (
         <Card key={user.username}>
           <CardContent className='text-center p-4'>
-            <MiniProfile
+            <Avatar
               name={user.name}
               url={user.profile_photo_url}
               imageSize={80}
