@@ -4,7 +4,6 @@ import { type PageProps } from '@inertiajs/core'
 import { usePage } from '@inertiajs/react'
 import Avatar from '@/components/Avatar'
 import UserSettings from '@/components/UserSettings'
-import SearchBox from '@/components/SearchBox'
 import UsersList from '@/components/UsersList'
 import ChatPanel from '@/components/ChatPanel'
 import { Button } from '@/components/ui/button'
@@ -78,12 +77,7 @@ export default function Index() {
           close={setCurrentUsername.bind(null, null)}
         />
       ) : (
-        <section className='flex-1 px-4'>
-          <div>
-            <SearchBox />
-            <UsersList />
-          </div>
-        </section>
+        <UsersList />
       )}
     </main>
   )
