@@ -1,34 +1,27 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { type PageProps } from '@inertiajs/core'
+import type { PageProps } from '@inertiajs/core'
 import { usePage } from '@inertiajs/react'
 import Avatar from '@/components/Avatar'
 import UserSettings from '@/components/UserSettings'
-import UsersList from '@/components/UsersList'
-import ChatPanel from '@/components/ChatPanel'
-import { Button } from '@/components/ui/button'
+import Strangers from '@/components/Strangers'
+import Contacts from '@/components/Contacts'
 import type { User } from '@/types'
 
 interface Props extends PageProps {
   user: User;
+  contact: User|null;
 }
 
-export default function Index() {
-  const { user } = usePage<Props>().props
-  const [currentUsername, setCurrentUsername] = useState<string | null>(null)
-  const { data: contacts, isSuccess } = useQuery<any, Error, User[]>({
-    queryKey: ['contacts'],
-    async queryFn() {
-      const response = await fetch('/users/contacts')
-      const data = await response.json()
+const ChatPanel = lazy(() => import('@/components/ChatPanel'))
 
-      return data.users
-    }
+export default function Index() {
+  const { user, contact } = usePage<Props>().props
+  const { data: username } = useQuery({
+    queryKey: ['username'],
+    initialData: contact?.username,
+    enabled: false,
   })
-  const currentUser = useMemo(
-    () => currentUsername ? contacts?.find(contact => contact.username === currentUsername) : null,
-    [currentUsername]
-  )
 
   return (
     <main className='flex'>
@@ -42,42 +35,17 @@ export default function Index() {
 
             <UserSettings />
           </div>
-          {isSuccess ? (
-            <div className='flex-1 overflow-y-auto'>
-              {contacts.map(contact => (
-                <Button
-                  key={contact.username}
-                  className='w-full h-auto flex items-center text-left rounded-none p-4 hover:bg-secondary'
-                  variant='ghost'
-                  onClick={setCurrentUsername.bind(null, contact.username)}
-                >
-                  <Avatar
-                    name={contact.name}
-                    url={contact.profile_photo_url}
-                    secondaryText={`@${contact.username}`}
-                    isOnline
-                  />
-                  <span className='w-[25px] h-[25px] inline-flex items-center justify-center bg-primary text-primary-foreground text-xs rounded-full ml-auto'>
-                    2
-                  </span>
-                </Button>
-              ))}
-            </div>
-          ) : (
-            <p className='text-gray-500 text-center px-4 mt-4'>
-              You haven&apos;t added anyone to your contacts list.
-            </p>
-          )}
+
+          <Contacts />
         </div>
       </aside>
 
-      {currentUser ? (
-        <ChatPanel
-          user={currentUser}
-          close={setCurrentUsername.bind(null, null)}
-        />
+      {username ? (
+        <Suspense>
+          <ChatPanel />
+        </Suspense>
       ) : (
-        <UsersList />
+        <Strangers />
       )}
     </main>
   )

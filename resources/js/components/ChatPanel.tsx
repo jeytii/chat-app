@@ -1,32 +1,35 @@
-import { type MouseEventHandler } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { UserMinus, X } from 'lucide-react'
 import Avatar from './Avatar'
 import MessageBox from './MessageBox'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
-import { User } from '@/types'
+import type { User } from '@/types'
 
-interface Props {
-  user: User;
-  close: MouseEventHandler<HTMLButtonElement>;
-}
-
-export default function ChatPanel({ user, close }: Props) {
+export default function ChatPanel() {
+  const queryClient = useQueryClient()
+  const username = queryClient.getQueryData<string>(['username'])
+  const user = useMemo(() => (
+    queryClient.getQueryData<User[]>(['contacts'])?.find(contact => contact.username === username)
+  ), [username])
   const { data } = useQuery<any, Error, User>({
-    queryKey: ['chat', { username: user.username }],
-    queryFn() {
-      return user
-    },
+    queryKey: ['chat', { username: user?.username }],
+    initialData: user,
+    enabled: false,
   })
+
+  function close() {
+    queryClient.setQueryData(['username'], null)
+  }
 
   return (
     <div className='flex-1 h-screen flex flex-col'>
       <header className='flex items-center border-b border-border shadow p-4'>
         <Avatar
-          name={user.name}
-          url={user.profile_photo_url}
+          name={user?.name as string}
+          url={user?.profile_photo_url}
           secondaryText='Last seen 25 minutes ago'
           isOnline
         />
