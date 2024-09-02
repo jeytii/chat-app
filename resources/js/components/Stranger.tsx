@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 import Avatar from './Avatar'
 import { Card, CardContent, CardFooter } from './ui/card'
 import { Button } from './ui/button'
@@ -6,16 +8,14 @@ import type { User } from '@/types'
 
 export default function Stranger({ user }: { user: User }) {
   const queryClient = useQueryClient()
+  const abortController = useRef(new AbortController())
   const { mutate: add, isPending } = useMutation<User, Error, User>({
     async mutationFn({ username }) {
-      const response = await fetch('users/contacts/store', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username })
-      })
-      const data = await response.json()
+      const { data } = await axios.post<{ user: User; }>(
+        'users/contacts/store',
+        { username },
+        { signal: abortController.current.signal },
+      )
 
       return data.user
     },
@@ -30,6 +30,12 @@ export default function Stranger({ user }: { user: User }) {
       )
     }
   })
+
+  useEffect(() => {
+    return () => {
+      abortController.current.abort()
+    }
+  }, [])
 
   function addToContacts() {
     add(user)

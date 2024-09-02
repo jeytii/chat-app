@@ -1,7 +1,8 @@
-import { useEffect, type ChangeEvent } from 'react'
+import { useEffect, useRef, type ChangeEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { PageProps } from '@inertiajs/core'
 import { usePage } from '@inertiajs/react'
+import axios from 'axios'
 import Stranger from './Stranger'
 import { Input } from './ui/input'
 import { useOnChangeDebounce } from '@/hooks'
@@ -14,6 +15,7 @@ interface Props extends PageProps {
 export default function Strangers() {
   const { strangers } = usePage<Props>().props
   const queryClient = useQueryClient()
+  const abortController = useRef(new AbortController())
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['search-results'],
@@ -23,38 +25,44 @@ export default function Strangers() {
 
   const { mutate: search } = useMutation<any, Error, string>({
     async mutationFn(query) {
-      if (!query.length) {
-        return []
-      }
-
-      const response = await fetch(`/users/search?query=${query}`)
-      const data = await response.json()
+      const { data } = await axios.get<{ users: User[]; }>(
+        '/users/search',
+        {
+          params: { query },
+          signal: abortController.current.signal,
+        },
+      )
 
       return data.users
     },
-    onSuccess(users, query) {
-      if (!query.length) {
-        queryClient.resetQueries({
-          queryKey: ['search-results'],
-        })
-      } else {
-        queryClient.setQueryData(['search-results'], users)
-      }
+    onSuccess(users) {
+      queryClient.setQueryData(['search-results'], users)
     }
   })
 
   useEffect(() => {
     return () => {
-      queryClient.removeQueries({
-        queryKey: ['search-results']
-      })
+      abortController.current.abort()
+      reset()
     }
   }, [])
 
   const debouncedHandleSearch = useOnChangeDebounce(handleSearch)
 
   function handleSearch(event: ChangeEvent<HTMLInputElement>) {
-    search(event.target.value)
+    const { value } = event.target
+
+    if (value.length) {
+      search(value)
+    } else {
+      reset()
+    }
+  }
+
+  function reset() {
+    queryClient.resetQueries({
+      queryKey: ['search-results'],
+    })
   }
 
   if (isLoading && !users) {
