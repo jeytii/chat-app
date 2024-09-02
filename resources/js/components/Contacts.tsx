@@ -3,6 +3,7 @@ import type { PageProps } from '@inertiajs/core'
 import { usePage } from '@inertiajs/react'
 import Avatar from './Avatar'
 import { Button } from './ui/button'
+import { cn } from '@/lib/utils'
 import type { User } from '@/types'
 
 interface Props extends PageProps {
@@ -39,7 +40,10 @@ export default function Contacts() {
       {contactsList.map(contact => (
         <Button
           key={contact.username}
-          className='w-full h-auto flex items-center text-left rounded-none p-4 hover:bg-secondary'
+          className={cn(
+            'w-full h-auto flex items-center text-left rounded-none p-4 hover:bg-secondary',
+            queryClient.getQueryData(['username']) === contact.username && 'bg-secondary'
+          )}
           variant='ghost'
           onClick={setCurrentContact.bind(null, contact)}
         >
