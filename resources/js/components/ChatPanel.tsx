@@ -26,7 +26,7 @@ export default function ChatPanel() {
 
   return (
     <div className='flex-1 h-screen flex flex-col'>
-      <header className='flex items-center border-b border-border shadow p-4'>
+      <header className='flex items-center border-b border-border shadow py-3 px-4'>
         <Avatar
           name={user?.name as string}
           url={user?.profile_photo_url}
@@ -36,10 +36,11 @@ export default function ChatPanel() {
         <Dialog>
           <DialogTrigger asChild>
             <Button
-              className='rounded-full ml-auto text-destructive hover:text-destructive'
+              className='h-auto rounded-full ml-auto text-destructive p-3 hover:text-destructive'
               variant='ghost'
+              size='icon'
             >
-              <UserMinus size='20' />
+              <UserMinus size='15' />
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -58,11 +59,12 @@ export default function ChatPanel() {
           </DialogContent>
         </Dialog>
         <Button
-          className='rounded-full'
+          className='h-auto rounded-full p-3'
           variant='ghost'
+          size='icon'
           onClick={close}
         >
-          <X size='20' />
+          <X size='15' />
         </Button>
       </header>
       <section className='flex-1 flex overflow-y-auto p-4'>
