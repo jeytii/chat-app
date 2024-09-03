@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
+import axios, { type AxiosResponse } from 'axios'
 import Avatar from './Avatar'
 import { Card, CardContent, CardFooter } from './ui/card'
 import { Button } from './ui/button'
@@ -9,25 +9,20 @@ import type { User } from '@/types'
 export default function Stranger({ user }: { user: User }) {
   const queryClient = useQueryClient()
   const abortController = useRef(new AbortController())
-  const { mutate: add, isPending } = useMutation<User, Error, User>({
-    async mutationFn({ username }) {
-      const { data } = await axios.post<{ user: User; }>(
-        'users/contacts/store',
-        { username },
+  const { mutate: add, isPending } = useMutation<AxiosResponse<{ user: User; }>>({
+    mutationFn: () => (
+      axios.post<{ user: User; }>(
+        `/users/contacts/${user.username}/add`,
+        null,
         { signal: abortController.current.signal },
       )
-
-      return data.user
-    },
-    onSuccess(newContact) {
+    ),
+    onSuccess({ data }) {
       queryClient.setQueryData<User[]>(
         ['contacts'],
-        (prev) => [newContact, ...(prev as User[])],
+        (prev) => [ data.user, ...(prev as User[]) ],
       )
-      queryClient.setQueryData<User[]>(
-        ['search-results'],
-        (prev) => prev?.filter(user => user.username !== newContact.username)
-      )
+      queryClient.setQueryData(['username'], data.user.username)
     }
   })
 
@@ -38,7 +33,7 @@ export default function Stranger({ user }: { user: User }) {
   }, [])
 
   function addToContacts() {
-    add(user)
+    add()
   }
 
   return (
