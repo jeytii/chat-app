@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { UserMinus, X } from 'lucide-react'
+import axios from 'axios'
 import Avatar from './Avatar'
 import MessageBox from './MessageBox'
 import { Button } from './ui/button'
@@ -14,11 +15,32 @@ export default function ChatPanel() {
   const user = useMemo(() => (
     queryClient.getQueryData<User[]>(['contacts'])?.find(contact => contact.username === username)
   ), [username])
-  const { data } = useQuery<any, Error, User>({
+  
+  useQuery<any, Error, User>({
     queryKey: ['chat', { username: user?.username }],
     initialData: user,
     enabled: false,
   })
+
+  const { mutate: remove, isPending: isRemoving } = useMutation({
+    mutationFn: () => axios.delete(`/users/contacts/${user?.username}/remove`),
+    onSuccess() {
+      queryClient.setQueryData<User[]>(
+        ['contacts'],
+        (prev) => prev?.filter(contact => contact.username !== user?.username) ?? []
+      )
+
+      queryClient.setQueryData(['username'], null)
+
+      queryClient.removeQueries({
+        queryKey: ['chat', { username: user?.username }]
+      })
+    }
+  })
+
+  function removeFromContacts() {
+    remove()
+  }
 
   function close() {
     queryClient.setQueryData(['username'], null)
@@ -47,14 +69,25 @@ export default function ChatPanel() {
             <DialogHeader>
               <DialogTitle>Remove from contacts</DialogTitle>
               <DialogDescription>
-                Are you sure you want to remove John Doe from your contacts?
+                Are you sure you want to remove {user?.name} from your contacts?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant='outline'>Cancel</Button>
+                <Button
+                  variant='outline'
+                  disabled={isRemoving}
+                >
+                  Cancel
+                </Button>
               </DialogClose>
-              <Button variant='destructive'>Remove</Button>
+              <Button
+                variant='destructive'
+                disabled={isRemoving}
+                onClick={removeFromContacts}
+              >
+                Remove
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
