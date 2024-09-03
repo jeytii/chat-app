@@ -1,42 +1,33 @@
 import { useEffect, useRef, type ChangeEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { PageProps } from '@inertiajs/core'
-import { usePage } from '@inertiajs/react'
-import axios from 'axios'
+import axios, { type AxiosResponse } from 'axios'
 import Stranger from './Stranger'
 import { Input } from './ui/input'
 import { useOnChangeDebounce } from '@/hooks'
 import type { User } from '@/types'
 
-interface Props extends PageProps {
-  strangers: User[];
-}
-
 export default function Strangers() {
-  const { strangers } = usePage<Props>().props
   const queryClient = useQueryClient()
   const abortController = useRef(new AbortController())
 
-  const { data: users, isLoading } = useQuery<User[]>({
+  const { data, isLoading } = useQuery<{ users: User[] }>({
     queryKey: ['search-results'],
-    initialData: strangers,
-    enabled: false,
+    async queryFn() {
+      const { data } = await axios.get('/users/search')
+
+      return data
+    },
   })
 
-  const { mutate: search } = useMutation<any, Error, string>({
-    async mutationFn(query) {
-      const { data } = await axios.get<{ users: User[]; }>(
-        '/users/search',
-        {
-          params: { query },
-          signal: abortController.current.signal,
-        },
-      )
-
-      return data.users
-    },
-    onSuccess(users) {
-      queryClient.setQueryData(['search-results'], users)
+  const { mutate: search } = useMutation<AxiosResponse<{ users: User[] }>, Error, string>({
+    mutationFn: (query) => (
+      axios.get('/users/search', {
+        params: { query },
+        signal: abortController.current.signal,
+      })
+    ),
+    onSuccess({ data }) {
+      queryClient.setQueryData(['search-results'], { users: data.users })
     }
   })
 
@@ -65,7 +56,7 @@ export default function Strangers() {
     })
   }
 
-  if (isLoading && !users) {
+  if (isLoading && !data) {
     return null
   }
 
@@ -77,7 +68,7 @@ export default function Strangers() {
         onChange={debouncedHandleSearch}
       />
       <div className='grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 mt-4'>
-        {users?.map(user =>  (
+        {data?.users.map(user =>  (
           <Stranger
             key={user.username}
             user={user}
