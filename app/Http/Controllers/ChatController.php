@@ -34,18 +34,6 @@ class ChatController extends Controller
             ))
             ->first();
 
-        $strangers = User::query()
-            ->whereNot('username', $username)
-            ->whereDoesntHave('addedContacts', fn (Builder $query): Builder => (
-                $query->where('username', $username)
-            ))
-            ->whereDoesntHave('linkedContacts', fn (Builder $query): Builder => (
-                $query->where('username', $username)
-            ))
-            ->limit(10)
-            ->orderByRaw('CONCAT(first_name, last_name)')
-            ->get();
-
-        return inertia('Index', compact('contacts', 'contact', 'strangers'));
+        return inertia('Index', compact('contacts', 'contact'));
     }
 }
