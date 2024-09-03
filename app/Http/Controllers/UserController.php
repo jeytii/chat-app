@@ -9,25 +9,28 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    public function addToContacts(Request $request)
+    public function addToContacts(User $user)
     {
-        $validated = $request->validate([
-            'username' => ['required', 'string', 'exists:users'],
-        ]);
+        Auth::user()->addedContacts()->attach($user);
 
+        return compact('user');
+    }
+
+    public function removeFromContacts(User $user)
+    {
         /** @var User */
-        $user = Auth::user();
-        $addedUser = User::query()->firstWhere('username', $validated['username']);
+        $authUser = Auth::user();
+        
+        $authUser->addedContacts()->detach($user);
+        $authUser->linkedContacts()->detach($user);
 
-        $user->addedContacts()->attach($addedUser);
-
-        return ['user' => $addedUser];
+        return compact('user');
     }
 
     public function search(Request $request)
     {
         $username = Auth::user()->username;
-        $query = $request->get('query');
+        $searchQuery = $request->query('query');
 
         $users = User::query()
             ->whereNot('username', $username)
@@ -37,10 +40,16 @@ class UserController extends Controller
             ->whereDoesntHave('linkedContacts', fn (Builder $query): Builder => (
                 $query->where('username', $username)
             ))
-            ->where(fn (Builder $builder): Builder => (
-                $builder->whereRaw('CONCAT(first_name, last_name) LIKE ?', ["%{$query}%"])
-                    ->orWhere('username', 'like', "%{$query}%")
-            ))
+            ->when(
+                (bool) $searchQuery,
+                fn (Builder $query) => (
+                    $query->where(fn (Builder $builder): Builder => (
+                        $builder->whereRaw('CONCAT(first_name, last_name) LIKE ?', ["%{$searchQuery}%"])
+                            ->orWhere('username', 'like', "%{$searchQuery}%")
+                    ))
+                ),
+                fn (Builder $query) => $query->limit(10),
+            )
             ->orderByRaw('CONCAT(first_name, last_name)')
             ->get();
 

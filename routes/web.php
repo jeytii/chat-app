@@ -14,7 +14,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [ChatController::class, 'index'])->name('index');
     
     Route::controller(UserController::class)->group(function () {
-        Route::post('users/contacts/store', 'addToContacts')->name('users.contacts.store');
+        Route::post('users/contacts/{user:username}/add', 'addToContacts')->name('users.contacts.add');
+        Route::delete('users/contacts/{user:username}/remove', 'removeFromContacts')->name('users.contacts.remove');
         Route::get('users/search', 'search')->name('users.search');
         Route::put('toggle-dark-mode', 'toggleDarkMode')->name('toggle-dark-mode');
     });
