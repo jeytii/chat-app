@@ -20,7 +20,12 @@ export default function Contacts() {
   })
 
   function setCurrentContact(contact: User) {
+    const currentUrl = new URL(window.location.href)
+
     queryClient.setQueryData(['username'], contact.username)
+
+    currentUrl.searchParams.append('username', contact.username)
+    window.history.pushState({}, '', currentUrl)
   }
 
   if (!isSuccess) {
