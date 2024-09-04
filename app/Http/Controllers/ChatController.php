@@ -12,28 +12,40 @@ class ChatController extends Controller
 {
     public function index(Request $request)
     {
+        $currentUsername = $request->query('username');
+
+        abort_unless(
+            ! $currentUsername || User::query()->where('username', $currentUsername)->exists(),
+            404,
+        );
+
         /** @var User */
         $user = Auth::user();
         $id = $user->id;
-        $username = $user->username;
 
-        $contacts = Conversation::query()
-            ->where('inviter_id', $id)
-            ->orWhere('invited_id', $id)
-            ->orderByDesc('created_at')
-            ->get()
-            ->map(fn (Conversation $conversation) => (
-                $conversation->inviter_id !== $id ? $conversation->inviter : $conversation->invited
-            ));
+        $data = [
+            'contacts' => Conversation::query()
+                ->where('inviter_id', $id)
+                ->orWhere('invited_id', $id)
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(fn (Conversation $conversation) => (
+                    $conversation->inviter_id !== $id ? $conversation->inviter : $conversation->invited
+                )),
+        ];
 
-        $contact = User::query()
-            ->where('username', $request->query(('username')))
-            ->where(fn (Builder $query) => (
-                $query->whereRelation('addedContacts', 'username', $username)
-                    ->orWhereRelation('linkedContacts', 'username', $username)
-            ))
-            ->first();
+        if ($currentUsername) {
+            $username = $user->username;
 
-        return inertia('Index', compact('contacts', 'contact'));
+            $data['contact'] = User::query()
+                ->where('username', $currentUsername)
+                ->where(fn (Builder $query) => (
+                    $query->whereRelation('addedContacts', 'username', $username)
+                        ->orWhereRelation('linkedContacts', 'username', $username)
+                ))
+                ->first();
+        }
+
+        return inertia('Index', $data);
     }
 }
