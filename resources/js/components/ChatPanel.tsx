@@ -43,7 +43,12 @@ export default function ChatPanel() {
   }
 
   function close() {
+    const currentUrl = new URL(window.location.href)
+
     queryClient.setQueryData(['username'], null)
+
+    currentUrl.searchParams.delete('username')
+    window.history.pushState({}, '', currentUrl)
   }
 
   return (
