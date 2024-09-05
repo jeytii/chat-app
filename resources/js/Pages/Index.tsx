@@ -26,7 +26,7 @@ export default function Index() {
   return (
     <main className='flex'>
       <aside className='w-72'>
-        <div className='fixed w-72 flex flex-col h-screen left-0 top-0 border-r border-border'>
+        <div className='fixed left-0 top-0 flex h-screen w-72 flex-col border-r border-border'>
           <div className='border-b border-border p-4'>
             <Avatar
               name={user.name}

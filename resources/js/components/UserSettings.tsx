@@ -7,7 +7,7 @@ export default function UserSettings() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <div className='flex items-center justify-between mt-4'>
+    <div className='mt-4 flex items-center justify-between'>
       <Button
         className='h-auto rounded-full border-gray-400 p-3 hover:bg-gray-200 dark:border-gray-500 dark:hover:bg-gray-800'
         variant='outline'

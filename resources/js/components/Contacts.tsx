@@ -24,8 +24,8 @@ export default function Contacts() {
 
     queryClient.setQueryData(['username'], contact.username)
 
-    currentUrl.searchParams.append('username', contact.username)
-    window.history.pushState({}, '', currentUrl)
+    currentUrl.searchParams.set('username', contact.username)
+    window.history.pushState({ username: contact.username }, '', currentUrl)
   }
 
   if (!isSuccess) {
@@ -34,7 +34,7 @@ export default function Contacts() {
   
   if (!contactsList.length) {
     return (
-      <p className='text-gray-500 text-center px-4 mt-4'>
+      <p className='mt-4 px-4 text-center text-gray-500'>
         You haven&apos;t added anyone to your contacts list.
       </p>
     )
@@ -46,7 +46,7 @@ export default function Contacts() {
         <Button
           key={contact.username}
           className={cn(
-            'w-full h-auto flex items-center text-left rounded-none p-4 hover:bg-secondary',
+            'flex h-auto w-full items-center rounded-none p-4 text-left hover:bg-secondary',
             queryClient.getQueryData(['username']) === contact.username && 'bg-secondary'
           )}
           variant='ghost'
@@ -58,7 +58,7 @@ export default function Contacts() {
             secondaryText={`@${contact.username}`}
             isOnline
           />
-          <span className='w-[25px] h-[25px] inline-flex items-center justify-center bg-primary text-primary-foreground text-xs rounded-full ml-auto'>
+          <span className='ml-auto inline-flex size-[25px] items-center justify-center rounded-full bg-primary text-xs text-primary-foreground'>
             2
           </span>
         </Button>

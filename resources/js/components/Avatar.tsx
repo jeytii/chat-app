@@ -38,24 +38,24 @@ export default function Avatar({
           }}
         >
           <Image
-            className='h-full w-full aspect-square rounded-full'
+            className='aspect-square size-full rounded-full'
             src={url}
             alt={initials}
             width={imageSize}
             height={imageSize}
           />
-          <Fallback className='flex h-full w-full items-center justify-center rounded-full bg-muted'>
+          <Fallback className='flex size-full items-center justify-center rounded-full bg-muted'>
             {initials}
           </Fallback>
         </Root>
         {isOnline && (
-          <span className='absolute bottom-0.5 right-0.5 w-[10px] h-[10px] rounded-full bg-green-500 border border-black'></span>
+          <span className='absolute bottom-0.5 right-0.5 size-[10px] rounded-full border border-black bg-green-500'></span>
         )}
       </div>
       <div className={cn(alignment === 'horizontal' && 'ml-2')}>
         <label className='text-primary'>{name}</label>
         {secondaryText && (
-          <span className='block text-gray-500 text-sm'>{secondaryText}</span>
+          <span className='block text-sm text-gray-500'>{secondaryText}</span>
         )}
       </div>
     </div>

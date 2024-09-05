@@ -67,7 +67,7 @@ export default function Strangers() {
         placeholder='Search'
         onChange={debouncedHandleSearch}
       />
-      <div className='grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 mt-4'>
+      <div className='mt-4 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4'>
         {data?.users.map(user =>  (
           <Stranger
             key={user.username}

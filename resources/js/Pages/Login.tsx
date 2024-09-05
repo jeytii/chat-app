@@ -44,10 +44,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className='min-h-screen flex items-center justify-center bg-primary-foreground'>
-      <Card className='max-w-sm w-full shadow-lg'>
+    <main className='flex min-h-screen items-center justify-center bg-primary-foreground'>
+      <Card className='w-full max-w-sm shadow-lg'>
         <CardHeader>
-          <CardTitle className='text-primary text-xl font-bold'>Welcome to Chat App</CardTitle>
+          <CardTitle className='text-xl font-bold text-primary'>Welcome to Chat App</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={login}>
@@ -67,7 +67,7 @@ export default function LoginPage() {
                 autoFocus
                 onChange={handleValue}
               />
-              { errors.username && <p className='text-sm text-destructive mt-1'>{errors.username}</p> }
+              { errors.username && <p className='mt-1 text-sm text-destructive'>{errors.username}</p> }
             </div>
             <div className='mt-8'>
               <Label
@@ -84,18 +84,18 @@ export default function LoginPage() {
                 disabled={submitting}
                 onChange={handleValue}
               />
-              { errors.password && <p className='text-sm text-destructive mt-1'>{errors.password}</p> }
+              { errors.password && <p className='mt-1 text-sm text-destructive'>{errors.password}</p> }
             </div>
 
             {submitting ? (
               <Button
-                className='w-full mt-8'
+                className='mt-8 w-full'
                 disabled
               >
                 <Loader2 className='animate-spin' />
               </Button>
             ) : (
-              <Button className='w-full mt-8'>Sign in</Button>
+              <Button className='mt-8 w-full'>Sign in</Button>
             )}
           </form>
         </CardContent>
