@@ -6,7 +6,8 @@
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "plugin:tailwindcss/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -41,6 +42,9 @@
       "allowFunctions": true,
       "allowArrowFunctions": false,
       "allowBind": true
+    }],
+    "tailwindcss/classnames-order": ["error", {
+      "callees": ["classnames", "clsx", "cn", "ctl", "cva", "tv"]
     }]
   }
 }
