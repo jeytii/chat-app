@@ -13,7 +13,7 @@ interface Props extends PageProps {
 export default function Contacts() {
   const { contacts } = usePage<Props>().props
   const queryClient = useQueryClient()
-  const { data: contactsList, isSuccess } = useQuery<any, Error, User[]>({
+  const { data: contactsList, isSuccess } = useQuery<User[]>({
     queryKey: ['contacts'],
     initialData: contacts,
     enabled: false,

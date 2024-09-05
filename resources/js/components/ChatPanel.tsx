@@ -16,7 +16,7 @@ export default function ChatPanel() {
     queryClient.getQueryData<User[]>(['contacts'])?.find(contact => contact.username === username)
   ), [username])
   
-  useQuery<any, Error, User>({
+  useQuery<User>({
     queryKey: ['chat', { username: user?.username }],
     initialData: user,
     enabled: false,
