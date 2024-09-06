@@ -6,6 +6,7 @@ import Avatar from '@/components/Avatar'
 import UserSettings from '@/components/UserSettings'
 import Strangers from '@/components/Strangers'
 import Contacts from '@/components/Contacts'
+import ChatPanelSkeleton from '@/components/skeletons/ChatPanel'
 import type { User } from '@/types'
 
 interface Props extends PageProps {
@@ -41,7 +42,7 @@ export default function Index() {
       </aside>
 
       {username ? (
-        <Suspense>
+        <Suspense fallback={<ChatPanelSkeleton />}>
           <ChatPanel />
         </Suspense>
       ) : (
