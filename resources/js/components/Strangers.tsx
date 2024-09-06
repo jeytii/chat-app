@@ -2,7 +2,9 @@ import { useEffect, useRef, type ChangeEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import Stranger from './Stranger'
+import StrangersSkeleton from './skeletons/Strangers'
 import { Input } from './ui/input'
+import { Skeleton } from './ui/skeleton'
 import { useOnChangeDebounce } from '@/hooks'
 import type { User } from '@/types'
 
@@ -19,10 +21,10 @@ export default function Strangers() {
     },
   })
 
-  const { mutate: search } = useMutation<AxiosResponse<{ users: User[] }>, Error, string>({
+  const { mutate: search, isPending: isSearching } = useMutation<AxiosResponse<{ users: User[] }>, Error, string>({
     mutationFn: (query) => (
       axios.get('/users/search', {
-        params: { query },
+        params: query ? { query } : null,
         signal: abortController.current.signal,
       })
     ),
@@ -34,30 +36,25 @@ export default function Strangers() {
   useEffect(() => {
     return () => {
       abortController.current.abort()
-      reset()
+      queryClient.resetQueries({
+        queryKey: ['search-results'],
+      })
     }
   }, [])
 
   const debouncedHandleSearch = useOnChangeDebounce(handleSearch)
 
   function handleSearch(event: ChangeEvent<HTMLInputElement>) {
-    const { value } = event.target
-
-    if (value.length) {
-      search(value)
-    } else {
-      reset()
-    }
+    search(event.target.value)
   }
 
-  function reset() {
-    queryClient.resetQueries({
-      queryKey: ['search-results'],
-    })
-  }
-
-  if (isLoading && !data) {
-    return null
+  if (isLoading) {
+    return (
+      <section className='flex-1 p-4'>
+        <Skeleton className='h-[38px]' />
+        <StrangersSkeleton />
+      </section>
+    )
   }
 
   return (
@@ -67,14 +64,18 @@ export default function Strangers() {
         placeholder='Search'
         onChange={debouncedHandleSearch}
       />
-      <div className='mt-4 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4'>
-        {data?.users.map(user =>  (
-          <Stranger
-            key={user.username}
-            user={user}
-          />
-        ))}
-      </div>
+      {isSearching ? (
+        <StrangersSkeleton />
+      ) : (
+        <div className='mt-4 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4'>
+          {data?.users.map(user =>  (
+            <Stranger
+              key={user.username}
+              user={user}
+            />
+          ))}
+        </div>
+      )}
     </section>
   )
 }
