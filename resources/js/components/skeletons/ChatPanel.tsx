@@ -19,7 +19,9 @@ export default function ChatPanelSkeleton() {
         <Skeleton className='h-20 w-4/5' />
         <Skeleton className='h-8 w-2/5' />
       </div>
-      <Skeleton className='h-[90px] rounded-none border-t' />
+      <div className='h-[90px] border-t p-4'>
+        <Skeleton className='h-full' />
+      </div>
     </section>
   )
 }

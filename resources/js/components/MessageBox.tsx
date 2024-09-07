@@ -1,5 +1,5 @@
 import { type ChangeEvent } from 'react'
-import { Camera } from 'lucide-react'
+import { Image, ImagePlay, SendHorizonal } from 'lucide-react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 
@@ -23,27 +23,27 @@ export default function MessageBox() {
         rows={1}
         onInput={watchHeight}
       />
-      <div className='flex justify-end'>
+      <div className='flex'>
         <Button
-          className='h-auto px-4 py-2 text-accent-foreground opacity-60 hover:opacity-100'
+          className='h-auto px-4 py-2 text-accent-foreground opacity-60 hover:bg-transparent hover:opacity-100'
           variant='ghost'
           size='sm'
         >
-          <Camera size='20' />
+          <Image size='20' />
         </Button>
         <Button
-          className='h-auto px-4 py-2 text-accent-foreground opacity-60 hover:opacity-100'
+          className='h-auto px-4 py-2 text-accent-foreground opacity-60 hover:bg-transparent hover:opacity-100'
           variant='ghost'
           size='sm'
         >
-          GIF
+          <ImagePlay size='20' />
         </Button>
         <Button
-          className='h-auto px-4 py-2 text-accent-foreground opacity-60 hover:opacity-100'
+          className='ml-auto h-auto px-4 py-2 text-accent-foreground opacity-60 hover:bg-transparent hover:opacity-100'
           variant='ghost'
           size='sm'
         >
-          Send
+          <SendHorizonal size='20' />
         </Button>
       </div>
     </section>

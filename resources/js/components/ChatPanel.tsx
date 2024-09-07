@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { UserMinus, X } from 'lucide-react'
+import { Check, UserMinus, X } from 'lucide-react'
 import axios from 'axios'
 import Avatar from './Avatar'
 import MessageBox from './MessageBox'
@@ -53,17 +53,17 @@ export default function ChatPanel() {
 
   return (
     <div className='flex h-screen flex-1 flex-col'>
-      <header className='flex items-center border-b border-border px-4 py-3 shadow'>
+      <header className='flex items-center border-b border-border px-4 py-3'>
         <Avatar
           name={user?.name as string}
           url={user?.profile_photo_url}
-          secondaryText='Last seen 25 minutes ago'
+          secondaryText='Typing...'
           isOnline
         />
         <Dialog>
           <DialogTrigger asChild>
             <Button
-              className='ml-auto h-auto rounded-full p-3 text-destructive hover:text-destructive'
+              className='ml-auto h-auto rounded-full p-3 text-destructive hover:bg-destructive/15 hover:text-destructive'
               variant='ghost'
               size='icon'
             >
@@ -97,7 +97,7 @@ export default function ChatPanel() {
           </DialogContent>
         </Dialog>
         <Button
-          className='h-auto rounded-full p-3'
+          className='h-auto rounded-full p-3 hover:bg-primary/15'
           variant='ghost'
           size='icon'
           onClick={close}
@@ -107,39 +107,34 @@ export default function ChatPanel() {
       </header>
       <section className='flex flex-1 overflow-y-auto p-4'>
         <div className='mt-auto flex flex-col gap-2'>
-          <div>
-            <Card className='inline-block max-w-[80%] border-border text-sm text-primary'>
-              <CardContent className='px-4 py-2'>
-                <p>hello</p>
-              </CardContent>
-            </Card>
-            <span className='mt-0.5 block text-xs text-gray-500'>7:30 PM</span>
+          <Card className='max-w-[80%] self-start border-border text-sm text-primary'>
+            <CardContent className='px-4 py-2'>
+              <p>hello</p>
+            </CardContent>
+          </Card>
+          <Card className='max-w-[80%] self-start border-border text-sm text-primary'>
+            <CardContent className='px-4 py-2'>
+              <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
+            </CardContent>
+          </Card>
+          <Card className='max-w-[80%] self-end border-0 bg-secondary text-left text-sm text-primary'>
+            <CardContent className='px-4 py-2'>
+              <p>Hi</p>
+            </CardContent>
+          </Card>
+          <Card className='max-w-[80%] self-end border-0 bg-secondary text-left text-sm text-primary'>
+            <CardContent className='px-4 py-2'>
+              <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Suscipit alias ratione, fugiat nesciunt, eos, excepturi autem quam delectus quasi incidunt. Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellat voluptatem minus ea aspernatur similique dicta laudantium soluta, neque voluptatum recusandae nulla, in error autem sint laborum non. Ex, culpa harum?</p>
+            </CardContent>
+          </Card>
+          <div className='flex items-center gap-2 self-end'>
+            <span className='text-xs text-gray-500'>Seen</span>
+            <Check
+              className='inline'
+              color='green'
+              size='15'
+            />
           </div>
-          <div>
-            <Card className='inline-block max-w-[80%] border-border text-sm text-primary'>
-              <CardContent className='px-4 py-2'>
-                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
-              </CardContent>
-            </Card>
-            <span className='mt-0.5 block text-xs text-gray-500'>7:30 PM</span>
-          </div>
-          <div className='text-right'>
-            <Card className='inline-block max-w-[80%] border-0 bg-primary text-left text-sm text-primary-foreground'>
-              <CardContent className='px-4 py-2'>
-                <p>Hi</p>
-              </CardContent>
-            </Card>
-            <span className='mt-0.5 block text-xs text-gray-500'>7:30 PM</span>
-          </div>
-          <div className='text-right'>
-            <Card className='inline-block max-w-[80%] border-0 bg-primary text-left text-sm text-primary-foreground'>
-              <CardContent className='px-4 py-2'>
-                <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Suscipit alias ratione, fugiat nesciunt, eos, excepturi autem quam delectus quasi incidunt. Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellat voluptatem minus ea aspernatur similique dicta laudantium soluta, neque voluptatum recusandae nulla, in error autem sint laborum non. Ex, culpa harum?</p>
-              </CardContent>
-            </Card>
-            <span className='mt-0.5 block text-xs text-gray-500'>7:30 PM</span>
-          </div>
-          <p className='text-gray-500'>Typing...</p>
         </div>
       </section>
 
