@@ -17,12 +17,19 @@ export default function Stranger({ user }: { user: User }) {
         { signal: abortController.current.signal },
       )
     ),
-    onSuccess({ data }) {
+    onSuccess(response) {
+      const { user } = response.data
+      const currentUrl = new URL(window.location.href)
+
       queryClient.setQueryData<User[]>(
         ['contacts'],
-        (prev) => [ data.user, ...(prev as User[]) ],
+        (prev) => [ user, ...(prev as User[]) ],
       )
-      queryClient.setQueryData(['username'], data.user.username)
+
+      queryClient.setQueryData(['username'], user.username)
+
+      currentUrl.searchParams.set('username', user.username)
+      window.history.pushState({ username: user.username }, '', currentUrl)
     }
   })
 
@@ -37,8 +44,11 @@ export default function Stranger({ user }: { user: User }) {
   }
 
   return (
-    <Card key={user.username}>
-      <CardContent className='text-center p-4'>
+    <Card
+      key={user.username}
+      className='shadow-lg'
+    >
+      <CardContent className='p-4 text-center'>
         <Avatar
           name={user.name}
           url={user.profile_photo_url}
