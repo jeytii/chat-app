@@ -52,7 +52,9 @@ export function ThemeProvider({
       clearTimeout(timer.current)
 
       timer.current = setTimeout(function() {
-        router.put('/toggle-dark-mode')
+        router.put('/toggle-dark-mode', {
+          dark_mode: theme === 'dark',
+        })
       }, 1000)
     },
   }

@@ -11,7 +11,10 @@ class UserController extends Controller
 {
     public function addToContacts(User $user)
     {
-        Auth::user()->addedContacts()->attach($user);
+        /** @var App\Models\User */
+        $authUser = Auth::user();
+
+        $authUser->addedContacts()->attach($user);
 
         return compact('user');
     }
@@ -56,13 +59,11 @@ class UserController extends Controller
         return compact('users');
     }
 
-    public function toggleDarkMode()
+    public function toggleDarkMode(Request $request)
     {
         /** @var App\Models\User */
         $user = Auth::user();
 
-        $user->update([
-            'dark_mode' => ! $user->dark_mode,
-        ]);
+        $user->update($request->only('dark_mode'));
     }
 }
