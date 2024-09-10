@@ -4,6 +4,7 @@ export default function ChatPanelSkeleton() {
   return (
     <section className='flex h-screen flex-1 flex-col'>
       <header className='flex items-center gap-2 border-b px-4 py-3'>
+        <Skeleton className='size-[35px] rounded-full sm:hidden' />
         <Skeleton className='size-[45px] rounded-full' />
         <div>
           <Skeleton className='h-3 w-[150px]' />
