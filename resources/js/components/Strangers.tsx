@@ -1,8 +1,12 @@
 import { useEffect, useRef, type ChangeEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
+import { Menu } from 'lucide-react'
 import Stranger from './Stranger'
 import StrangersSkeleton from './skeletons/Strangers'
+import Sidebar from './Sidebar'
+import { Button } from './ui/button'
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet'
 import { Input } from './ui/input'
 import { Skeleton } from './ui/skeleton'
 import { useOnChangeDebounce } from '@/hooks'
@@ -51,7 +55,10 @@ export default function Strangers() {
   if (isLoading) {
     return (
       <section className='flex-1 p-4'>
-        <Skeleton className='h-[38px]' />
+        <div className='flex'>
+          <Skeleton className='mr-2 size-[38px] rounded-full' />
+          <Skeleton className='h-[38px] flex-1' />
+        </div>
         <StrangersSkeleton />
       </section>
     )
@@ -59,11 +66,31 @@ export default function Strangers() {
 
   return (
     <section className='flex-1 p-4'>
-      <Input
-        type='text'
-        placeholder='Search'
-        onChange={debouncedHandleSearch}
-      />
+      <header className='flex gap-2'>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              className='h-auto rounded-full md:hidden'
+              variant='ghost'
+              size='icon'
+            >
+              <Menu />
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            className='w-72 p-0'
+            side='left'
+          >
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
+
+        <Input
+          type='text'
+          placeholder='Search'
+          onChange={debouncedHandleSearch}
+        />
+      </header>
       {isSearching ? (
         <StrangersSkeleton />
       ) : (

@@ -1,11 +1,13 @@
 import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, UserMinus, X } from 'lucide-react'
+import { Check, Menu, UserMinus, X } from 'lucide-react'
 import axios from 'axios'
 import Avatar from './Avatar'
 import MessageBox from './MessageBox'
+import Sidebar from './Sidebar'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import type { User } from '@/types'
 
@@ -54,6 +56,24 @@ export default function ChatPanel() {
   return (
     <div className='flex h-screen flex-1 flex-col'>
       <header className='flex items-center border-b border-border px-4 py-3'>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              className='mr-2 h-auto rounded-full p-2 md:hidden'
+              variant='ghost'
+              size='icon'
+            >
+              <Menu />
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            className='w-72 p-0'
+            side='left'
+          >
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
+
         <Avatar
           name={user?.name as string}
           url={user?.profile_photo_url}
@@ -70,7 +90,7 @@ export default function ChatPanel() {
               <UserMinus size='15' />
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className='mx-auto w-[90%] rounded-lg'>
             <DialogHeader>
               <DialogTitle>Remove from contacts</DialogTitle>
               <DialogDescription>
