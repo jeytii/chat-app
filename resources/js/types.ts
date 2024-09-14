@@ -6,3 +6,9 @@ export interface User {
   profile_photo_url?: string;
   dark_mode: boolean;
 }
+
+export interface Message {
+  id: number;
+  content: string;
+  from_self: boolean;
+}

@@ -75,7 +75,7 @@ class User extends Authenticatable
 
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class);
+        return $this->hasMany(Message::class, 'sender_id');
     }
 
     public function name(): Attribute
