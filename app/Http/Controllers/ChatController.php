@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
@@ -47,5 +49,62 @@ class ChatController extends Controller
         }
 
         return inertia('Index', $data);
+    }
+
+    public function getMessages(Request $request)
+    {
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'exists:users,username'],
+        ]);
+
+        $conversation = $this->getConversation($validated['username'], true);
+
+        return [
+            'messages' => $conversation->messages->map(function (Message $message) {
+                $message['from_self'] = $message->sender_id === Auth::id();
+
+                return $message;
+            }),
+        ];
+    }
+
+    public function sendMessage(Request $request)
+    {
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'exists:users,username'],
+            'message' => ['required', 'string'],
+        ]);
+
+        $message = Auth::user()->messages()->create([
+            'conversation_id' => $this->getConversation($validated['username'])->id,
+            'content' => Str::markdown($validated['message'], [
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+                'renderer' => [
+                    'block_separator' => '<br>',
+                    'inner_separator' => '<br>',
+                    'soft_break'      => '<br>',
+                ],
+            ]),
+        ]);
+
+        return compact('message');
+    }
+
+    protected function getConversation(string $username, bool $getMessages = false): Conversation
+    {
+        $authId = Auth::id();
+
+        return Conversation::query()
+            ->where(function (Builder $query) use ($authId, $username) {
+                $query->whereRelation('inviter', 'id', $authId)
+                    ->whereRelation('invited', 'username', $username);
+            })
+            ->orWhere(function (Builder $query) use ($authId, $username) {
+                $query->whereRelation('inviter', 'username', $username)
+                    ->whereRelation('invited', 'id', $authId);
+            })
+            ->when($getMessages, fn (Builder $query) => $query->with('messages'))
+            ->first();
     }
 }
