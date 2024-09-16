@@ -1,38 +1,49 @@
-import { useState, useRef, type ChangeEvent } from 'react'
+import { useRef, type ChangeEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
+import axios, { type AxiosResponse } from 'axios'
+import { marked } from 'marked'
 import { Image, ImagePlay, SendHorizonal } from 'lucide-react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 import type { Message, User } from '@/types'
 
 export default function MessageBox() {
-  const [message, setMessage] = useState<string>('')
   const textarea = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
   const receiverUsername = queryClient.getQueryData<string>(['username'])
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => axios.post(
+  const { mutate } = useMutation<AxiosResponse<{ message: Message; }>, Error, string, number>({
+    mutationFn: (message) => axios.post(
       '/send-message',
       { message },
       {
         params: { username: receiverUsername },
       },
     ),
-    onMutate() {
+    onMutate(message) {
+      const messageId = Math.floor(Math.random() * 1000000000)
       queryClient.setQueryData(
         ['chat', { username: receiverUsername }],
         ({ user, messages }) => ({
           user: user as User,
           messages: [...messages, {
-            id: 0,
+            id: messageId,
             from_self: true,
-            content: 'Sending....',
+            loading: true,
+            content: marked.parseInline(message, {
+              breaks: true,
+            }),
           }],
         })
       )
+
+      if (textarea.current) {
+        textarea.current.removeAttribute('style')
+        textarea.current.value = ''
+      }
+
+      return messageId
     },
-    onSuccess({ data }) {
+    onSuccess({ data }, message, messageId) {
       queryClient.setQueryData<{ user: User; messages: Message[]; }>(
         ['chat', { username: receiverUsername }],
         (prev) => {
@@ -40,7 +51,7 @@ export default function MessageBox() {
             return undefined
           }
 
-          const newMessages = prev.messages.filter(m => m.id !== 0)
+          const newMessages = prev.messages.filter(m => m.id !== messageId)
 
           return {
             user: prev.user,
@@ -48,11 +59,8 @@ export default function MessageBox() {
           }
         }
       )
-
-      setMessage('')
-      textarea.current?.removeAttribute('style')
     },
-    onError() {
+    onError(error, message, messageId) {
       queryClient.setQueryData<{ user: User; messages: Message[]; }>(
         ['chat', { username: receiverUsername }],
         (prev) => {
@@ -62,7 +70,7 @@ export default function MessageBox() {
 
           return {
             user: prev.user,
-            messages: prev.messages.filter(m => m.id !== 0),
+            messages: prev.messages.filter(m => m.id !== messageId),
           }
         }
       )
@@ -78,16 +86,16 @@ export default function MessageBox() {
     } else {
       target.removeAttribute('style')
     }
-
-    setMessage(target.value)
   }
 
   function send() {
+    const message = textarea.current?.value
+
     if (!message) {
       return
     }
 
-    mutate()
+    mutate(message)
   }
 
   return (
@@ -97,7 +105,6 @@ export default function MessageBox() {
         className='min-h-0 resize-none overflow-hidden rounded-none border-0 bg-transparent p-4'
         placeholder='Write a message'
         rows={1}
-        value={message}
         onInput={watchHeight}
       />
       <div className='flex'>
@@ -116,10 +123,9 @@ export default function MessageBox() {
           <ImagePlay size='20' />
         </Button>
         <Button
-          className='ml-auto h-auto px-4 py-2 text-accent-foreground opacity-60 hover:bg-transparent hover:opacity-100 disabled:pointer-events-none disabled:opacity-20'
+          className='ml-auto h-auto px-4 py-2 text-accent-foreground opacity-60 hover:bg-transparent hover:opacity-100'
           variant='ghost'
           size='sm'
-          disabled={isPending}
           onClick={send}
         >
           <SendHorizonal size='20' />
