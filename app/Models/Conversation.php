@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Conversation extends Model
 {
     public $table = 'conversations';
-    
+
     public $incrementing = true;
 
     public function inviter(): BelongsTo

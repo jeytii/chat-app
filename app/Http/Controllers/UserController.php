@@ -23,7 +23,7 @@ class UserController extends Controller
     {
         /** @var User */
         $authUser = Auth::user();
-        
+
         $authUser->addedContacts()->detach($user);
         $authUser->linkedContacts()->detach($user);
 

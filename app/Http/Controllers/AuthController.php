@@ -22,7 +22,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'username' => 'User not found.'
+            'username' => 'User not found.',
         ]);
     }
 

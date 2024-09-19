@@ -83,7 +83,7 @@ class ChatController extends Controller
                 'renderer' => [
                     'block_separator' => '<br>',
                     'inner_separator' => '<br>',
-                    'soft_break'      => '<br>',
+                    'soft_break' => '<br>',
                 ],
             ]),
         ]);
