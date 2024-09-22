@@ -26,7 +26,7 @@ export default function Stranger({ user }: { user: User }) {
         (prev) => [ user, ...(prev as User[]) ],
       )
 
-      queryClient.setQueryData(['username'], user.username)
+      queryClient.setQueryData(['current-chat'], user)
 
       currentUrl.searchParams.set('username', user.username)
       window.history.pushState({ username: user.username }, '', currentUrl)

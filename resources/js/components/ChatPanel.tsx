@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Menu, UserMinus, X } from 'lucide-react'
 import axios from 'axios'
@@ -9,27 +8,24 @@ import Messages from './Messages'
 import { Button } from './ui/button'
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
-import type { User } from '@/types'
+import type { ChatContact } from '@/types'
 
 export default function ChatPanel() {
   const queryClient = useQueryClient()
-  const username = queryClient.getQueryData<string>(['username'])
-  const user = useMemo(() => (
-    queryClient.getQueryData<User[]>(['contacts'])?.find(contact => contact.username === username)
-  ), [username])
+  const user = queryClient.getQueryData<ChatContact>(['current-chat'])
 
   const { mutate: remove, isPending: isRemoving } = useMutation({
     mutationFn: () => axios.delete(`/users/contacts/${user?.username}/remove`),
     onSuccess() {
-      queryClient.setQueryData<User[]>(
+      queryClient.setQueryData<ChatContact[]>(
         ['contacts'],
         (prev) => prev?.filter(contact => contact.username !== user?.username) ?? []
       )
 
-      queryClient.setQueryData(['username'], null)
+      queryClient.setQueryData(['current-chat'], null)
 
       queryClient.removeQueries({
-        queryKey: ['chat', { username: user?.username }]
+        queryKey: ['messages', { username: user?.username }]
       })
     }
   })
@@ -41,7 +37,7 @@ export default function ChatPanel() {
   function close() {
     const currentUrl = new URL(window.location.href)
 
-    queryClient.setQueryData(['username'], null)
+    queryClient.setQueryData(['current-chat'], null)
 
     currentUrl.searchParams.delete('username')
     window.history.pushState(null, '', '/')
@@ -71,8 +67,8 @@ export default function ChatPanel() {
         <Avatar
           name={user?.name as string}
           url={user?.profile_photo_url}
-          secondaryText='Typing...'
-          isOnline
+          secondaryText={user?.is_online ? 'Online' : 'Offline'}
+          isOnline={user?.is_online}
         />
         <Dialog>
           <DialogTrigger asChild>

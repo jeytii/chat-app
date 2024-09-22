@@ -10,30 +10,34 @@ import type { Message, User } from '@/types'
 export default function MessageBox() {
   const textarea = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
-  const receiverUsername = queryClient.getQueryData<string>(['username'])
+  const receiver = queryClient.getQueryData<User>(['current-chat'])
   const { mutate } = useMutation<AxiosResponse<{ message: Message; }>, Error, string, number>({
     mutationFn: (message) => axios.post(
       '/send-message',
       { message },
       {
-        params: { username: receiverUsername },
+        params: { username: receiver?.username },
       },
     ),
     onMutate(message) {
       const messageId = Math.floor(Math.random() * 1000000000)
-      queryClient.setQueryData(
-        ['chat', { username: receiverUsername }],
-        ({ user, messages }) => ({
-          user: user as User,
-          messages: [...messages, {
-            id: messageId,
-            from_self: true,
-            loading: true,
-            content: marked.parseInline(message, {
-              breaks: true,
-            }),
-          }],
-        })
+      queryClient.setQueryData<Message[]>(
+        ['messages', { username: receiver?.username }],
+        (prev) => {
+          if (!prev) {
+            return undefined
+          }
+
+          return [
+            ...prev,
+            {
+              id: messageId,
+              from_self: true,
+              loading: true,
+              content: marked.parseInline(message, { breaks: true }).toString(),
+            }
+          ]
+        }
       )
 
       if (textarea.current) {
@@ -44,35 +48,24 @@ export default function MessageBox() {
       return messageId
     },
     onSuccess({ data }, message, messageId) {
-      queryClient.setQueryData<{ user: User; messages: Message[]; }>(
-        ['chat', { username: receiverUsername }],
+      queryClient.setQueryData<Message[]>(
+        ['messages', { username: receiver?.username }],
         (prev) => {
           if (! prev) {
             return undefined
           }
 
-          const newMessages = prev.messages.filter(m => m.id !== messageId)
-
-          return {
-            user: prev.user,
-            messages: [ ...newMessages, data.message ],
-          }
+          return [
+            ...prev.filter(m => m.id !== messageId),
+            data.message,
+          ]
         }
       )
     },
     onError(error, message, messageId) {
-      queryClient.setQueryData<{ user: User; messages: Message[]; }>(
-        ['chat', { username: receiverUsername }],
-        (prev) => {
-          if (! prev) {
-            return undefined
-          }
-
-          return {
-            user: prev.user,
-            messages: prev.messages.filter(m => m.id !== messageId),
-          }
-        }
+      queryClient.setQueryData<Message[]>(
+        ['messages', { username: receiver?.username }],
+        (prev) => prev?.filter(m => m.id !== messageId)
       )
     }
   })

@@ -10,7 +10,7 @@ export default function Contact(props: ChatContact) {
   function setCurrentContact() {
     const currentUrl = new URL(window.location.href)
 
-    queryClient.setQueryData(['username'], props.username)
+    queryClient.setQueryData(['current-chat'], props)
 
     currentUrl.searchParams.set('username', props.username)
     window.history.pushState({ username: props.username }, '', currentUrl)
@@ -20,7 +20,7 @@ export default function Contact(props: ChatContact) {
     <Button
       className={cn(
         'flex h-auto w-full items-center rounded-none p-4 text-left hover:bg-secondary',
-        queryClient.getQueryData(['username']) === props.username && 'bg-secondary'
+        queryClient.getQueryData<ChatContact>(['current-chat'])?.username === props.username && 'bg-secondary'
       )}
       variant='ghost'
       onClick={setCurrentContact}

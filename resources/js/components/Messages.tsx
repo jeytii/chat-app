@@ -6,25 +6,22 @@ import type { Message, User } from '@/types'
 
 export default function Messages() {
   const queryClient = useQueryClient()
-  const username = queryClient.getQueryData<string>(['username'])
-  const { data, isFetched } = useQuery<{ user: User; messages: Message[]; }>({
-    queryKey: ['chat', { username }],
+  const user = queryClient.getQueryData<User>(['current-chat'])
+  const { data, isFetched } = useQuery<Message[]>({
+    queryKey: ['messages', { username: user?.username }],
     async queryFn() {
       const response = await axios.get(
         '/get-messages',
         {
-          params: { username },
+          params: { username: user?.username },
         }
       )
 
-      return {
-        user: queryClient.getQueryData<User[]>(['contacts'])?.find(contact => contact.username === username) as User,
-        messages: response.data.messages,
-      }
+      return response.data.messages
     },
   })
 
-  if (isFetched && data && !data.messages.length) {
+  if (isFetched && data && !data.length) {
     return (
       <section className='flex flex-1 overflow-y-auto p-4'>
         <div className='mt-auto w-full'>
@@ -37,7 +34,7 @@ export default function Messages() {
   return (
     <section className='flex flex-1 overflow-y-auto p-4'>
       <div className='mt-auto flex w-full flex-col gap-2'>
-        {data?.messages.map(message => (
+        {data?.map(message => (
           <Card
             key={message.id}
             className={cn(
