@@ -23,11 +23,14 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $avatarId = fake()->regexify('[A-Za-z0-9]{19}');
+        $avatarSet = fake()->randomElement(['set1', 'set2', 'set3', 'set4']);
+
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'username' => fake()->unique()->userName(),
-            'profile_photo' => fake()->imageUrl(200, 200),
+            'profile_photo_url' => "https://robohash.org/{$avatarId}?set={$avatarSet}",
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];

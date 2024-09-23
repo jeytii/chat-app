@@ -8,5 +8,5 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('chat', function (User $user) {
-    return $user->only(['name', 'username', 'profile_photo']);
+    return $user->only(['name', 'username', 'profile_photo_url']);
 });
