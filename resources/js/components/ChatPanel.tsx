@@ -90,6 +90,7 @@ export default function ChatPanel() {
             <DialogFooter>
               <DialogClose asChild>
                 <Button
+                  className='mt-2 sm:mt-0'
                   variant='outline'
                   disabled={isRemoving}
                 >

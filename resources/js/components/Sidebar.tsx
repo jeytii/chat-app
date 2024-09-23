@@ -36,7 +36,7 @@ export default function Sidebar() {
         </p>
       )}
 
-      {(isSuccess && data.length) && (
+      {(isSuccess && !!data.length) && (
         <div className='flex-1 overflow-y-auto'>
           {data.map(contact => (
             <Contact

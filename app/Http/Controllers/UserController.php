@@ -47,13 +47,13 @@ class UserController extends Controller
                 (bool) $searchQuery,
                 fn (Builder $query) => (
                     $query->where(fn (Builder $builder): Builder => (
-                        $builder->whereRaw('CONCAT(first_name, last_name) LIKE ?', ["%{$searchQuery}%"])
+                        $builder->whereRaw("first_name || ' ' || last_name LIKE ?", ["%{$searchQuery}%"])
                             ->orWhere('username', 'like', "%{$searchQuery}%")
                     ))
                 ),
                 fn (Builder $query) => $query->limit(10),
             )
-            ->orderByRaw('CONCAT(first_name, last_name)')
+            ->orderByRaw('first_name || last_name')
             ->get();
 
         return compact('users');

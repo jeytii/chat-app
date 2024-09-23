@@ -7,8 +7,8 @@ export default function ChatPanelSkeleton() {
         <Skeleton className='size-[35px] rounded-full sm:hidden' />
         <Skeleton className='size-[45px] rounded-full' />
         <div>
-          <Skeleton className='h-3 w-[150px]' />
-          <Skeleton className='mt-2 h-3 w-[180px]' />
+          <Skeleton className='h-3 w-[120px]' />
+          <Skeleton className='mt-2 h-3 w-[50px]' />
         </div>
         <Skeleton className='ml-auto mr-1 size-8 rounded-full' />
         <Skeleton className='size-8 rounded-full' />

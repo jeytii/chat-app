@@ -29,8 +29,8 @@ export default function Avatar({
       <div className='relative'>
         <Root
           className={cn(
-            'relative shrink-0 overflow-hidden rounded-full border border-border',
-            alignment === 'vertical' ? 'inline-block' : 'flex'
+            'relative shrink-0 overflow-hidden rounded-full border border-primary p-1',
+            alignment === 'vertical' ? 'mx-auto block' : 'flex'
           )}
           style={{
             width: `${imageSize}px`,
