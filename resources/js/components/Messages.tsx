@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Card, CardContent } from './ui/card'
@@ -6,6 +7,7 @@ import type { Message, User } from '@/types'
 
 export default function Messages() {
   const queryClient = useQueryClient()
+  const root = useRef<HTMLDivElement>(null)
   const user = queryClient.getQueryData<User>(['current-chat'])
   const { data, isFetched } = useQuery<Message[]>({
     queryKey: ['messages', { username: user?.username }],
@@ -21,6 +23,12 @@ export default function Messages() {
     },
   })
 
+  useEffect(() => {
+    if (root.current) {
+      root.current.scrollTo({ top: root.current.scrollHeight })
+    }
+  }, [user?.username, data?.length])
+
   if (isFetched && data && !data.length) {
     return (
       <section className='flex flex-1 overflow-y-auto p-4'>
@@ -32,7 +40,10 @@ export default function Messages() {
   }
 
   return (
-    <section className='flex flex-1 overflow-y-auto p-4'>
+    <section
+      ref={root}
+      className='flex flex-1 overflow-y-auto p-4'
+    >
       <div className='mt-auto flex w-full flex-col gap-2'>
         {data?.map(message => (
           <Card
