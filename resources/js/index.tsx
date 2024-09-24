@@ -8,6 +8,13 @@ import Echo from 'laravel-echo'
 import { ThemeProvider } from './components/ThemeProvider'
 import { type User } from '@/types'
 
+declare global {
+  interface Window {
+      Pusher: typeof Pusher;
+      Echo: Echo; 
+  }
+}
+
 interface Props extends PageProps {
   user?: User;
 }
