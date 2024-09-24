@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -75,7 +76,10 @@ class ChatController extends Controller
             'message' => ['required', 'string'],
         ]);
 
-        $message = Auth::user()->messages()->create([
+        /** @var User */
+        $user = Auth::user();
+
+        $message = $user->messages()->create([
             'conversation_id' => $this->getConversation($validated['username'])->id,
             'content' => Str::markdown($validated['message'], [
                 'html_input' => 'strip',
@@ -87,6 +91,8 @@ class ChatController extends Controller
                 ],
             ]),
         ]);
+
+        broadcast(new MessageSent($user->username, $message));
 
         return compact('message');
     }

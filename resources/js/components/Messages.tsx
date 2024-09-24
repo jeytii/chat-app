@@ -29,6 +29,35 @@ export default function Messages() {
     }
   }, [user?.username, data?.length])
 
+  useEffect(() => {
+    if (user) {
+      window.Echo.private(`send.${user.username}`)
+        .listen('MessageSent', ({ message }: { message: Message; }) => {
+          queryClient.setQueryData<Message[]>(
+            ['messages', { username: user.username }],
+            (prev) => {
+              if (!prev) {
+                return undefined
+              }
+
+              return [
+                ...prev,
+                {
+                  ...message,
+                  from_self: false,
+                  loading: false,
+                },
+              ]
+            }
+          )
+        })
+
+      return () => {
+        window.Echo.leave(`send.${user.username}`)
+      }
+    }
+  }, [user?.username])
+
   if (isFetched && data && !data.length) {
     return (
       <section className='flex flex-1 overflow-y-auto p-4'>
