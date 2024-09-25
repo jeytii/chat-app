@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ChangeEvent } from 'react'
+import { useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import { Menu } from 'lucide-react'
@@ -46,11 +46,9 @@ export default function Strangers() {
     }
   }, [])
 
-  const debouncedHandleSearch = useOnChangeDebounce(handleSearch)
-
-  function handleSearch(event: ChangeEvent<HTMLInputElement>) {
+  const debouncedHandleSearch = useOnChangeDebounce((event) => {
     search(event.target.value)
-  }
+  })
 
   if (isLoading) {
     return (
