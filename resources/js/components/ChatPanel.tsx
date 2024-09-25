@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Menu, UserMinus, X } from 'lucide-react'
 import axios from 'axios'
@@ -10,8 +11,14 @@ import { Sheet, SheetContent, SheetTrigger } from './ui/sheet'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import type { ChatContact } from '@/types'
 
+interface WhisperData {
+  username: string;
+  typing: boolean;
+};
+
 export default function ChatPanel() {
   const queryClient = useQueryClient()
+  const [typing, setTyping] = useState<boolean>(false)
   const user = queryClient.getQueryData<ChatContact>(['current-chat'])
 
   const { mutate: remove, isPending: isRemoving } = useMutation({
@@ -29,6 +36,22 @@ export default function ChatPanel() {
       })
     }
   })
+
+  useEffect(() => {
+    if (user) {
+      const typingListener = window.Echo.private('chat')
+
+      typingListener.listenForWhisper('typing', (data: WhisperData) => {
+        if (data.username === user.username) {
+          setTyping(data.typing)
+        }
+      })
+
+      return () => {
+        typingListener.stopListeningForWhisper('typing')
+      }
+    }
+  }, [user?.username])
 
   function removeFromContacts() {
     remove()
@@ -67,7 +90,7 @@ export default function ChatPanel() {
         <Avatar
           name={user?.name as string}
           url={user?.profile_photo_url}
-          secondaryText={user?.is_online ? 'Online' : 'Offline'}
+          secondaryText={typing ? 'Typing...' : (user?.is_online ? 'Online' : 'Offline')}
           isOnline={user?.is_online}
         />
         <Dialog>

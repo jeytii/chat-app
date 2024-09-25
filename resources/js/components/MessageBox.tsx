@@ -1,13 +1,17 @@
 import { useRef, type ChangeEvent } from 'react'
+import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import { marked } from 'marked'
 import { Image, ImagePlay, SendHorizonal } from 'lucide-react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
+import { useOnChangeDebounce } from '@/hooks'
+import type { PageProps } from '@inertiajs/core'
 import type { Message, User } from '@/types'
 
 export default function MessageBox() {
+  const { user: authUser } = usePage<{ user: User; } & PageProps>().props
   const textarea = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
   const receiver = queryClient.getQueryData<User>(['current-chat'])
@@ -70,6 +74,24 @@ export default function MessageBox() {
     }
   })
 
+  const debounceNotifyTyping = useOnChangeDebounce(
+    () => {
+      window.Echo.private('chat').whisper('typing', {
+        username: authUser.username,
+        typing: false,
+      })
+    },
+    (event) => {
+      if (event.target.value) {
+        window.Echo.private('chat').whisper('typing', {
+          username: authUser.username,
+          typing: true,
+        })
+      }
+    },
+    1000
+  )
+
   function watchHeight(event: ChangeEvent<HTMLTextAreaElement>) {
     const { target } = event
 
@@ -99,6 +121,7 @@ export default function MessageBox() {
         placeholder='Write a message'
         rows={1}
         onInput={watchHeight}
+        onChange={debounceNotifyTyping}
       />
       <div className='flex'>
         <Button
