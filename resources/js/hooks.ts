@@ -1,11 +1,17 @@
 import { type ChangeEvent, useCallback, useRef } from 'react'
 
-export function useOnChangeDebounce(callback: CallableFunction, delay: number = 700) {
+type Listener = (event: ChangeEvent<HTMLInputElement|HTMLTextAreaElement>) => void;
+
+export function useOnChangeDebounce(callback: Listener, preCallback?: Listener, delay: number = 700) {
   const timeoutRef = useRef<number|null>(null)
 
-  const debouncedCallback = useCallback<(event: ChangeEvent<HTMLInputElement>) => void>((event) => {
+  const debouncedCallback = useCallback<Listener>((event) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
+    }
+
+    if (preCallback) {
+      preCallback(event)
     }
 
     timeoutRef.current = setTimeout(() => {
