@@ -21,8 +21,8 @@ class MessageSent implements ShouldBroadcastNow
      * Create a new event instance.
      */
     public function __construct(
-        public string $username,
-        public Message $message,
+        private string $channelName,
+        private Message $message,
     )
     {
         //
@@ -35,7 +35,7 @@ class MessageSent implements ShouldBroadcastNow
      */
     public function broadcastOn(): Channel
     {
-        return new PrivateChannel("send.{$this->username}");
+        return new PrivateChannel($this->channelName);
     }
 
     /**

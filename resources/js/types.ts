@@ -9,6 +9,7 @@ export interface User {
 
 export interface ChatContact extends User {
   is_online: boolean;
+  unread_messages_count: number;
 }
 
 export interface Message {
