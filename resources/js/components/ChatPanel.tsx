@@ -47,11 +47,28 @@ export default function ChatPanel() {
         }
       })
 
+      if (user.unread_messages_count) {
+        markMessagesAsRead()
+      }
+
       return () => {
         typingListener.stopListeningForWhisper('typing')
       }
     }
   }, [user?.username])
+
+  async function markMessagesAsRead() {
+    await axios.put('messages/mark-as-read', {
+      username: user?.username
+    })
+
+    queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => (
+      prev?.map(contact => ({
+        ...contact,
+        unread_messages_count: 0,
+      }))   
+    ))
+  }
 
   function removeFromContacts() {
     remove()

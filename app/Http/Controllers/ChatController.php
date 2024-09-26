@@ -31,10 +31,19 @@ class ChatController extends Controller
                 ->where('inviter_id', $id)
                 ->orWhere('invited_id', $id)
                 ->orderByDesc('created_at')
+                ->with(['inviter', 'invited'])
+                ->withCount([
+                    'messages as unread_messages_count' => fn (Builder $query) => (
+                        $query->whereNot('sender_id', $id)->whereNull('read_at')
+                    ),
+                ])
                 ->get()
-                ->map(fn (Conversation $conversation) => (
-                    $conversation->inviter_id !== $id ? $conversation->inviter : $conversation->invited
-                )),
+                ->map(function (Conversation $conversation) use ($id) {
+                    $data = $conversation->inviter_id !== $id ? $conversation->inviter : $conversation->invited;
+                    $data['unread_messages_count'] = $conversation->unread_messages_count;
+
+                    return $data;
+                }),
         ];
 
         if ($currentUsername) {
@@ -92,9 +101,25 @@ class ChatController extends Controller
             ]),
         ]);
 
-        broadcast(new MessageSent($user->username, $message));
+        broadcast(new MessageSent("send.{$user->username}", $message));
+        broadcast(new MessageSent("count-unread-messages.{$user->username}", $message));
 
         return compact('message');
+    }
+
+    public function markMessagesAsRead(Request $request)
+    {
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'exists:users,username'],
+        ]);
+
+        $conversation = $this->getConversation($validated['username']);
+
+        $conversation->messages()
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return ['success' => true];
     }
 
     protected function getConversation(string $username, bool $getMessages = false): Conversation
