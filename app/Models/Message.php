@@ -15,10 +15,12 @@ class Message extends Model
         'conversation_id',
         'sender_id',
         'content',
+        'read_at',
     ];
 
     protected $hidden = [
         'conversation_id',
+        'read_at',
         'created_at',
         'updated_at',
     ];
