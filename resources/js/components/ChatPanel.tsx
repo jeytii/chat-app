@@ -85,7 +85,7 @@ export default function ChatPanel() {
 
   return (
     <div className='flex h-screen flex-1 flex-col'>
-      <header className='flex items-center border-b border-border px-4 py-3'>
+      <header className='sticky left-0 top-0 z-10 flex items-center border-b border-border bg-background px-4 py-3'>
         <Sheet>
           <SheetTrigger asChild>
             <Button

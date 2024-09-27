@@ -114,7 +114,7 @@ export default function MessageBox() {
   }
 
   return (
-    <section className='border-t border-border bg-secondary dark:bg-gray-950'>
+    <section className='sticky bottom-0 left-0 border-t border-border bg-secondary dark:bg-gray-950'>
       <Textarea
         ref={textarea}
         className='min-h-0 resize-none overflow-hidden rounded-none border-0 bg-transparent p-4'
