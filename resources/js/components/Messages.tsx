@@ -11,7 +11,13 @@ export default function Messages() {
   const user = queryClient.getQueryData<User>(['current-chat'])
   const { data, isFetched } = useQuery<Message[]>({
     queryKey: ['messages', { username: user?.username }],
-    async queryFn() {
+    async queryFn({ queryKey }) {
+      const cachedData = queryClient.getQueryData(queryKey)
+
+      if (cachedData) {
+        return cachedData
+      }
+
       const response = await axios.get(
         '/get-messages',
         {

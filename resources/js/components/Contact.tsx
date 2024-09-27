@@ -4,7 +4,7 @@ import axios from 'axios'
 import Avatar from './Avatar'
 import { Button } from './ui/button'
 import { cn } from '@/lib/utils'
-import type { ChatContact } from '@/types'
+import type { ChatContact, Message } from '@/types'
 
 export default function Contact(props: ChatContact) {
   const queryClient = useQueryClient()
@@ -12,7 +12,7 @@ export default function Contact(props: ChatContact) {
 
   useEffect(() => {
     window.Echo.private(`count-unread-messages.${props.username}`)
-      .listen('MessageSent', () => {
+      .listen('MessageSent', ({ message }: { message: Message; }) => {
         const currentChat = queryClient.getQueryData<ChatContact>(['current-chat'])
 
         if (!currentChat || currentChat.username !== props.username) {
@@ -20,8 +20,24 @@ export default function Contact(props: ChatContact) {
             prev?.map(contact => ({
               ...contact,
               unread_messages_count: contact.unread_messages_count + 1,
-            }))   
+            }))
           ))
+
+          queryClient.setQueryData<Message[]>(
+            ['messages', { username: props.username }],
+            (prev) => {
+              if (prev) {
+                return [
+                  ...prev,
+                  {
+                    ...message,
+                    from_self: false,
+                    loading: false,
+                  },
+                ]
+              }
+            }
+          )
         } else {
           axios.put('messages/mark-as-read', {
             username: props.username
