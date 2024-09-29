@@ -16,12 +16,12 @@ export default function Strangers() {
   const queryClient = useQueryClient()
   const abortController = useRef(new AbortController())
 
-  const { data, isLoading } = useQuery<{ users: User[] }>({
+  const { data, isLoading } = useQuery<User[]>({
     queryKey: ['search-results'],
     async queryFn() {
       const { data } = await axios.get('/users/search')
 
-      return data
+      return data.users
     },
   })
 
@@ -33,7 +33,7 @@ export default function Strangers() {
       })
     ),
     onSuccess({ data }) {
-      queryClient.setQueryData(['search-results'], { users: data.users })
+      queryClient.setQueryData(['search-results'], data.users)
     }
   })
 
@@ -93,7 +93,7 @@ export default function Strangers() {
         <StrangersSkeleton />
       ) : (
         <div className='mt-4 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4'>
-          {data?.users.map(user =>  (
+          {data?.map(user =>  (
             <Stranger
               key={user.username}
               user={user}
