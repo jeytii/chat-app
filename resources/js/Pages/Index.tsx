@@ -7,18 +7,21 @@ import ChatPanelSkeleton from '@/components/skeletons/ChatPanel'
 import type { PageProps } from '@inertiajs/core'
 import type { ChatContact, User } from '@/types'
 
-interface Props extends PageProps {
-  contact: ChatContact|null;
-}
-
 const ChatPanel = lazy(() => import('@/components/ChatPanel'))
 
 export default function Index() {
-  const { contact } = usePage<Props>().props
+  const { contact } = usePage<{ contact: ChatContact|null } & PageProps>().props
   const queryClient = useQueryClient()
-  const { data } = useQuery({
+
+  const { data: currentChat } = useQuery<ChatContact|null>({
     queryKey: ['current-chat'],
     initialData: contact,
+    enabled: false,
+  })
+
+  useQuery<string[]>({
+    queryKey: ['online-users'],
+    initialData: [],
     enabled: false,
   })
 
@@ -42,14 +45,59 @@ export default function Index() {
             is_online: !!users.find(user => user.username === contact.username),
           }))
         )
+
+        queryClient.setQueryData<string[]>(
+          ['online-users'],
+          users.map(user => user.username)
+        )
       })
       .joining((joiningUser: User) => {
         updateCurrentChatStatus(joiningUser, true)
         updateContactsStatuses(joiningUser, true)
+
+        queryClient.setQueryData<string[]>(
+          ['online-users'],
+          (prev) => prev ? [ ...prev, joiningUser.username ] : undefined
+        )
       })
       .leaving((leavingUser: User) => {
         updateCurrentChatStatus(leavingUser, false)
         updateContactsStatuses(leavingUser, false)
+
+        queryClient.setQueryData<string[]>(
+          ['online-users'],
+          (prev) => prev?.filter(username => username !== leavingUser.username)
+        )
+      })
+
+    window.Echo.private('chat')
+      .listenForWhisper('linked-contact', (newContact: ChatContact) => {
+        const onlineUsers = queryClient.getQueryData<string[]>(['online-users'])
+
+        queryClient.setQueryData<ChatContact[]>(
+          ['contacts'],
+          (prev) => {
+            if (prev) {
+              return [
+                {
+                  ...newContact,
+                  is_online: onlineUsers?.indexOf(newContact.username) !== -1,
+                  unread_messages_count: 0,
+                },
+                ...prev,
+              ]
+            }
+          }
+        )
+
+        queryClient.setQueryData<User[]>(
+          ['search-results'],
+          (prev) => {
+            if (prev) {
+              return prev.filter(user => user.username !== newContact.username)
+            }
+          }
+        )
       })
   }, [])
 
@@ -93,7 +141,7 @@ export default function Index() {
         </div>
       </aside>
 
-      {data ? (
+      {currentChat ? (
         <Suspense fallback={<ChatPanelSkeleton />}>
           <ChatPanel />
         </Suspense>

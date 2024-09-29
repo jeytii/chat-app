@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import Avatar from './Avatar'
@@ -7,11 +8,12 @@ import { Button } from './ui/button'
 import type { User } from '@/types'
 
 export default function Stranger({ user }: { user: User }) {
+  const { user: authUser } = usePage<{ user: User }>().props
   const queryClient = useQueryClient()
   const abortController = useRef(new AbortController())
   const { mutate: add, isPending } = useMutation<AxiosResponse<{ user: User; }>>({
     mutationFn: () => (
-      axios.post<{ user: User; }>(
+      axios.post(
         `/users/contacts/${user.username}/add`,
         null,
         { signal: abortController.current.signal },
@@ -20,13 +22,32 @@ export default function Stranger({ user }: { user: User }) {
     onSuccess(response) {
       const { user } = response.data
       const currentUrl = new URL(window.location.href)
+      const onlineUsers = queryClient.getQueryData<string[]>(['online-users'])
+      const isOnline = onlineUsers?.indexOf(user.username) !== -1
 
       queryClient.setQueryData<User[]>(
         ['contacts'],
-        (prev) => [ user, ...(prev as User[]) ],
+        (prev) => {
+          if (prev) {
+            return [
+              {
+                ...user,
+                is_online: isOnline,
+                unread_messages_count: 0,
+              },
+              ...prev,
+            ]
+          }
+        },
       )
 
-      queryClient.setQueryData(['current-chat'], user)
+      window.Echo.private('chat').whisper('linked-contact', authUser)
+
+      queryClient.setQueryData(['current-chat'], {
+        ...user,
+        is_online: isOnline,
+        unread_messages_count: 0,
+      })
 
       currentUrl.searchParams.set('username', user.username)
       window.history.pushState({ username: user.username }, '', currentUrl)
