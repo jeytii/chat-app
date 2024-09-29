@@ -12,6 +12,6 @@ function shouldBroadcast(User $user, string $username) {
         || $user->linkedContacts()->where('username', $username)->exists();
 }
 
-Broadcast::channel('chat', fn (User $user) =>  $user->only(['name', 'username', 'profile_photo_url']));
+Broadcast::channel('chat', fn (User $user) => $user->only(['name', 'username', 'profile_photo_url']));
 Broadcast::channel('send.{username}', 'shouldBroadcast');
 Broadcast::channel('count-unread-messages.{username}', 'shouldBroadcast');
