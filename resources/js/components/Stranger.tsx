@@ -25,23 +25,20 @@ export default function Stranger({ user }: { user: User }) {
       const onlineUsers = queryClient.getQueryData<string[]>(['online-users'])
       const isOnline = onlineUsers?.indexOf(user.username) !== -1
 
-      queryClient.setQueryData<User[]>(
-        ['contacts'],
-        (prev) => {
-          if (prev) {
-            return [
-              {
-                ...user,
-                is_online: isOnline,
-                unread_messages_count: 0,
-              },
-              ...prev,
-            ]
-          }
-        },
-      )
+      queryClient.setQueryData<User[]>(['contacts'], (prev) => {
+        if (prev) {
+          return [
+            {
+              ...user,
+              is_online: isOnline,
+              unread_messages_count: 0,
+            },
+            ...prev,
+          ]
+        }
+      })
 
-      window.Echo.private('chat').whisper('linked-contact', authUser)
+      window.Echo.private('chat').whisper('add', authUser)
 
       queryClient.setQueryData(['current-chat'], {
         ...user,

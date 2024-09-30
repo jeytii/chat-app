@@ -16,12 +16,14 @@ export default function Contact(props: ChatContact) {
         const currentChat = queryClient.getQueryData<ChatContact>(['current-chat'])
 
         if (!currentChat || currentChat.username !== props.username) {
-          queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => (
-            prev?.map(contact => ({
-              ...contact,
-              unread_messages_count: contact.unread_messages_count + 1,
-            }))
-          ))
+          queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
+            if (prev) {
+              return prev.map(contact => ({
+                ...contact,
+                unread_messages_count: contact.unread_messages_count + 1,
+              }))
+            }
+          })
 
           queryClient.setQueryData<Message[]>(
             ['messages', { username: props.username }],
@@ -29,11 +31,7 @@ export default function Contact(props: ChatContact) {
               if (prev) {
                 return [
                   ...prev,
-                  {
-                    ...message,
-                    from_self: false,
-                    loading: false,
-                  },
+                  { ...message, from_self: false, loading: false },
                 ]
               }
             }

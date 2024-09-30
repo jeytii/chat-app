@@ -28,19 +28,17 @@ export default function MessageBox() {
       queryClient.setQueryData<Message[]>(
         ['messages', { username: receiver?.username }],
         (prev) => {
-          if (!prev) {
-            return undefined
+          if (prev) {
+            return [
+              ...prev,
+              {
+                id: messageId,
+                from_self: true,
+                loading: true,
+                content: marked.parseInline(message, { breaks: true }).toString(),
+              }
+            ]
           }
-
-          return [
-            ...prev,
-            {
-              id: messageId,
-              from_self: true,
-              loading: true,
-              content: marked.parseInline(message, { breaks: true }).toString(),
-            }
-          ]
         }
       )
 
@@ -55,21 +53,23 @@ export default function MessageBox() {
       queryClient.setQueryData<Message[]>(
         ['messages', { username: receiver?.username }],
         (prev) => {
-          if (! prev) {
-            return undefined
+          if (prev) {
+            return [
+              ...prev.filter(m => m.id !== messageId),
+              data.message,
+            ]
           }
-
-          return [
-            ...prev.filter(m => m.id !== messageId),
-            data.message,
-          ]
         }
       )
     },
     onError(error, message, messageId) {
       queryClient.setQueryData<Message[]>(
         ['messages', { username: receiver?.username }],
-        (prev) => prev?.filter(m => m.id !== messageId)
+        (prev) => {
+          if (prev) {
+            return prev.filter(m => m.id !== messageId)
+          }
+        }
       )
     }
   })

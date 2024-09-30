@@ -17,7 +17,7 @@ export default function Strangers() {
   const abortController = useRef(new AbortController())
 
   const { data, isLoading } = useQuery<User[]>({
-    queryKey: ['search-results'],
+    queryKey: ['strangers'],
     async queryFn() {
       const { data } = await axios.get('/users/search')
 
@@ -33,7 +33,7 @@ export default function Strangers() {
       })
     ),
     onSuccess({ data }) {
-      queryClient.setQueryData(['search-results'], data.users)
+      queryClient.setQueryData(['strangers'], data.users)
     }
   })
 
@@ -41,7 +41,7 @@ export default function Strangers() {
     return () => {
       abortController.current.abort()
       queryClient.resetQueries({
-        queryKey: ['search-results'],
+        queryKey: ['strangers'],
       })
     }
   }, [])

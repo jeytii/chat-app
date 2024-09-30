@@ -42,18 +42,12 @@ export default function Messages() {
           queryClient.setQueryData<Message[]>(
             ['messages', { username: user.username }],
             (prev) => {
-              if (!prev) {
-                return undefined
+              if (prev) {
+                return [
+                  ...prev,
+                  { ...message, from_self: false, loading: false },
+                ]
               }
-
-              return [
-                ...prev,
-                {
-                  ...message,
-                  from_self: false,
-                  loading: false,
-                },
-              ]
             }
           )
         })

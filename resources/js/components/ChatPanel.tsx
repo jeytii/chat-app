@@ -24,10 +24,11 @@ export default function ChatPanel() {
   const { mutate: remove, isPending: isRemoving } = useMutation({
     mutationFn: () => axios.delete(`/users/contacts/${user?.username}/remove`),
     onSuccess() {
-      queryClient.setQueryData<ChatContact[]>(
-        ['contacts'],
-        (prev) => prev?.filter(contact => contact.username !== user?.username) ?? []
-      )
+      queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
+        if (prev) {
+          return prev.filter(contact => contact.username !== user?.username)
+        }
+      })
 
       queryClient.setQueryData(['current-chat'], null)
 
@@ -62,12 +63,14 @@ export default function ChatPanel() {
       username: user?.username
     })
 
-    queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => (
-      prev?.map(contact => ({
-        ...contact,
-        unread_messages_count: 0,
-      }))   
-    ))
+    queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
+      if (prev) {
+        return prev.map(contact => ({
+          ...contact,
+          unread_messages_count: 0,
+        }))
+      }
+    })
   }
 
   function removeFromContacts() {

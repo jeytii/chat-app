@@ -38,13 +38,14 @@ export default function Index() {
           }
         }
 
-        queryClient.setQueryData<ChatContact[]>(
-          ['contacts'],
-          (prev) => prev?.map(contact => ({
-            ...contact,
-            is_online: !!users.find(user => user.username === contact.username),
-          }))
-        )
+        queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
+          if (prev) {
+            return prev.map(contact => ({
+              ...contact,
+              is_online: !!users.find(user => user.username === contact.username),
+            }))
+          }
+        })
 
         queryClient.setQueryData<string[]>(
           ['online-users'],
@@ -55,49 +56,45 @@ export default function Index() {
         updateCurrentChatStatus(joiningUser, true)
         updateContactsStatuses(joiningUser, true)
 
-        queryClient.setQueryData<string[]>(
-          ['online-users'],
-          (prev) => prev ? [ ...prev, joiningUser.username ] : undefined
-        )
+        queryClient.setQueryData<string[]>(['online-users'], (prev) => {
+          if (prev) {
+            return [ ...prev, joiningUser.username ]
+          }
+        })
       })
       .leaving((leavingUser: User) => {
         updateCurrentChatStatus(leavingUser, false)
         updateContactsStatuses(leavingUser, false)
 
-        queryClient.setQueryData<string[]>(
-          ['online-users'],
-          (prev) => prev?.filter(username => username !== leavingUser.username)
-        )
+        queryClient.setQueryData<string[]>(['online-users'], (prev) => {
+          if (prev) {
+            return prev.filter(username => username !== leavingUser.username)
+          }
+        })
       })
 
     window.Echo.private('chat')
-      .listenForWhisper('linked-contact', (newContact: ChatContact) => {
+      .listenForWhisper('add', (newContact: ChatContact) => {
         const onlineUsers = queryClient.getQueryData<string[]>(['online-users'])
 
-        queryClient.setQueryData<ChatContact[]>(
-          ['contacts'],
-          (prev) => {
-            if (prev) {
-              return [
-                {
-                  ...newContact,
-                  is_online: onlineUsers?.indexOf(newContact.username) !== -1,
-                  unread_messages_count: 0,
-                },
-                ...prev,
-              ]
-            }
+        queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
+          if (prev) {
+            return [
+              {
+                ...newContact,
+                is_online: onlineUsers?.indexOf(newContact.username) !== -1,
+                unread_messages_count: 0,
+              },
+              ...prev,
+            ]
           }
-        )
+        })
 
-        queryClient.setQueryData<User[]>(
-          ['search-results'],
-          (prev) => {
-            if (prev) {
-              return prev.filter(user => user.username !== newContact.username)
-            }
+        queryClient.setQueryData<User[]>(['strangers'], (prev) => {
+          if (prev) {
+            return prev.filter(user => user.username !== newContact.username)
           }
-        )
+        })
       })
   }, [])
 
@@ -119,18 +116,17 @@ export default function Index() {
   }
 
   function updateContactsStatuses(user: User, isOnline: boolean) {
-    queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => (
-      prev?.map(contact => {
-        if (contact.username === user.username) {
-          return {
-            ...contact,
-            is_online: isOnline,
+    queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
+      if (prev) {
+        return prev.map(contact => {
+          if (contact.username === user.username) {
+            return { ...contact, is_online: isOnline }
           }
-        }
-
-        return contact
-      })
-    ))
+  
+          return contact
+        })
+      }
+    })
   }
 
   return (
