@@ -79,8 +79,9 @@ export default function Messages() {
             key={message.id}
             className={cn(
               'max-w-[80%] text-sm text-primary',
-              message.from_self ? 'self-end justify-self-end border-0 bg-secondary' : 'self-start border-border',
+              message.from_self ? 'self-end justify-self-end bg-secondary' : 'self-start border-border',
               message.loading && 'opacity-50',
+              message.is_not_sent && 'border-red-500',
             )}
           >
             <CardContent className='px-4 py-2'>

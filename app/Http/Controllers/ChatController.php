@@ -17,13 +17,17 @@ class ChatController extends Controller
     {
         $currentUsername = $request->query('username');
 
+        /** @var User */
+        $user = Auth::user();
+
         abort_unless(
-            ! $currentUsername || User::query()->where('username', $currentUsername)->exists(),
+            ! $currentUsername
+            || $user->whereRelation('addedContacts', 'username', $currentUsername)
+                ->orWhereRelation('linkedContacts', 'username', $currentUsername)
+                ->exists(),
             404,
         );
 
-        /** @var User */
-        $user = Auth::user();
         $id = $user->id;
 
         $data = [
@@ -81,12 +85,19 @@ class ChatController extends Controller
     public function sendMessage(Request $request)
     {
         $validated = $request->validate([
-            'username' => ['required', 'string', 'exists:users,username'],
+            'username' => ['required', 'string'],
             'message' => ['required', 'string'],
         ]);
 
         /** @var User */
         $user = Auth::user();
+
+        abort_if(
+            $user->whereRelation('addedContacts', 'username', $validated['username'])
+                ->orWhereRelation('linkedContacts', 'username', $validated['username'])
+                ->doesntExist(),
+            403,
+        );
 
         $message = $user->messages()->create([
             'conversation_id' => $this->getConversation($validated['username'])->id,

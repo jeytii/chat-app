@@ -1,7 +1,7 @@
 import { useRef, type ChangeEvent } from 'react'
 import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import axios, { type AxiosResponse } from 'axios'
+import axios, { type AxiosResponse, AxiosError } from 'axios'
 import { marked } from 'marked'
 import { Image, ImagePlay, SendHorizonal } from 'lucide-react'
 import { Button } from './ui/button'
@@ -15,7 +15,7 @@ export default function MessageBox() {
   const textarea = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
   const receiver = queryClient.getQueryData<User>(['current-chat'])
-  const { mutate } = useMutation<AxiosResponse<{ message: Message; }>, Error, string, number>({
+  const { mutate } = useMutation<AxiosResponse<{ message: Message; }>, AxiosError, string, number>({
     mutationFn: (message) => axios.post(
       '/send-message',
       { message },
@@ -54,10 +54,7 @@ export default function MessageBox() {
         ['messages', { username: receiver?.username }],
         (prev) => {
           if (prev) {
-            return [
-              ...prev.filter(m => m.id !== messageId),
-              data.message,
-            ]
+            return prev.map(m => m.id === messageId ? data.message : m)
           }
         }
       )
@@ -67,7 +64,11 @@ export default function MessageBox() {
         ['messages', { username: receiver?.username }],
         (prev) => {
           if (prev) {
-            return prev.filter(m => m.id !== messageId)
+            if (error.status === 422) {
+              return prev.filter(m => m.id !== messageId)
+            }
+
+            return prev.map(m => m.id === messageId ? { ...m, is_not_sent: true } : m)
           }
         }
       )
