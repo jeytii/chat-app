@@ -17,4 +17,5 @@ export interface Message {
   content: string;
   from_self: boolean;
   loading?: boolean;
+  is_not_sent?: boolean;
 }
