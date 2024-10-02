@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import axios, { type AxiosResponse } from 'axios'
+import axios, { type AxiosResponse, AxiosError } from 'axios'
 import { Menu } from 'lucide-react'
 import Stranger from './Stranger'
 import StrangersSkeleton from './skeletons/Strangers'
@@ -25,7 +25,7 @@ export default function Strangers() {
     },
   })
 
-  const { mutate: search, isPending: isSearching } = useMutation<AxiosResponse<{ users: User[] }>, Error, string>({
+  const { mutate: search, isPending: isSearching } = useMutation<AxiosResponse<{ users: User[] }>, AxiosError, string>({
     mutationFn: (query) => (
       axios.get('/users/search', {
         params: query ? { query } : null,

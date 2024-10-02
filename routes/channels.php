@@ -8,8 +8,9 @@ function shouldBroadcast(User $user, string $username) {
         return false;
     }
 
-    return $user->addedContacts()->where('username', $username)->exists()
-        || $user->linkedContacts()->where('username', $username)->exists();
+    return $user->whereRelation('addedContacts', 'username', $username)
+        ->orWhereRelation('linkedContacts', 'username', $username)
+        ->exists();
 }
 
 Broadcast::channel('chat', fn (User $user) => $user->only(['name', 'username', 'profile_photo_url']));
