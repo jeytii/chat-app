@@ -54,7 +54,7 @@ export default function MessageBox() {
         ['messages', { username: receiver?.username }],
         (prev) => {
           if (prev) {
-            return prev.map(m => m.id === messageId ? data.message : m)
+            return prev.map(message => message.id === messageId ? data.message : message)
           }
         }
       )
@@ -68,7 +68,11 @@ export default function MessageBox() {
               return prev.filter(m => m.id !== messageId)
             }
 
-            return prev.map(m => m.id === messageId ? { ...m, is_not_sent: true } : m)
+            return prev.map(message => (
+              message.id === messageId
+                ? { ...message, is_not_sent: true }
+                : message
+            ))
           }
         }
       )
