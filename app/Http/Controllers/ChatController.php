@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AddedNewMessage;
 use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -104,8 +105,8 @@ class ChatController extends Controller
             ]),
         ]);
 
-        broadcast(new MessageSent("chat.{$user->username}", $message));
-        broadcast(new MessageSent("count-unread-messages.{$user->username}", $message));
+        broadcast(new MessageSent($user->username, $message));
+        broadcast(new AddedNewMessage($user->username, $message));
 
         return compact('message');
     }
