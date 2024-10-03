@@ -37,23 +37,24 @@ export default function Messages() {
 
   useEffect(() => {
     if (user) {
-      window.Echo.private(`chat.${user.username}`)
-        .listen('MessageSent', ({ message }: { message: Message; }) => {
-          queryClient.setQueryData<Message[]>(
-            ['messages', { username: user.username }],
-            (prev) => {
-              if (prev) {
-                return [
-                  ...prev,
-                  { ...message, from_self: false, loading: false },
-                ]
-              }
+      const channel = window.Echo.private(`chat.${user.username}`)
+
+      channel.listen('MessageSent', ({ message }: { message: Message; }) => {
+        queryClient.setQueryData<Message[]>(
+          ['messages', { username: user.username }],
+          (prev) => {
+            if (prev) {
+              return [
+                ...prev,
+                { ...message, from_self: false },
+              ]
             }
-          )
-        })
+          }
+        )
+      })
 
       return () => {
-        window.Echo.leave(`chat.${user.username}`)
+        channel.stopListening('MessageSent')
       }
     }
   }, [user?.username])
