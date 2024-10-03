@@ -40,7 +40,7 @@ export default function ChatPanel() {
 
   useEffect(() => {
     if (user) {
-      const typingListener = window.Echo.private('chat')
+      const typingListener = window.Echo.private('app')
 
       typingListener.listenForWhisper('typing', (data: WhisperData) => {
         if (data.username === user.username) {

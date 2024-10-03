@@ -38,7 +38,7 @@ export default function Stranger({ user }: { user: User }) {
         }
       })
 
-      window.Echo.private('chat').whisper('add', authUser)
+      window.Echo.private('app').whisper('add', authUser)
 
       queryClient.setQueryData(['current-chat'], {
         ...user,

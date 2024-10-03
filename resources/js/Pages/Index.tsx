@@ -26,7 +26,7 @@ export default function Index() {
   })
 
   useEffect(() => {
-    window.Echo.join('chat')
+    window.Echo.join('app')
       .here((users: User[]) => {
         const currentChat = queryClient.getQueryData<ChatContact>(['current-chat'])
         
@@ -73,7 +73,7 @@ export default function Index() {
         })
       })
 
-    window.Echo.private('chat')
+    window.Echo.private('app')
       .listenForWhisper('add', (newContact: ChatContact) => {
         const onlineUsers = queryClient.getQueryData<string[]>(['online-users'])
 
