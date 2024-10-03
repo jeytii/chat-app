@@ -8,5 +8,5 @@ function shouldBroadcast(User $user, string $username) {
 }
 
 Broadcast::channel('app', fn (User $user) => $user->only(['name', 'username', 'profile_photo_url']));
-Broadcast::channel('send.{username}', 'shouldBroadcast');
+Broadcast::channel('chat.{username}', 'shouldBroadcast');
 Broadcast::channel('count-unread-messages.{username}', 'shouldBroadcast');

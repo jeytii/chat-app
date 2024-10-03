@@ -37,7 +37,7 @@ export default function Messages() {
 
   useEffect(() => {
     if (user) {
-      window.Echo.private(`send.${user.username}`)
+      window.Echo.private(`chat.${user.username}`)
         .listen('MessageSent', ({ message }: { message: Message; }) => {
           queryClient.setQueryData<Message[]>(
             ['messages', { username: user.username }],
@@ -53,7 +53,7 @@ export default function Messages() {
         })
 
       return () => {
-        window.Echo.leave(`send.${user.username}`)
+        window.Echo.leave(`chat.${user.username}`)
       }
     }
   }, [user?.username])

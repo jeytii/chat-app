@@ -104,7 +104,7 @@ class ChatController extends Controller
             ]),
         ]);
 
-        broadcast(new MessageSent("send.{$user->username}", $message));
+        broadcast(new MessageSent("chat.{$user->username}", $message));
         broadcast(new MessageSent("count-unread-messages.{$user->username}", $message));
 
         return compact('message');
