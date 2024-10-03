@@ -57,6 +57,11 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * =================================
+     * Relationships
+     * =================================
+     */
     public function addedContacts(): BelongsToMany
     {
         return $this->belongsToMany(self::class, 'conversations', 'inviter_id', 'invited_id')
@@ -74,6 +79,23 @@ class User extends Authenticatable
         return $this->hasMany(Message::class, 'sender_id');
     }
 
+    /**
+     * =================================
+     * Custom methods
+     * =================================
+     */
+    public function hasContact(string $username): bool
+    {
+        return $this->whereRelation('addedContacts', 'username', $username)
+            ->orWhereRelation('linkedContacts', 'username', $username)
+            ->exists();
+    }
+
+    /**
+     * =================================
+     * Custom attributes
+     * =================================
+     */
     public function name(): Attribute
     {
         return Attribute::get(fn () => "{$this->first_name} {$this->last_name}");

@@ -21,10 +21,7 @@ class ChatController extends Controller
         $user = Auth::user();
 
         abort_unless(
-            ! $currentUsername
-            || $user->whereRelation('addedContacts', 'username', $currentUsername)
-                ->orWhereRelation('linkedContacts', 'username', $currentUsername)
-                ->exists(),
+            ! $currentUsername || $user->hasContact($currentUsername),
             404,
         );
 
@@ -92,12 +89,7 @@ class ChatController extends Controller
         /** @var User */
         $user = Auth::user();
 
-        abort_if(
-            $user->whereRelation('addedContacts', 'username', $validated['username'])
-                ->orWhereRelation('linkedContacts', 'username', $validated['username'])
-                ->doesntExist(),
-            403,
-        );
+        abort_unless($user->hasContact($validated['username']), 403);
 
         $message = $user->messages()->create([
             'conversation_id' => $this->getConversation($validated['username'])->id,
