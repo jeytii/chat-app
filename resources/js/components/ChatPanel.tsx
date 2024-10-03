@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Menu, UserMinus, X } from 'lucide-react'
 import axios from 'axios'
@@ -9,7 +10,8 @@ import Messages from './Messages'
 import { Button } from './ui/button'
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
-import type { ChatContact } from '@/types'
+import type { PageProps } from '@inertiajs/core'
+import type { ChatContact, User } from '@/types'
 
 interface WhisperData {
   username: string;
@@ -17,6 +19,7 @@ interface WhisperData {
 };
 
 export default function ChatPanel() {
+  const { user: authUser } = usePage<{ user: User; } & PageProps>().props
   const queryClient = useQueryClient()
   const [typing, setTyping] = useState<boolean>(false)
   const user = queryClient.getQueryData<ChatContact>(['current-chat'])
@@ -24,6 +27,12 @@ export default function ChatPanel() {
   const { mutate: remove, isPending: isRemoving } = useMutation({
     mutationFn: () => axios.delete(`/users/contacts/${user?.username}/remove`),
     onSuccess() {
+      window.Echo.private(`chat.${authUser.username}`)
+        .whisper('removed', {
+          name: authUser.name,
+          username: authUser.username,
+        })
+
       queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
         if (prev) {
           return prev.filter(contact => contact.username !== user?.username)

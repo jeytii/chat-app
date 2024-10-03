@@ -4,15 +4,15 @@ import axios from 'axios'
 import Avatar from './Avatar'
 import { Button } from './ui/button'
 import { cn } from '@/lib/utils'
-import type { ChatContact, Message } from '@/types'
+import type { ChatContact, Message, User } from '@/types'
 
 export default function Contact(props: ChatContact) {
   const queryClient = useQueryClient()
   const unreadMessagesCount = props.unread_messages_count
 
   useEffect(() => {
-    window.Echo.private(`count-unread-messages.${props.username}`)
-      .listen('MessageSent', ({ message }: { message: Message; }) => {
+    window.Echo.private(`chat.${props.username}`)
+      .listen('AddedNewMessage', ({ message }: { message: Message; }) => {
         const currentChat = queryClient.getQueryData<ChatContact>(['current-chat'])
 
         if (!currentChat || currentChat.username !== props.username) {
@@ -31,7 +31,7 @@ export default function Contact(props: ChatContact) {
               if (prev) {
                 return [
                   ...prev,
-                  { ...message, from_self: false, loading: false },
+                  { ...message, from_self: false },
                 ]
               }
             }
@@ -42,9 +42,26 @@ export default function Contact(props: ChatContact) {
           })
         }
       })
+      .listenForWhisper('removed', (user: User) => {
+        if (queryClient.getQueryData(['current-chat'])) {
+          alert(`${user.name} (${user.username}) just removed you from the contacts.`)
+        }
+
+        queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
+          if (prev) {
+            return prev.filter(contact => contact.username !== user.username)
+          }
+        })
+
+        queryClient.setQueryData(['current-chat'], null)
+
+        queryClient.removeQueries({
+          queryKey: ['messages', { username: user?.username }]
+        })
+      })
 
     return () => {
-      window.Echo.leave(`count-unread-messages.${props.username}`)
+      window.Echo.leave(`chat.${props.username}`)
     }
   }, [])
 
