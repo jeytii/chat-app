@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AddedToContacts;
+use App\Events\RemovedFromContacts;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -11,10 +13,12 @@ class UserController extends Controller
 {
     public function addToContacts(User $user)
     {
-        /** @var App\Models\User */
+        /** @var User */
         $authUser = Auth::user();
 
         $authUser->addedContacts()->attach($user);
+
+        broadcast(new AddedToContacts($user->username, $authUser));
 
         return compact('user');
     }
@@ -23,6 +27,8 @@ class UserController extends Controller
     {
         /** @var User */
         $authUser = Auth::user();
+
+        broadcast(new RemovedFromContacts($authUser));
 
         $authUser->addedContacts()->detach($user);
         $authUser->linkedContacts()->detach($user);
