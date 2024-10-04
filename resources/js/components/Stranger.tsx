@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import Avatar from './Avatar'
@@ -8,7 +7,6 @@ import { Button } from './ui/button'
 import type { User } from '@/types'
 
 export default function Stranger({ user }: { user: User }) {
-  const { user: authUser } = usePage<{ user: User }>().props
   const queryClient = useQueryClient()
   const abortController = useRef(new AbortController())
   const { mutate: add, isPending } = useMutation<AxiosResponse<{ user: User; }>>({
@@ -37,8 +35,6 @@ export default function Stranger({ user }: { user: User }) {
           ]
         }
       })
-
-      window.Echo.private('app').whisper('add', authUser)
 
       queryClient.setQueryData(['current-chat'], {
         ...user,

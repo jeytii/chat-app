@@ -81,14 +81,16 @@ export default function MessageBox() {
 
   const debounceNotifyTyping = useOnChangeDebounce(
     () => {
-      window.Echo.private('app').whisper('typing', {
-        username: authUser.username,
-        typing: false,
-      })
+      if (receiver) {
+        window.Echo.private(`chat.${receiver.username}`).whisper('typing', {
+          username: authUser.username,
+          typing: false,
+        })
+      }
     },
     (event) => {
-      if (event.target.value) {
-        window.Echo.private('app').whisper('typing', {
+      if (receiver && event.target.value) {
+        window.Echo.private(`chat.${receiver.username}`).whisper('typing', {
           username: authUser.username,
           typing: true,
         })

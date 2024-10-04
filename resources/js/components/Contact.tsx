@@ -42,9 +42,11 @@ export default function Contact(props: ChatContact) {
           })
         }
       })
-      .listenForWhisper('removed', (user: User) => {
+      .listen('RemovedFromContacts', ({ user }: { user: User; }) => {
+        const currentUrl = new URL(window.location.href)
+
         if (queryClient.getQueryData(['current-chat'])) {
-          alert(`${user.name} (${user.username}) just removed you from the contacts.`)
+          alert('You have just been removed from the contacts.')
         }
 
         queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
@@ -58,6 +60,9 @@ export default function Contact(props: ChatContact) {
         queryClient.removeQueries({
           queryKey: ['messages', { username: user?.username }]
         })
+
+        currentUrl.searchParams.delete('username')
+        window.history.pushState(null, '', '/')
       })
 
     return () => {

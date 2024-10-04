@@ -27,12 +27,6 @@ export default function ChatPanel() {
   const { mutate: remove, isPending: isRemoving } = useMutation({
     mutationFn: () => axios.delete(`/users/contacts/${user?.username}/remove`),
     onSuccess() {
-      window.Echo.private(`chat.${authUser.username}`)
-        .whisper('removed', {
-          name: authUser.name,
-          username: authUser.username,
-        })
-
       queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
         if (prev) {
           return prev.filter(contact => contact.username !== user?.username)
@@ -44,12 +38,14 @@ export default function ChatPanel() {
       queryClient.removeQueries({
         queryKey: ['messages', { username: user?.username }]
       })
+
+      clearParameters()
     }
   })
 
   useEffect(() => {
     if (user) {
-      const typingListener = window.Echo.private('app')
+      const typingListener = window.Echo.private(`chat.${authUser.username}`)
 
       typingListener.listenForWhisper('typing', (data: WhisperData) => {
         if (data.username === user.username) {
@@ -87,9 +83,12 @@ export default function ChatPanel() {
   }
 
   function close() {
-    const currentUrl = new URL(window.location.href)
-
     queryClient.setQueryData(['current-chat'], null)
+    clearParameters()
+  }
+
+  function clearParameters() {
+    const currentUrl = new URL(window.location.href)
 
     currentUrl.searchParams.delete('username')
     window.history.pushState(null, '', '/')

@@ -7,10 +7,15 @@ import ChatPanelSkeleton from '@/components/skeletons/ChatPanel'
 import type { PageProps } from '@inertiajs/core'
 import type { ChatContact, User } from '@/types'
 
+interface Props extends PageProps {
+  user: User;
+  contact: ChatContact|null;
+}
+
 const ChatPanel = lazy(() => import('@/components/ChatPanel'))
 
 export default function Index() {
-  const { contact } = usePage<{ contact: ChatContact|null } & PageProps>().props
+  const { user: authUser, contact } = usePage<Props>().props
   const queryClient = useQueryClient()
 
   const { data: currentChat } = useQuery<ChatContact|null>({
@@ -73,8 +78,8 @@ export default function Index() {
         })
       })
 
-    window.Echo.private('app')
-      .listenForWhisper('add', (newContact: ChatContact) => {
+    window.Echo.private(`chat.${authUser.username}`)
+      .listen('AddedToContacts', ({ user: newContact }: { user: ChatContact; }) => {
         const onlineUsers = queryClient.getQueryData<string[]>(['online-users'])
 
         queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
