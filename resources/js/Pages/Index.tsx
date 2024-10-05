@@ -4,6 +4,7 @@ import { usePage } from '@inertiajs/react'
 import Sidebar from '@/components/Sidebar'
 import Strangers from '@/components/Strangers'
 import ChatPanelSkeleton from '@/components/skeletons/ChatPanel'
+import { useToast } from '@/hooks/use-toast'
 import type { PageProps } from '@inertiajs/core'
 import type { ChatContact, User } from '@/types'
 
@@ -17,6 +18,7 @@ const ChatPanel = lazy(() => import('@/components/ChatPanel'))
 export default function Index() {
   const { user: authUser, contact } = usePage<Props>().props
   const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   const { data: currentChat } = useQuery<ChatContact|null>({
     queryKey: ['current-chat'],
@@ -99,6 +101,10 @@ export default function Index() {
           if (prev) {
             return prev.filter(user => user.username !== newContact.username)
           }
+        })
+
+        toast({
+          description: `${newContact.name} added you.`,
         })
       })
   }, [])

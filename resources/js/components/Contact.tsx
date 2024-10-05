@@ -3,11 +3,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import Avatar from './Avatar'
 import { Button } from './ui/button'
+import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { ChatContact, Message, User } from '@/types'
 
 export default function Contact(props: ChatContact) {
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const unreadMessagesCount = props.unread_messages_count
 
   useEffect(() => {
@@ -43,11 +45,8 @@ export default function Contact(props: ChatContact) {
         }
       })
       .listen('RemovedFromContacts', ({ user }: { user: User; }) => {
+        const currentChat = queryClient.getQueryData<ChatContact>(['current-chat'])
         const currentUrl = new URL(window.location.href)
-
-        if (queryClient.getQueryData(['current-chat'])) {
-          alert('You have just been removed from the contacts.')
-        }
 
         queryClient.setQueryData<ChatContact[]>(['contacts'], (prev) => {
           if (prev) {
@@ -58,8 +57,20 @@ export default function Contact(props: ChatContact) {
         queryClient.setQueryData(['current-chat'], null)
 
         queryClient.removeQueries({
-          queryKey: ['messages', { username: user?.username }]
+          queryKey: ['messages', { username: user?.username }],
         })
+
+        if (currentChat) {
+          if (currentChat.username === user.username) {
+            toast({
+              description: 'You have just been removed from the contacts.',
+            })
+          }
+        } else {
+          queryClient.invalidateQueries({
+            queryKey: ['strangers'],
+          })
+        }
 
         currentUrl.searchParams.delete('username')
         window.history.pushState(null, '', '/')

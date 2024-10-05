@@ -1,11 +1,12 @@
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { type PageProps } from '@inertiajs/core'
 import { createInertiaApp } from '@inertiajs/react'
 import Pusher from 'pusher-js'
 import Echo from 'laravel-echo'
 import { ThemeProvider } from './components/ThemeProvider'
+import { Toaster } from './components/ui/toaster'
+import { type PageProps } from '@inertiajs/core'
 import { type User } from '@/types'
 
 declare global {
@@ -54,6 +55,8 @@ createInertiaApp<Props>({
       createRoot(el).render(
         <QueryClientProvider client={queryClient}>
           {root}
+
+          <Toaster />
 
           <ReactQueryDevtools
             initialIsOpen={false}
