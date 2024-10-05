@@ -6,7 +6,7 @@ import { marked } from 'marked'
 import { Image, ImagePlay, SendHorizonal } from 'lucide-react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
-import { useOnChangeDebounce } from '@/hooks'
+import { useOnChangeDebounce } from '@/hooks/debounce'
 import type { PageProps } from '@inertiajs/core'
 import type { Message, User } from '@/types'
 

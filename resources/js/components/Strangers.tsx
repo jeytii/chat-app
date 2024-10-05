@@ -9,7 +9,7 @@ import { Button } from './ui/button'
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet'
 import { Input } from './ui/input'
 import { Skeleton } from './ui/skeleton'
-import { useOnChangeDebounce } from '@/hooks'
+import { useOnChangeDebounce } from '@/hooks/debounce'
 import type { User } from '@/types'
 
 export default function Strangers() {
