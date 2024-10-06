@@ -1,8 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import Avatar from './Avatar'
-import { Button } from './ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type { ChatContact, Message, User } from '@/types'
@@ -11,6 +10,8 @@ export default function Contact(props: ChatContact) {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const unreadMessagesCount = props.unread_messages_count
+  const currentChat = queryClient.getQueryData<ChatContact>(['current-chat'])
+  const isActive = useMemo(() => currentChat ? currentChat.username === props.username : false, [currentChat])
 
   useEffect(() => {
     window.Echo.private(`chat.${props.username}`)
@@ -91,13 +92,11 @@ export default function Contact(props: ChatContact) {
   }
 
   return (
-    <Button
+    <label
       className={cn(
-        'flex h-auto w-full items-center justify-between rounded-none p-4 text-left hover:bg-secondary',
-        queryClient.getQueryData<ChatContact>(['current-chat'])?.username === props.username && 'bg-secondary'
+        'flex h-auto w-full cursor-pointer items-center justify-between rounded-none p-4 text-left hover:bg-secondary',
+        isActive && 'bg-secondary'
       )}
-      variant='ghost'
-      onClick={setCurrentContact}
     >
       <Avatar
         name={props.name}
@@ -110,6 +109,13 @@ export default function Contact(props: ChatContact) {
           { unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }
         </span>
       )}
-    </Button>
+      <input
+        className='hidden'
+        type='radio'
+        name='contact'
+        checked={isActive}
+        onChange={setCurrentContact}
+      />
+    </label>
   )
 }
