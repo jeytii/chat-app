@@ -28,10 +28,6 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->update([
-            'last_seen_at' => now(),
-        ]);
-
         Auth::logoutCurrentDevice();
 
         $request->session()->invalidate();

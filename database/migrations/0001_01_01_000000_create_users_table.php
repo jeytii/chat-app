@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('profile_photo_url')->nullable();
             $table->boolean('dark_mode')->default(false);
             $table->string('password');
-            $table->timestamp('last_seen_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
