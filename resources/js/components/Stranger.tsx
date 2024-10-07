@@ -42,6 +42,10 @@ export default function Stranger({ user }: { user: User }) {
         unread_messages_count: 0,
       })
 
+      queryClient.resetQueries({
+        queryKey: ['strangers']
+      })
+
       currentUrl.searchParams.set('username', user.username)
       window.history.pushState({ username: user.username }, '', currentUrl)
     }

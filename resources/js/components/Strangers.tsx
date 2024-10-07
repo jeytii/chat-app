@@ -18,7 +18,13 @@ export default function Strangers() {
 
   const { data, isLoading } = useQuery<User[]>({
     queryKey: ['strangers'],
-    async queryFn() {
+    async queryFn({ queryKey }) {
+      const cachedData = queryClient.getQueryData(queryKey)
+
+      if (cachedData) {
+        return cachedData
+      }
+
       const { data } = await axios.get('/users/search')
 
       return data.users
@@ -40,9 +46,6 @@ export default function Strangers() {
   useEffect(() => {
     return () => {
       abortController.current.abort()
-      queryClient.resetQueries({
-        queryKey: ['strangers'],
-      })
     }
   }, [])
 

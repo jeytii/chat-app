@@ -39,6 +39,10 @@ export default function ChatPanel() {
         queryKey: ['messages', { username: user?.username }]
       })
 
+      queryClient.resetQueries({
+        queryKey: ['strangers']
+      })
+
       clearParameters()
     }
   })
