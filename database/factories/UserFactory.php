@@ -29,7 +29,7 @@ class UserFactory extends Factory
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
-            'username' => fake()->unique()->userName(),
+            'username' => str_replace('.', '_', fake()->unique()->userName()),
             'profile_photo_url' => "https://robohash.org/{$avatarId}?set={$avatarSet}",
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
