@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class ChatController extends Controller
@@ -66,17 +67,33 @@ class ChatController extends Controller
     public function getMessages(Request $request)
     {
         $validated = $request->validate([
-            'username' => ['required', 'string', 'exists:users,username'],
+            'username' => ['required', 'string'],
         ]);
 
-        $conversation = $this->getConversation($validated['username'], true);
+        /** @var User */
+        $user = Auth::user();
+
+        abort_unless($user->hasContact($validated['username']), 403);
+
+        $conversation = $this->getConversation($validated['username']);
+
+        $messages = Message::query()
+            ->where('conversation_id', $conversation->id)
+            ->latest()
+            ->simplePaginate(
+                perPage: 30,
+                page: $request->query('page') ?? 1,
+            );
 
         return [
-            'messages' => $conversation->messages->map(function (Message $message) {
-                $message['from_self'] = $message->sender_id === Auth::id();
-
-                return $message;
-            }),
+            'has_more' => $messages->hasMorePages(),
+            'messages' => array_map(
+                fn (Message $message) => [
+                    ...$message->toArray(),
+                    'from_self' => $message->sender_id === $user->id,
+                ],
+                array_reverse($messages->items())
+            ),
         ];
     }
 
@@ -126,20 +143,23 @@ class ChatController extends Controller
         return ['success' => true];
     }
 
-    protected function getConversation(string $username, bool $getMessages = false): Conversation
+    protected function getConversation(string $username): Conversation
     {
-        $authId = Auth::id();
+        /** @var User */
+        $user = Auth::user();
+        $authId = $user->id;
 
-        return Conversation::query()
-            ->where(function (Builder $query) use ($authId, $username) {
-                $query->whereRelation('inviter', 'id', $authId)
-                    ->whereRelation('invited', 'username', $username);
-            })
-            ->orWhere(function (Builder $query) use ($authId, $username) {
-                $query->whereRelation('inviter', 'username', $username)
-                    ->whereRelation('invited', 'id', $authId);
-            })
-            ->when($getMessages, fn (Builder $query) => $query->with('messages'))
-            ->first();
+        return Cache::remember("conversation.{$user->username}.{$username}", 3600, fn () => (
+            Conversation::query()
+                ->where(function (Builder $query) use ($authId, $username) {
+                    $query->whereRelation('inviter', 'id', $authId)
+                        ->whereRelation('invited', 'username', $username);
+                })
+                ->orWhere(function (Builder $query) use ($authId, $username) {
+                    $query->whereRelation('inviter', 'username', $username)
+                        ->whereRelation('invited', 'id', $authId);
+                })
+                ->first()
+        ));
     }
 }
