@@ -3,15 +3,17 @@ import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import Avatar from './Avatar'
 import { useToast } from '@/hooks/use-toast'
+import useUpdateMessages from '@/hooks/message'
 import { cn } from '@/lib/utils'
 import type { ChatContact, Message, User } from '@/types'
 
 export default function Contact(props: ChatContact) {
   const queryClient = useQueryClient()
   const { toast } = useToast()
-  const unreadMessagesCount = props.unread_messages_count
+  const updateMessages = useUpdateMessages(props.username)
   const currentChat = queryClient.getQueryData<ChatContact>(['current-chat'])
   const isActive = useMemo(() => currentChat ? currentChat.username === props.username : false, [currentChat])
+  const unreadMessagesCount = props.unread_messages_count
 
   useEffect(() => {
     window.Echo.private(`chat.${props.username}`)
@@ -28,17 +30,10 @@ export default function Contact(props: ChatContact) {
             }
           })
 
-          queryClient.setQueryData<Message[]>(
-            ['messages', { username: props.username }],
-            (prev) => {
-              if (prev) {
-                return [
-                  ...prev,
-                  { ...message, from_self: false },
-                ]
-              }
-            }
-          )
+          updateMessages((messages) => ([
+            ...messages,
+            { ...message, from_self: false },
+          ]))
         } else {
           axios.put('messages/mark-as-read', {
             username: props.username

@@ -7,6 +7,7 @@ import { Image, ImagePlay, SendHorizonal } from 'lucide-react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 import { useOnChangeDebounce } from '@/hooks/debounce'
+import useUpdateMessages from '@/hooks/message'
 import type { PageProps } from '@inertiajs/core'
 import type { Message, User } from '@/types'
 
@@ -15,6 +16,8 @@ export default function MessageBox() {
   const textarea = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
   const receiver = queryClient.getQueryData<User>(['current-chat'])
+  const updateMessages = useUpdateMessages(receiver?.username as string)
+
   const { mutate } = useMutation<AxiosResponse<{ message: Message; }>, AxiosError, string, number>({
     mutationFn: (message) => axios.post(
       '/send-message',
@@ -25,22 +28,16 @@ export default function MessageBox() {
     ),
     onMutate(message) {
       const messageId = Math.floor(Math.random() * 1000000000)
-      queryClient.setQueryData<Message[]>(
-        ['messages', { username: receiver?.username }],
-        (prev) => {
-          if (prev) {
-            return [
-              ...prev,
-              {
-                id: messageId,
-                from_self: true,
-                loading: true,
-                content: marked.parseInline(message, { breaks: true }).toString(),
-              }
-            ]
-          }
-        }
-      )
+
+      updateMessages((messages) => ([
+        ...messages,
+        {
+          id: messageId,
+          from_self: true,
+          loading: true,
+          content: marked.parseInline(message, { breaks: true }).toString(),
+        },
+      ]))
 
       if (textarea.current) {
         textarea.current.removeAttribute('style')
@@ -50,32 +47,22 @@ export default function MessageBox() {
       return messageId
     },
     onSuccess({ data }, message, messageId) {
-      queryClient.setQueryData<Message[]>(
-        ['messages', { username: receiver?.username }],
-        (prev) => {
-          if (prev) {
-            return prev.map(message => message.id === messageId ? data.message : message)
-          }
-        }
-      )
+      updateMessages((messages) => (
+        messages.map((message) => message.id === messageId ? data.message : message)
+      ))
     },
     onError(error, message, messageId) {
-      queryClient.setQueryData<Message[]>(
-        ['messages', { username: receiver?.username }],
-        (prev) => {
-          if (prev) {
-            if (error.status === 422) {
-              return prev.filter(m => m.id !== messageId)
-            }
-
-            return prev.map(message => (
-              message.id === messageId
-                ? { ...message, is_not_sent: true }
-                : message
-            ))
-          }
+      updateMessages((messages) => {
+        if (error.status === 422) {
+          return messages.filter((message) => message.id !== messageId)
         }
-      )
+
+        return messages.map((message) => (
+          message.id === messageId
+            ? { ...message, is_not_sent: true }
+            : message
+        ))
+      })
     }
   })
 

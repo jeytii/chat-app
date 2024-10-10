@@ -3,6 +3,7 @@ import { type QueryKey, useInfiniteQuery, useQueryClient } from '@tanstack/react
 import axios from 'axios'
 import { Card, CardContent } from './ui/card'
 import useInfiniteScroll from '@/hooks/infinite-scroll'
+import useUpdateMessages from '@/hooks/message'
 import { cn } from '@/lib/utils'
 import type { Message, User } from '@/types'
 
@@ -15,6 +16,7 @@ export default function Messages() {
   const queryClient = useQueryClient()
   const root = useRef<HTMLDivElement>(null)
   const user = queryClient.getQueryData<User>(['current-chat'])
+  const updateMessages = useUpdateMessages(user?.username as string)
 
   const {
     data,
@@ -58,17 +60,10 @@ export default function Messages() {
       const channel = window.Echo.private(`chat.${user.username}`)
 
       channel.listen('MessageSent', ({ message }: { message: Message; }) => {
-        queryClient.setQueryData<Message[]>(
-          ['messages', { username: user.username }],
-          (prev) => {
-            if (prev) {
-              return [
-                ...prev,
-                { ...message, from_self: false },
-              ]
-            }
-          }
-        )
+        updateMessages((messages) => ([
+          ...messages,
+          { ...message, from_self: false },
+        ]))
       })
 
       return () => {
