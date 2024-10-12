@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent } from 'react'
+import { useContext, useRef, type ChangeEvent } from 'react'
 import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse, AxiosError } from 'axios'
@@ -6,6 +6,7 @@ import { marked } from 'marked'
 import { Image, ImagePlay, SendHorizonal } from 'lucide-react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
+import { ChatPanelContext } from './ChatPanel'
 import { useOnChangeDebounce } from '@/hooks/debounce'
 import useUpdateMessages from '@/hooks/message'
 import type { PageProps } from '@inertiajs/core'
@@ -14,6 +15,7 @@ import type { Message, User } from '@/types'
 export default function MessageBox() {
   const { user: authUser } = usePage<{ user: User; } & PageProps>().props
   const textarea = useRef<HTMLTextAreaElement>(null)
+  const messages = useContext(ChatPanelContext)
   const queryClient = useQueryClient()
   const receiver = queryClient.getQueryData<User>(['current-chat'])
   const updateMessages = useUpdateMessages(receiver?.username as string)
@@ -43,6 +45,10 @@ export default function MessageBox() {
         textarea.current.removeAttribute('style')
         textarea.current.value = ''
       }
+
+      setTimeout(() => {
+        messages?.current?.scrollTo({ top: messages.current.scrollHeight })
+      }, 0)
 
       return messageId
     },

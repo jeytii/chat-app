@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { createContext, useEffect, useRef, useState, type RefObject } from 'react'
 import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Menu, UserMinus, X } from 'lucide-react'
@@ -18,8 +18,11 @@ interface WhisperData {
   typing: boolean;
 };
 
+export const ChatPanelContext = createContext<RefObject<HTMLElement>|null>(null)
+
 export default function ChatPanel() {
   const { user: authUser } = usePage<{ user: User; } & PageProps>().props
+  const messagesRef = useRef<HTMLElement>(null)
   const queryClient = useQueryClient()
   const [typing, setTyping] = useState<boolean>(false)
   const user = queryClient.getQueryData<ChatContact>(['current-chat'])
@@ -172,9 +175,11 @@ export default function ChatPanel() {
         </Button>
       </header>
       
-      <Messages />
+      <ChatPanelContext.Provider value={messagesRef}>
+        <Messages />
 
-      <MessageBox />
+        <MessageBox />
+      </ChatPanelContext.Provider>
     </div>
   )
 }

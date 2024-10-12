@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useContext, useEffect } from 'react'
 import { type QueryKey, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Card, CardContent } from './ui/card'
+import { ChatPanelContext } from './ChatPanel'
 import useInfiniteScroll from '@/hooks/infinite-scroll'
 import useUpdateMessages from '@/hooks/message'
 import { cn } from '@/lib/utils'
@@ -14,7 +15,7 @@ interface InfiniteQueryData {
 
 export default function Messages() {
   const queryClient = useQueryClient()
-  const root = useRef<HTMLDivElement>(null)
+  const root = useContext(ChatPanelContext)
   const user = queryClient.getQueryData<User>(['current-chat'])
   const updateMessages = useUpdateMessages(user?.username as string)
 
@@ -24,6 +25,7 @@ export default function Messages() {
     isFetchingPreviousPage,
     hasPreviousPage,
     fetchPreviousPage,
+    refetch,
   } = useInfiniteQuery<InfiniteQueryData, Error, Message[], QueryKey, number>({
     queryKey: ['messages', { username: user?.username }],
     queryFn: async ({ pageParam }) => {
@@ -45,18 +47,23 @@ export default function Messages() {
       page.has_more ? cursor + 1 : null
     ),
     select: ({ pages }) => pages.flatMap(page => page.messages),
+    enabled: false,
   })
 
   const messageRef = useInfiniteScroll(isFetchingPreviousPage, fetchPreviousPage)
 
   useEffect(() => {
-    if (root.current) {
+    if (root?.current) {
       root.current.scrollTo({ top: root.current.scrollHeight })
     }
   }, [user?.username, isFetched])
 
   useEffect(() => {
     if (user) {
+      if (! queryClient.getQueryData(['messages', { username: user.username }])) {
+        refetch()
+      }
+
       const channel = window.Echo.private(`chat.${user.username}`)
 
       channel.listen('MessageSent', ({ message }: { message: Message; }) => {
@@ -64,6 +71,10 @@ export default function Messages() {
           ...messages,
           { ...message, from_self: false },
         ]))
+
+        setTimeout(() => {
+          root?.current?.scrollTo({ top: root.current.scrollHeight })
+        }, 0)
       })
 
       return () => {
