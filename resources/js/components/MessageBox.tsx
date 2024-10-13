@@ -2,7 +2,7 @@ import { useContext, useRef, type ChangeEvent } from 'react'
 import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse, AxiosError } from 'axios'
-import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react'
+import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react'
 import { marked } from 'marked'
 import { Image, ImagePlay, SendHorizonal, Smile } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
@@ -11,6 +11,7 @@ import { Textarea } from './ui/textarea'
 import { ChatPanelContext } from './ChatPanel'
 import { useOnChangeDebounce } from '@/hooks/debounce'
 import useUpdateMessages from '@/hooks/message'
+import { useTheme } from './ThemeProvider'
 import type { PageProps } from '@inertiajs/core'
 import type { Message, User } from '@/types'
 
@@ -19,6 +20,7 @@ export default function MessageBox() {
   const textarea = useRef<HTMLTextAreaElement>(null)
   const messages = useContext(ChatPanelContext)
   const queryClient = useQueryClient()
+  const { theme } = useTheme()
   const receiver = queryClient.getQueryData<User>(['current-chat'])
   const updateMessages = useUpdateMessages(receiver?.username as string)
 
@@ -156,14 +158,13 @@ export default function MessageBox() {
               <Smile />
             </Button>
           </PopoverTrigger>
-          <PopoverContent
-            className='p-0'
-          >
+          <PopoverContent className='p-0'>
             <EmojiPicker
               lazyLoadEmojis={true}
               autoFocusSearch={false}
               skinTonesDisabled={true}
               previewConfig={{ showPreview: false }}
+              theme={Theme[theme === 'dark' ? 'DARK' : 'LIGHT']}
               onEmojiClick={selectEmoji}
             />
           </PopoverContent>
