@@ -2,8 +2,10 @@ import { useContext, useRef, type ChangeEvent } from 'react'
 import { usePage } from '@inertiajs/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse, AxiosError } from 'axios'
+import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react'
 import { marked } from 'marked'
-import { Image, ImagePlay, SendHorizonal } from 'lucide-react'
+import { Image, ImagePlay, SendHorizonal, Smile } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 import { ChatPanelContext } from './ChatPanel'
@@ -103,6 +105,12 @@ export default function MessageBox() {
     }
   }
 
+  function selectEmoji({ emoji }: EmojiClickData) {
+    if (textarea.current) {
+      textarea.current.value += emoji
+    }
+  }
+
   function send() {
     const message = textarea.current?.value
 
@@ -138,6 +146,28 @@ export default function MessageBox() {
         >
           <ImagePlay size='20' />
         </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              className='h-auto px-4 py-2 text-accent-foreground opacity-60 hover:bg-transparent hover:opacity-100'
+              variant='ghost'
+              size='sm'
+            >
+              <Smile />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className='p-0'
+          >
+            <EmojiPicker
+              lazyLoadEmojis={true}
+              autoFocusSearch={false}
+              skinTonesDisabled={true}
+              previewConfig={{ showPreview: false }}
+              onEmojiClick={selectEmoji}
+            />
+          </PopoverContent>
+        </Popover>
         <Button
           className='ml-auto h-auto px-4 py-2 text-accent-foreground opacity-60 hover:bg-transparent hover:opacity-100'
           variant='ghost'
