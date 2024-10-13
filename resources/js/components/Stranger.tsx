@@ -82,7 +82,7 @@ export default function Stranger({ user }: { user: User }) {
           disabled={isPending}
           onClick={addToContacts}
         >
-          Add and say hi
+          Add to contacts
         </Button>
       </CardFooter>
     </Card>
