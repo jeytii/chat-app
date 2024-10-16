@@ -3,7 +3,7 @@ import { Root, Image, Fallback } from '@radix-ui/react-avatar'
 import { cn } from '@/lib/utils'
 
 interface Props {
-  name: string;
+  name?: string;
   url?: string;
   imageSize?: number;
   secondaryText?: string;
@@ -20,7 +20,7 @@ export default function Avatar({
   alignment = 'horizontal'
 }: Props) {
   const initials = useMemo<string>(
-    () => name.split(' ', 2).map(text => text[0]).join(''),
+    () => name ? name.split(' ', 2).map(text => text[0]).join('') : '',
     [name]
   )
 
@@ -52,12 +52,15 @@ export default function Avatar({
           <span className='absolute bottom-0.5 right-0.5 size-[10px] rounded-full border border-black bg-green-500'></span>
         )}
       </div>
-      <div className={cn(alignment === 'horizontal' && 'ml-2')}>
-        <label className='text-primary'>{name}</label>
-        {secondaryText && (
-          <span className='block text-sm text-gray-500'>{secondaryText}</span>
-        )}
-      </div>
+
+      {(!!name || !!secondaryText) && (
+        <div className={cn(alignment === 'horizontal' && 'ml-2')}>
+          <label className='text-primary'>{name}</label>
+          {secondaryText && (
+            <span className='block text-sm text-gray-500'>{secondaryText}</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

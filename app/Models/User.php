@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -23,7 +24,7 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'username',
-        'profile_photo_url',
+        'profile_photo',
         'dark_mode',
         'password',
     ];
@@ -34,6 +35,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
+        'profile_photo',
         'password',
         'remember_token',
         'created_at',
@@ -42,6 +44,7 @@ class User extends Authenticatable
 
     protected $appends = [
         'name',
+        'profile_photo_url',
     ];
 
     /**
@@ -54,6 +57,13 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
         ];
+    }
+
+    protected static function booted()
+    {
+        static::updated(function (self $model) {
+            Storage::delete($model->getOriginal('profile_photo'));
+        });
     }
 
     /**
@@ -98,5 +108,22 @@ class User extends Authenticatable
     public function name(): Attribute
     {
         return Attribute::get(fn () => "{$this->first_name} {$this->last_name}");
+    }
+
+    public function profilePhotoUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            $image = $this->profile_photo;
+
+            if (! $image) {
+                return null;
+            }
+
+            if (str_starts_with($image, 'https://robohash.org')) {
+                return $image;
+            }
+
+            return Storage::url($image);
+        });
     }
 }

@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -63,6 +64,33 @@ class UserController extends Controller
             ->get();
 
         return compact('users');
+    }
+
+    public function update(Request $request)
+    {
+        $request->validate([
+            'first_name' => ['required', 'string'],
+            'last_name' => ['required', 'string'],
+            'profile_photo' => [
+                'sometimes',
+                'nullable',
+                'image',
+                'mimes:jpg,png',
+                Rule::dimensions()->maxWidth(500)->maxHeight(500)->ratio(1 / 1),
+            ],
+        ]);
+
+        /** @var User */
+        $user = Auth::user();
+        $data = $request->only(['first_name', 'last_name']);
+
+        if ($request->has('profile_photo')) {
+            $data['profile_photo'] = $request->file('profile_photo')->store();
+        }
+
+        $user->update($data);
+
+        return ['success' => true];
     }
 
     public function toggleDarkMode(Request $request)

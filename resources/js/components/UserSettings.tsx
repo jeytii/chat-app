@@ -1,20 +1,33 @@
 import { Link } from '@inertiajs/react'
 import { Sun, Moon, Settings, LogOut } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
+import SettingsForm from './SettingsForm'
 import { Button } from './ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 
 export default function UserSettings() {
   const { theme, setTheme } = useTheme()
 
   return (
     <div className='mt-4 flex items-center justify-between'>
-      <Button
-        className='h-auto rounded-full border-gray-400 p-3 hover:bg-gray-200 dark:border-gray-500 dark:hover:bg-gray-800'
-        variant='outline'
-        size='icon'
-      >
-        <Settings size='15' />
-      </Button>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+            className='h-auto rounded-full border-gray-400 p-3 hover:bg-gray-200 dark:border-gray-500 dark:hover:bg-gray-800'
+            variant='outline'
+            size='icon'
+          >
+            <Settings size='15' />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit profile</DialogTitle>
+          </DialogHeader>
+
+          <SettingsForm />
+        </DialogContent>
+      </Dialog>
       <Button
         className='h-auto rounded-full border-gray-400 p-3 hover:bg-gray-200 dark:border-gray-500 dark:hover:bg-gray-800'
         variant='outline'

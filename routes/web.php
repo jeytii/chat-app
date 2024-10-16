@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function () {
         Route::post('users/contacts/{user:username}/add', 'addToContacts')->name('users.contacts.add');
         Route::delete('users/contacts/{user:username}/remove', 'removeFromContacts')->name('users.contacts.remove');
         Route::get('users/search', 'search')->name('users.search');
+        Route::post('users/update', 'update')->name('users.update');
         Route::put('toggle-dark-mode', 'toggleDarkMode')->name('toggle-dark-mode');
     });
 
