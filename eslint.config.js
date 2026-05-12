@@ -1,11 +1,10 @@
-import js from '@eslint/js';
-import stylistic from '@stylistic/eslint-plugin';
-import prettier from 'eslint-config-prettier/flat';
-import importPlugin from 'eslint-plugin-import';
-import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
-import globals from 'globals';
-import typescript from 'typescript-eslint';
+import js from '@eslint/js'
+import stylistic from '@stylistic/eslint-plugin'
+import importPlugin from 'eslint-plugin-import'
+import react from 'eslint-plugin-react'
+import reactHooks from 'eslint-plugin-react-hooks'
+import globals from 'globals'
+import typescript from 'typescript-eslint'
 
 const controlStatements = [
     'if',
@@ -16,13 +15,13 @@ const controlStatements = [
     'switch',
     'try',
     'throw',
-];
+]
 const paddingAroundControl = [
-    ...controlStatements.flatMap((stmt) => [
+    ...controlStatements.flatMap(stmt => [
         { blankLine: 'always', prev: '*', next: stmt },
         { blankLine: 'always', prev: stmt, next: '*' },
     ]),
-];
+]
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -119,14 +118,37 @@ export default [
             'resources/js/wayfinder/**',
         ],
     },
-    prettier, // Turn off all rules that might conflict with Prettier
     {
         plugins: {
             '@stylistic': stylistic,
         },
         rules: {
             curly: ['error', 'all'],
+            '@stylistic/indent': 'error',
+            '@stylistic/semi': ['error', 'never'],
+            '@stylistic/quotes': ['error', 'single'],
+            '@stylistic/comma-dangle': ['error', 'always-multiline'],
+            '@stylistic/arrow-parens': ['error', 'as-needed'],
+            '@stylistic/object-curly-spacing': ['error', 'always'],
+            '@stylistic/no-multi-spaces': 'error',
+            '@stylistic/space-before-blocks': 'error',
             '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: false }],
+            '@stylistic/keyword-spacing': ['error', { before: true, after: true }],
+            '@stylistic/jsx-quotes': ['error', 'prefer-single'],
+            '@stylistic/jsx-indent-props': ['error', 4],
+            '@stylistic/jsx-closing-bracket-location': ['error', 'line-aligned'],
+            '@stylistic/jsx-closing-tag-location': ['error', 'tag-aligned'],
+            '@stylistic/jsx-tag-spacing': 'error',
+            '@stylistic/jsx-max-props-per-line': ['error', {
+                maximum: {
+                    single: 2,
+                    multi: 1,
+                },
+            }],
+            '@stylistic/jsx-self-closing-comp': ['error', {
+                component: true,
+                html: true,
+            }],
         },
     },
-];
+]
