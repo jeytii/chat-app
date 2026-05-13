@@ -17,10 +17,6 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php-version: ['8.5']
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -28,7 +24,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-version }}
+          php-version: 8.5
           tools: composer:v2
           coverage: xdebug
 
@@ -40,7 +36,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install Node Dependencies
@@ -56,7 +52,7 @@ jobs:
         run: php artisan key:generate
 
       - name: Build Assets
-        run: pnpm run build
+        run: pnpm build
 
       - name: Tests
         run: ./vendor/bin/pest
