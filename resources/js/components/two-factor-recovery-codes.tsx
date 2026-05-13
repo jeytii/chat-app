@@ -1,62 +1,62 @@
-import { Form } from '@inertiajs/react';
-import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import AlertError from '@/components/alert-error';
-import { Button } from '@/components/ui/button';
+import { Form } from '@inertiajs/react'
+import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import AlertError from '@/components/alert-error'
+import { Button } from '@/components/ui/button'
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
-} from '@/components/ui/card';
-import { regenerateRecoveryCodes } from '@/routes/two-factor';
+} from '@/components/ui/card'
+import { regenerateRecoveryCodes } from '@/routes/two-factor'
 
 type Props = {
     recoveryCodesList: string[];
     fetchRecoveryCodes: () => Promise<void>;
     errors: string[];
-};
+}
 
 export default function TwoFactorRecoveryCodes({
     recoveryCodesList,
     fetchRecoveryCodes,
     errors,
 }: Props) {
-    const [codesAreVisible, setCodesAreVisible] = useState<boolean>(false);
-    const codesSectionRef = useRef<HTMLDivElement | null>(null);
-    const canRegenerateCodes = recoveryCodesList.length > 0 && codesAreVisible;
+    const [codesAreVisible, setCodesAreVisible] = useState<boolean>(false)
+    const codesSectionRef = useRef<HTMLDivElement | null>(null)
+    const canRegenerateCodes = recoveryCodesList.length > 0 && codesAreVisible
 
     const toggleCodesVisibility = useCallback(async () => {
         if (!codesAreVisible && !recoveryCodesList.length) {
-            await fetchRecoveryCodes();
+            await fetchRecoveryCodes()
         }
 
-        setCodesAreVisible(!codesAreVisible);
+        setCodesAreVisible(!codesAreVisible)
 
         if (!codesAreVisible) {
             setTimeout(() => {
                 codesSectionRef.current?.scrollIntoView({
                     behavior: 'smooth',
                     block: 'nearest',
-                });
-            });
+                })
+            })
         }
-    }, [codesAreVisible, recoveryCodesList.length, fetchRecoveryCodes]);
+    }, [codesAreVisible, recoveryCodesList.length, fetchRecoveryCodes])
 
     useEffect(() => {
         if (!recoveryCodesList.length) {
-            fetchRecoveryCodes();
+            fetchRecoveryCodes()
         }
-    }, [recoveryCodesList.length, fetchRecoveryCodes]);
+    }, [recoveryCodesList.length, fetchRecoveryCodes])
 
-    const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
+    const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex gap-3">
-                    <LockKeyhole className="size-4" aria-hidden="true" />
+                <CardTitle className='flex gap-3'>
+                    <LockKeyhole className='size-4' aria-hidden='true' />
                     2FA recovery codes
                 </CardTitle>
                 <CardDescription>
@@ -65,16 +65,16 @@ export default function TwoFactorRecoveryCodes({
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
+                <div className='flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between'>
                     <Button
                         onClick={toggleCodesVisibility}
-                        className="w-fit"
+                        className='w-fit'
                         aria-expanded={codesAreVisible}
-                        aria-controls="recovery-codes-section"
+                        aria-controls='recovery-codes-section'
                     >
                         <RecoveryCodeIconComponent
-                            className="size-4"
-                            aria-hidden="true"
+                            className='size-4'
+                            aria-hidden='true'
                         />
                         {codesAreVisible ? 'Hide' : 'View'} recovery codes
                     </Button>
@@ -87,10 +87,10 @@ export default function TwoFactorRecoveryCodes({
                         >
                             {({ processing }) => (
                                 <Button
-                                    variant="secondary"
-                                    type="submit"
+                                    variant='secondary'
+                                    type='submit'
                                     disabled={processing}
-                                    aria-describedby="regenerate-warning"
+                                    aria-describedby='regenerate-warning'
                                 >
                                     <RefreshCw /> Regenerate codes
                                 </Button>
@@ -99,43 +99,43 @@ export default function TwoFactorRecoveryCodes({
                     )}
                 </div>
                 <div
-                    id="recovery-codes-section"
+                    id='recovery-codes-section'
                     className={`relative overflow-hidden transition-all duration-300 ${codesAreVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
                     aria-hidden={!codesAreVisible}
                 >
-                    <div className="mt-3 space-y-3">
+                    <div className='mt-3 space-y-3'>
                         {errors?.length ? (
                             <AlertError errors={errors} />
                         ) : (
                             <>
                                 <div
                                     ref={codesSectionRef}
-                                    className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
-                                    role="list"
-                                    aria-label="Recovery codes"
+                                    className='grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm'
+                                    role='list'
+                                    aria-label='Recovery codes'
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
                                             <div
                                                 key={index}
-                                                role="listitem"
-                                                className="select-text"
+                                                role='listitem'
+                                                className='select-text'
                                             >
                                                 {code}
                                             </div>
                                         ))
                                     ) : (
                                         <div
-                                            className="space-y-2"
-                                            aria-label="Loading recovery codes"
+                                            className='space-y-2'
+                                            aria-label='Loading recovery codes'
                                         >
                                             {Array.from(
                                                 { length: 8 },
                                                 (_, index) => (
                                                     <div
                                                         key={index}
-                                                        className="h-4 animate-pulse rounded bg-muted-foreground/20"
-                                                        aria-hidden="true"
+                                                        className='h-4 animate-pulse rounded bg-muted-foreground/20'
+                                                        aria-hidden='true'
                                                     />
                                                 ),
                                             )}
@@ -143,12 +143,12 @@ export default function TwoFactorRecoveryCodes({
                                     )}
                                 </div>
 
-                                <div className="text-xs text-muted-foreground select-none">
-                                    <p id="regenerate-warning">
+                                <div className='text-xs text-muted-foreground select-none'>
+                                    <p id='regenerate-warning'>
                                         Each recovery code can be used once to
                                         access your account and will be removed
                                         after use. If you need more, click{' '}
-                                        <span className="font-bold">
+                                        <span className='font-bold'>
                                             Regenerate codes
                                         </span>{' '}
                                         above.
@@ -160,5 +160,5 @@ export default function TwoFactorRecoveryCodes({
                 </div>
             </CardContent>
         </Card>
-    );
+    )
 }
