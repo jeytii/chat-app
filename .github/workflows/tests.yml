@@ -55,4 +55,4 @@ jobs:
         run: pnpm build
 
       - name: Tests
-        run: ./vendor/bin/pest
+        run: composer test
