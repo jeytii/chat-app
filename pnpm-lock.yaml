@@ -117,9 +117,6 @@ importers:
       '@eslint/js':
         specifier: ^10.0
         version: 10.0.1(eslint@10.3.0(jiti@2.7.0))
-      '@laravel/vite-plugin-wayfinder':
-        specifier: ^0.1.7
-        version: 0.1.7
       '@stylistic/eslint-plugin':
         specifier: ^5.10.0
         version: 5.10.0(eslint@10.3.0(jiti@2.7.0))
@@ -375,9 +372,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
-
-  '@laravel/vite-plugin-wayfinder@0.1.7':
-    resolution: {integrity: sha512-yZYIr1iwuCQ7LFI+GsJk9vacw1HWMp3ZlDlW0pdfz3zXyKeu4US7oH79KmQQ031L0cYaSyaUMo/Ha1D4BosKqw==}
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
@@ -2910,8 +2904,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
-
-  '@laravel/vite-plugin-wayfinder@0.1.7': {}
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:

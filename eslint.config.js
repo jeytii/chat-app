@@ -110,12 +110,7 @@ export default [
             'node_modules',
             'public',
             'bootstrap/ssr',
-            'tailwind.config.js',
-            'vite.config.ts',
-            'resources/js/actions/**',
             'resources/js/components/ui/*',
-            'resources/js/routes/**',
-            'resources/js/wayfinder/**',
         ],
     },
     {
