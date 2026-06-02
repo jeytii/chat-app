@@ -26,7 +26,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: 8.5
 
       - name: Install PNPM
         uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d
@@ -38,11 +38,8 @@ jobs:
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
           pnpm install
 
-      - name: Run Pint
+      - name: Lint Files
         run: composer lint
-
-      - name: Lint Frontend
-        run: pnpm lint
 
       # - name: Commit Changes
       #   uses: stefanzweifel/git-auto-commit-action@v7
