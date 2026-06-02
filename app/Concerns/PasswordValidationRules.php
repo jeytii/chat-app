@@ -10,11 +10,11 @@ trait PasswordValidationRules
     /**
      * Get the validation rules used to validate passwords.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Password|array<mixed>|string>
      */
     protected function passwordRules(): array
     {
-        return ['required', 'string', Password::default()->toPasswordRulesString(), 'confirmed'];
+        return ['required', 'string', Password::default(), 'confirmed'];
     }
 
     /**
