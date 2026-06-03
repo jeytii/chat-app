@@ -1,5 +1,6 @@
 import js from '@eslint/js'
 import stylistic from '@stylistic/eslint-plugin'
+import queryPlugin from '@tanstack/eslint-plugin-query'
 import importPlugin from 'eslint-plugin-import'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -27,6 +28,7 @@ const paddingAroundControl = [
 export default [
     js.configs.recommended,
     reactHooks.configs.flat['recommended-latest'],
+    ...queryPlugin.configs['flat/recommended'],
     ...typescript.configs.recommended,
     {
         ...react.configs.flat.recommended,
@@ -97,27 +99,6 @@ export default [
             '@stylistic': stylistic,
         },
         rules: {
-            '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: false }],
-            '@stylistic/padding-line-between-statements': [
-                'error',
-                ...paddingAroundControl,
-            ],
-        },
-    },
-    {
-        ignores: [
-            'vendor',
-            'node_modules',
-            'public',
-            'bootstrap/ssr',
-            'resources/js/components/ui/*',
-        ],
-    },
-    {
-        plugins: {
-            '@stylistic': stylistic,
-        },
-        rules: {
             curly: ['error', 'all'],
             '@stylistic/indent': 'error',
             '@stylistic/semi': ['error', 'never'],
@@ -128,6 +109,10 @@ export default [
             '@stylistic/no-multi-spaces': 'error',
             '@stylistic/space-before-blocks': 'error',
             '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: false }],
+            '@stylistic/padding-line-between-statements': [
+                'error',
+                ...paddingAroundControl,
+            ],
             '@stylistic/keyword-spacing': ['error', { before: true, after: true }],
             '@stylistic/jsx-quotes': ['error', 'prefer-single'],
             '@stylistic/jsx-indent-props': ['error', 4],
@@ -145,5 +130,14 @@ export default [
                 html: true,
             }],
         },
+    },
+    {
+        ignores: [
+            'vendor',
+            'node_modules',
+            'public',
+            'bootstrap/ssr',
+            'resources/js/components/ui/*',
+        ],
     },
 ]

@@ -1,5 +1,9 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout'
 import type { BreadcrumbItem } from '@/types'
+
+const queryClient = new QueryClient()
 
 export default function AppLayout({
     breadcrumbs = [],
@@ -9,8 +13,12 @@ export default function AppLayout({
     children: React.ReactNode;
 }) {
     return (
-        <AppLayoutTemplate breadcrumbs={breadcrumbs}>
-            {children}
-        </AppLayoutTemplate>
+        <QueryClientProvider client={queryClient}>
+            <AppLayoutTemplate breadcrumbs={breadcrumbs}>
+                {children}
+            </AppLayoutTemplate>
+
+            <ReactQueryDevtools position='right' />
+        </QueryClientProvider>
     )
 }
