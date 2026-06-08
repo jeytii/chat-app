@@ -1,5 +1,4 @@
 import { Link } from '@inertiajs/react'
-import { LayoutGrid } from 'lucide-react'
 import AppLogo from '@/components/app-logo'
 import { NavMain } from '@/components/nav-main'
 import { NavUser } from '@/components/nav-user'
@@ -12,15 +11,6 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import type { NavItem } from '@/types'
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Home',
-        href: '/',
-        icon: LayoutGrid,
-    },
-]
 
 export function AppSidebar() {
     return (
@@ -38,7 +28,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain />
             </SidebarContent>
 
             <SidebarFooter>
