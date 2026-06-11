@@ -1,5 +1,7 @@
-import { Link } from '@inertiajs/react'
+import { Link, usePage } from '@inertiajs/react'
 import { EllipsisVertical } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Input } from '@/components/ui/input'
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -8,12 +10,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { useCurrentUrl } from '@/hooks/use-current-url'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Input } from './ui/input'
 
 export function NavMain() {
-    const { isCurrentUrl } = useCurrentUrl()
+    const { props } = usePage()
 
     return (
         <SidebarGroup className='px-2 py-0'>
@@ -26,9 +25,10 @@ export function NavMain() {
                     <SidebarMenuButton
                         asChild
                         size='lg'
-                        isActive={isCurrentUrl('/')}
+                        isActive={props.conversationId === 1}
+                        className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
                     >
-                        <Link href='/' prefetch>
+                        <Link href='/?id=1' replace>
                             <div className='relative'>
                                 <Avatar className='size-9 rounded-full border border-primary'>
                                     <AvatarImage src='https://placehold.co/50x50' />
@@ -42,7 +42,7 @@ export function NavMain() {
                             </div>
                         </Link>
                     </SidebarMenuButton>
-                    <SidebarMenuAction showOnHover>
+                    <SidebarMenuAction showOnHover className='top-1/2! right-2 -translate-y-1/2 cursor-pointer hover:bg-transparent'>
                         <EllipsisVertical />
                     </SidebarMenuAction>
                 </SidebarMenuItem>
@@ -50,9 +50,10 @@ export function NavMain() {
                     <SidebarMenuButton
                         asChild
                         size='lg'
-                        isActive={isCurrentUrl('/about')}
+                        isActive={props.conversationId === 2}
+                        className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
                     >
-                        <Link href='/about' prefetch>
+                        <Link href='/?id=2' replace>
                             <div className='relative'>
                                 <Avatar className='size-9 rounded-full border border-primary'>
                                     <AvatarImage src='https://placehold.co/50x50' />
@@ -66,7 +67,7 @@ export function NavMain() {
                             </div>
                         </Link>
                     </SidebarMenuButton>
-                    <SidebarMenuAction showOnHover>
+                    <SidebarMenuAction showOnHover className='top-1/2! right-2 -translate-y-1/2 cursor-pointer hover:bg-transparent'>
                         <EllipsisVertical />
                     </SidebarMenuAction>
                 </SidebarMenuItem>
