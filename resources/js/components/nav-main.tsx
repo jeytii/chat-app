@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react'
+import { useQuery } from '@tanstack/react-query'
 import { EllipsisVertical } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Photo } from '@/components/photo'
 import { Input } from '@/components/ui/input'
 import {
     SidebarGroup,
@@ -10,9 +11,23 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import { Skeleton } from '@/components/ui/skeleton'
+
+type Conversation = {
+    id: number;
+    user: {
+        name: string,
+        image_url: string | null;
+    };
+}
 
 export function NavMain() {
     const { props } = usePage()
+
+    const { data, isLoading } = useQuery<Conversation[]>({
+        queryKey: ['conversations'],
+        queryFn: async () => (await fetch('/conversations')).json(),
+    })
 
     return (
         <SidebarGroup className='px-2 py-0'>
@@ -20,58 +35,82 @@ export function NavMain() {
                 <Input placeholder='Search contact...' className='text-xs' />
             </div>
             <SidebarGroupLabel>Contacts</SidebarGroupLabel>
-            <SidebarMenu className='gap-2'>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        size='lg'
-                        isActive={props.conversationId === 1}
-                        className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
-                    >
-                        <Link href='/?id=1' replace>
-                            <div className='relative'>
-                                <Avatar className='size-9 rounded-full border border-primary'>
-                                    <AvatarImage src='https://placehold.co/50x50' />
-                                    <AvatarFallback>JD</AvatarFallback>
-                                </Avatar>
-                                <span className='absolute bottom-px right-px size-2.5 bg-green-700 border border-primary rounded-full' />
-                            </div>
-                            <div>
-                                <h5>John Doe</h5>
-                                <p className='text-xs text-muted-foreground'>Lorem ipsum</p>
-                            </div>
-                        </Link>
-                    </SidebarMenuButton>
-                    <SidebarMenuAction showOnHover className='top-1/2! right-2 -translate-y-1/2 cursor-pointer hover:bg-transparent'>
-                        <EllipsisVertical />
-                    </SidebarMenuAction>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        size='lg'
-                        isActive={props.conversationId === 2}
-                        className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
-                    >
-                        <Link href='/?id=2' replace>
-                            <div className='relative'>
-                                <Avatar className='size-9 rounded-full border border-primary'>
-                                    <AvatarImage src='https://placehold.co/50x50' />
-                                    <AvatarFallback>JD</AvatarFallback>
-                                </Avatar>
-                                <span className='absolute bottom-px right-px size-2.5 bg-green-700 border border-primary rounded-full' />
-                            </div>
-                            <div>
-                                <h5>Juan Dela Cruz</h5>
-                                <p className='text-xs text-muted-foreground'>Lorem ipsum</p>
-                            </div>
-                        </Link>
-                    </SidebarMenuButton>
-                    <SidebarMenuAction showOnHover className='top-1/2! right-2 -translate-y-1/2 cursor-pointer hover:bg-transparent'>
-                        <EllipsisVertical />
-                    </SidebarMenuAction>
-                </SidebarMenuItem>
-            </SidebarMenu>
+
+            {isLoading && (
+                <div className='px-2 space-y-4'>
+                    <div className='flex items-center gap-2'>
+                        <Skeleton className='size-10 rounded-full' />
+                        <div className='flex-1 space-y-1'>
+                            <Skeleton className='h-4 w-full' />
+                            <Skeleton className='h-3 w-1/2' />
+                        </div>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                        <Skeleton className='size-10 rounded-full' />
+                        <div className='flex-1 space-y-1'>
+                            <Skeleton className='h-4 w-full' />
+                            <Skeleton className='h-3 w-1/2' />
+                        </div>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                        <Skeleton className='size-10 rounded-full' />
+                        <div className='flex-1 space-y-1'>
+                            <Skeleton className='h-4 w-full' />
+                            <Skeleton className='h-3 w-1/2' />
+                        </div>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                        <Skeleton className='size-10 rounded-full' />
+                        <div className='flex-1 space-y-1'>
+                            <Skeleton className='h-4 w-full' />
+                            <Skeleton className='h-3 w-1/2' />
+                        </div>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                        <Skeleton className='size-10 rounded-full' />
+                        <div className='flex-1 space-y-1'>
+                            <Skeleton className='h-4 w-full' />
+                            <Skeleton className='h-3 w-1/2' />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {!!data && (
+                <SidebarMenu className='gap-2'>
+                    {data.map(conversation => (
+                        <SidebarMenuItem key={conversation.id}>
+                            <SidebarMenuButton
+                                asChild
+                                size='lg'
+                                isActive={props.conversationId === conversation.id}
+                                className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
+                            >
+                                <Link
+                                    href='/'
+                                    data={{ id: conversation.id }}
+                                    replace
+                                >
+                                    <div className='relative'>
+                                        <Photo
+                                            src={conversation.user.image_url as string}
+                                            className='rounded-full border border-primary'
+                                        />
+                                        <span className='absolute bottom-px right-px size-2.5 bg-green-700 border border-primary rounded-full' />
+                                    </div>
+                                    <div>
+                                        <h5>{conversation.user.name}</h5>
+                                        <p className='text-xs text-muted-foreground'>Lorem ipsum</p>
+                                    </div>
+                                </Link>
+                            </SidebarMenuButton>
+                            <SidebarMenuAction showOnHover className='top-1/2! right-2 -translate-y-1/2 cursor-pointer hover:bg-transparent'>
+                                <EllipsisVertical />
+                            </SidebarMenuAction>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+            )}
         </SidebarGroup>
     )
 }
