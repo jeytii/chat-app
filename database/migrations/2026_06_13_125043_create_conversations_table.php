@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('conversations', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('accepter_id')->constrained('users');
             $table->foreignId('requestor_id')->constrained('users');
             $table->timestamps();

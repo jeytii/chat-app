@@ -37,7 +37,8 @@ class User extends Authenticatable
      */
     public function addedContacts(): BelongsToMany
     {
-        return $this->belongsToMany(self::class, 'conversations', 'requestor_id', 'accepter_id');
+        return $this->belongsToMany(self::class, 'conversations', 'requestor_id', 'accepter_id')
+            ->withTimestamps();
     }
 
     /**

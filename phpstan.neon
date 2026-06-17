@@ -4,6 +4,9 @@ includes:
 
 parameters:
 
+    universalObjectCratesClasses:
+        - Illuminate\Http\Resources\Json\JsonResource
+
     paths:
         - app
         - bootstrap/app.php
