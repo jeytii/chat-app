@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->string('secondary_id')->unique()->index();
-            $table->string('tertiary_id')->unique()->index();
             $table->foreignId('sender_id')->constrained('users');
-            $table->foreignId('conversation_id')->constrained('conversations');
+            $table->foreignId('conversation_id')->constrained();
+            $table->foreignId('reference_id')->nullable()->constrained('messages')->nullOnDelete();
             $table->longText('content')->nullable();
             $table->string('gif')->nullable();
             $table->string('image')->nullable();

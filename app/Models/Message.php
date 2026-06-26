@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Override;
 
 class Message extends Model
@@ -18,11 +17,6 @@ class Message extends Model
     #[Override]
     protected static function booted(): void
     {
-        static::creating(function (self $model): void {
-            $model->secondary_id = uniqid();
-            $model->tertiary_id = Str::random(16);
-        });
-
         static::deleted(function (self $model): void {
             if ($image = $model->image) {
                 Storage::delete($image);
@@ -44,6 +38,14 @@ class Message extends Model
     public function conversation(): BelongsTo
     {
         return $this->belongsTo(Conversation::class);
+    }
+
+    /**
+     * @return BelongsTo<self, $this>
+     */
+    public function reference(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reference_id');
     }
 
     /**
