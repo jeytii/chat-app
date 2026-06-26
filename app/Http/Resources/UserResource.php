@@ -23,6 +23,7 @@ class UserResource extends JsonResource
         return [
             'conversation_id' => $this->whenNotNull($this->conversationId),
             'name' => $this->name,
+            'username' => $this->username,
             'image_url' => $this->image ? Storage::url($this->image) : null,
         ];
     }
