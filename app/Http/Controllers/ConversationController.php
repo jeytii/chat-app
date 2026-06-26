@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Inertia\Response;
 
 class ConversationController extends Controller
 {
@@ -19,5 +20,12 @@ class ConversationController extends Controller
             ->get();
 
         return ConversationResource::collection($conversations);
+    }
+
+    public function show(Conversation $conversation): Response
+    {
+        return inertia('conversation', [
+            'conversation' => $conversation->toResource(),
+        ]);
     }
 }

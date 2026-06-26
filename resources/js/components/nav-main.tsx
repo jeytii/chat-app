@@ -22,7 +22,7 @@ type Conversation = {
 }
 
 export function NavMain() {
-    const { props } = usePage()
+    const { props } = usePage<{ conversation?: Conversation; }>()
 
     const { data, isLoading } = useQuery<Conversation[]>({
         queryKey: ['conversations'],
@@ -83,14 +83,10 @@ export function NavMain() {
                             <SidebarMenuButton
                                 asChild
                                 size='lg'
-                                isActive={props.conversationId === conversation.id}
+                                isActive={props.conversation?.id === conversation.id}
                                 className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
                             >
-                                <Link
-                                    href='/'
-                                    data={{ id: conversation.id }}
-                                    replace
-                                >
+                                <Link href={`/conversations/${conversation.id}`} replace>
                                     <div className='relative'>
                                         <Photo
                                             src={conversation.user.image_url as string}
