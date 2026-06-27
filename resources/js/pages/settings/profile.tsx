@@ -67,13 +67,33 @@ export default function Profile({
                                     defaultValue={auth.user.email}
                                     name='email'
                                     required
-                                    autoComplete='username'
+                                    autoComplete='email'
                                     placeholder='Email address'
                                 />
 
                                 <InputError
                                     className='mt-2'
                                     message={errors.email}
+                                />
+                            </div>
+
+                            <div className='grid gap-2'>
+                                <Label htmlFor='username'>Username</Label>
+
+                                <Input
+                                    id='username'
+                                    type='text'
+                                    className='mt-1 block w-full'
+                                    defaultValue={auth.user.username}
+                                    name='username'
+                                    required
+                                    autoComplete='username'
+                                    placeholder="Must be 8-40 characters long and not contain an '@'"
+                                />
+
+                                <InputError
+                                    className='mt-2'
+                                    message={errors.username}
                                 />
                             </div>
 
