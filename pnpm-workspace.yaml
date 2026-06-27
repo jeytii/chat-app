@@ -1,4 +1,6 @@
 allowBuilds:
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - eslint@10.6.0
 publicHoistPattern:
   - '@inertiajs/core'

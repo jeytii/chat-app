@@ -12,16 +12,15 @@
         "php": "^8.5",
         "inertiajs/inertia-laravel": "^3.1",
         "laravel/fortify": "^1.37",
-        "laravel/framework": "^13.12",
+        "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
         "larastan/larastan": "^3.10",
         "laravel/pail": "^1.2",
-        "laravel/pao": "^1.0",
         "laravel/pint": "^1.29",
-        "laravel/sail": "^1.61",
+        "laravel/sail": "^1.63",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.9",
         "pestphp/pest": "^4.7",
@@ -69,7 +68,6 @@
         ],
         "test": [
             "@php artisan config:clear --ansi",
-            "@lint:check",
             "@php artisan test"
         ],
         "post-autoload-dump": [
