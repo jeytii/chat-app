@@ -3,6 +3,7 @@ import type { PropsWithChildren } from 'react'
 import Heading from '@/components/heading'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import { useCurrentUrl } from '@/hooks/use-current-url'
 import { cn, toUrl } from '@/lib/utils'
 import type { NavItem } from '@/types'
@@ -29,11 +30,14 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl()
 
     return (
-        <div className='px-4 py-6'>
-            <Heading
-                title='Settings'
-                description='Manage your profile and account settings'
-            />
+        <div className='px-4 py-6 space-y-8'>
+            <div className='flex items-center gap-2'>
+                <SidebarTrigger className='-ml-1' />
+                <Heading
+                    title='Settings'
+                    description='Manage your profile and account settings'
+                />
+            </div>
 
             <div className='flex flex-col lg:flex-row lg:space-x-12'>
                 <aside className='w-full max-w-xl lg:w-48'>
