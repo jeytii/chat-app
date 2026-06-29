@@ -2,9 +2,10 @@
 
 use Laravel\Fortify\Features;
 
-beforeEach(function () {
-    $this->skipUnlessFortifyHas(Features::registration());
-});
+beforeEach()->skip(
+    fn () => ! Features::enabled(Features::registration()),
+    'Fortify feature ['.Features::registration().'] is not enabled.',
+);
 
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));

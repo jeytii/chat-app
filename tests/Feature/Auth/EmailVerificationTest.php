@@ -6,9 +6,10 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Laravel\Fortify\Features;
 
-beforeEach(function () {
-    $this->skipUnlessFortifyHas(Features::emailVerification());
-});
+beforeEach()->skip(
+    fn () => ! Features::enabled(Features::emailVerification()),
+    'Fortify feature ['.Features::emailVerification().'] is not enabled.',
+);
 
 test('email verification screen can be rendered', function () {
     $user = User::factory()->unverified()->create();
