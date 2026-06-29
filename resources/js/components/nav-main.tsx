@@ -12,14 +12,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-
-type Conversation = {
-    id: number;
-    user: {
-        name: string,
-        image_url: string | null;
-    };
-}
+import type { Conversation } from '@/types/models'
 
 export function NavMain() {
     const { props } = usePage<{ conversation?: Conversation; }>()

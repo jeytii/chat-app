@@ -12,27 +12,10 @@ import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import type { Conversation as ConversationModel, Message } from '@/types/models'
 
 type PageProps = {
     conversation: { id: number; }
-}
-
-type User = {
-    name: string,
-    image_url: string | null;
-}
-
-type Conversation = {
-    id: number;
-    user: User;
-}
-
-type Message = {
-    id: number;
-    content: string | null;
-    gif: string | null;
-    image_url: string | null;
-    from_self: boolean;
 }
 
 export default function Conversation() {
@@ -47,7 +30,7 @@ export default function Conversation() {
             return null
         }
 
-        const conversations = queryClient.getQueryData<Conversation[]>(['conversations'])
+        const conversations = queryClient.getQueryData<ConversationModel[]>(['conversations'])
 
         if (!conversations) {
             return null

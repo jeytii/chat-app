@@ -1,22 +1,15 @@
 import { usePage } from '@inertiajs/react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { Skeleton } from './ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
+import type { Message as MessageModel } from '@/types/models'
 
 type PageProps = {
     conversation: { id: number; }
 }
 
-type Message = {
-    id: number;
-    content: string | null;
-    gif: string | null;
-    image_url: string | null;
-    from_self: boolean;
-}
-
 export default function Messages() {
     const { props } = usePage<PageProps>()
-    const { data, isLoading } = useInfiniteQuery<Message[]>({
+    const { data, isLoading } = useInfiniteQuery<MessageModel[]>({
         queryKey: ['messages', props.conversation.id],
         queryFn: async () => (await fetch(`/messages?conversation_id=${props.conversation.id}`)).json(),
         initialPageParam: 0,
@@ -68,7 +61,7 @@ export default function Messages() {
     )
 }
 
-function Message({ message }: { message: Message }) {
+function Message({ message }: { message: MessageModel }) {
     if (message.from_self) {
         return (
             <div className='flex justify-end-safe'>
