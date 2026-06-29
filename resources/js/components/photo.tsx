@@ -1,7 +1,7 @@
 import { User } from 'lucide-react'
 import type { ImgHTMLAttributes } from 'react'
 import { useEffect, useState } from 'react'
-import { Skeleton } from './ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface Props extends ImgHTMLAttributes<HTMLImageElement> {
     size?: number;

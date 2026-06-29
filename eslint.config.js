@@ -116,7 +116,6 @@ export default [
             '@stylistic/keyword-spacing': ['error', { before: true, after: true }],
             '@stylistic/jsx-quotes': ['error', 'prefer-single'],
             '@stylistic/jsx-indent-props': ['error', 4],
-            '@stylistic/jsx-closing-bracket-location': ['error', 'line-aligned'],
             '@stylistic/jsx-closing-tag-location': ['error', 'tag-aligned'],
             '@stylistic/jsx-tag-spacing': 'error',
             '@stylistic/jsx-max-props-per-line': ['error', {
