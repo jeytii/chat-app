@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ImageController extends Controller
 {
-    public function __invoke(Message $message)
+    public function __invoke(Message $message): BinaryFileResponse
     {
         abort_if($message->sender_id !== auth()->id(), 403);
 

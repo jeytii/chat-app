@@ -17,4 +17,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('image/{message:image}', ImageController::class);
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';
