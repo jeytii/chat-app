@@ -3,15 +3,14 @@ import type { InfiniteData } from '@tanstack/react-query'
 import { useIsFetching, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AxiosResponse } from 'axios'
 import axios from 'axios'
-import { ImagePlay, Send, Smile } from 'lucide-react'
+import { ImagePlay, SendHorizonal, Smile } from 'lucide-react'
 import type { ChangeEvent } from 'react'
 import { useMemo, useState } from 'react'
 import Messages from '@/components/messages'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
+import { DefaultPhoto } from '@/components/photo'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Textarea } from '@/components/ui/textarea'
 import type { Conversation as ConversationModel, Message } from '@/types/models'
 
 type PageProps = {
@@ -36,7 +35,7 @@ export default function Conversation() {
             return null
         }
 
-        return conversations.find(conversation => conversation.id === id)?.user
+        return conversations.find(conversation => conversation.id === id)?.user || null
     }, [queryClient, id, isFetchingConversations])
 
     const { mutate } = useMutation<AxiosResponse<{ message: Message }>, Error, string, number>({
@@ -101,7 +100,7 @@ export default function Conversation() {
     }
 
     function send() {
-        if (!message.length) {
+        if (!message.trim().length) {
             return
         }
 
@@ -111,17 +110,16 @@ export default function Conversation() {
     return (
         <>
             {/* ===== HEADER ===== */}
-            <header className='sticky top-0 left-0 flex h-16 shrink-0 items-center gap-2 bg-background border-b border-sidebar-border/50 z-10 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4'>
+            <header className='sticky top-0 left-0 flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 z-10 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4'>
                 <div className='flex items-center gap-2'>
                     <SidebarTrigger className='-ml-1' />
+
                     {user ? (
-                        <Avatar className='size-10'>
-                            <AvatarImage src='https://placehold.co/40x40' />
-                            <AvatarFallback className='text-xs'>JD</AvatarFallback>
-                        </Avatar>
+                        <DefaultPhoto width={40} height={40} />
                     ) : (
                         <Skeleton className='size-10 rounded-full' />
                     )}
+
                     {user ? (
                         <div>
                             <h1>{user.name}</h1>
@@ -141,44 +139,35 @@ export default function Conversation() {
             <Messages />
 
             {/* ===== MESSAGE BOX ===== */}
-            <div className='sticky bottom-0 left-0 flex shrink-0 justify-center items-center gap-4 bg-background border-t border-sidebar-border/50 p-4 z-10'>
-                <Textarea
-                    placeholder='Type a message...'
-                    name='message'
-                    className='min-h-auto text-sm'
-                    value={message}
-                    onChange={handleMessage}
-                />
-                <Button
-                    variant='outline'
-                    size='icon'
-                    className='bg-accent text-accent-foreground'
-                >
-                    <Smile />
-                </Button>
-                <Button
-                    variant='outline'
-                    size='icon'
-                    className='bg-accent text-accent-foreground text-xs'
-                >
-                    GIF
-                </Button>
-                <Button
-                    variant='outline'
-                    size='icon'
-                    className='bg-accent text-accent-foreground'
-                >
-                    <ImagePlay />
-                </Button>
-                <Button
-                    variant='outline'
-                    size='icon'
-                    className='bg-accent text-accent-foreground'
-                    disabled={!message.length}
-                    onClick={send}
-                >
-                    <Send />
-                </Button>
+            <div className='sticky bottom-0 left-0 z-10'>
+                <InputGroup className='items-end border-x-0 border-b-0 rounded-none dark:bg-transparent'>
+                    <InputGroupTextarea
+                        placeholder='Write a message'
+                        value={message}
+                        className='min-h-auto px-4'
+                        onChange={handleMessage}
+                    />
+                    <InputGroupAddon align='block-end'>
+                        <InputGroupButton variant='ghost' size='icon-xs'>
+                            <Smile />
+                        </InputGroupButton>
+                        <InputGroupButton variant='ghost' size='icon-xs'>
+                            <ImagePlay />
+                        </InputGroupButton>
+                        <InputGroupButton variant='ghost' size='xs'>
+                            GIF
+                        </InputGroupButton>
+                        <InputGroupButton
+                            variant='ghost'
+                            size='icon-xs'
+                            disabled={!message.trim().length}
+                            className='ml-auto'
+                            onClick={send}
+                        >
+                            <SendHorizonal />
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                </InputGroup>
             </div>
         </>
     )
