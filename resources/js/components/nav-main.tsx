@@ -1,7 +1,7 @@
 import { Link, usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
 import { EllipsisVertical } from 'lucide-react'
-import { Photo } from '@/components/photo'
+import { DefaultPhoto, Photo } from '@/components/photo'
 import { Input } from '@/components/ui/input'
 import {
     SidebarGroup,
@@ -81,10 +81,18 @@ export function NavMain() {
                             >
                                 <Link href={`/conversations/${conversation.id}`} replace>
                                     <div className='relative'>
-                                        <Photo
-                                            src={conversation.user.image_url as string}
-                                            className='rounded-full border border-primary'
-                                        />
+                                        {conversation.user.image_url ? (
+                                            <Photo
+                                                src={conversation.user.image_url}
+                                                className='rounded-full border border-primary'
+                                            />
+                                        ) : (
+                                            <DefaultPhoto
+                                                width={40}
+                                                height={40}
+                                                className='rounded-full border-2 border-primary fill-secondary'
+                                            />
+                                        )}
                                         <span className='absolute bottom-px right-px size-2.5 bg-green-700 border border-primary rounded-full' />
                                     </div>
                                     <div>
