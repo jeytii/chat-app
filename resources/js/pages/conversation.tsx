@@ -110,7 +110,7 @@ export default function Conversation() {
     return (
         <>
             {/* ===== HEADER ===== */}
-            <header className='sticky top-0 left-0 flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 z-10 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4'>
+            <header className='flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 z-10 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4'>
                 <div className='flex items-center gap-2'>
                     <SidebarTrigger className='-ml-1' />
 
@@ -139,7 +139,7 @@ export default function Conversation() {
             <Messages />
 
             {/* ===== MESSAGE BOX ===== */}
-            <div className='sticky bottom-0 left-0 z-10'>
+            <div className='z-10'>
                 <InputGroup className='items-end border-x-0 border-b-0 rounded-none dark:bg-transparent'>
                     <InputGroupTextarea
                         placeholder='Write a message'
