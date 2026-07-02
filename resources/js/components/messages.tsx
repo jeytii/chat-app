@@ -1,5 +1,8 @@
 import { usePage } from '@inertiajs/react'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { Bubble, BubbleContent } from '@/components/ui/bubble'
+import { Message, MessageContent } from '@/components/ui/message'
+import { MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerItem, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Message as MessageModel } from '@/types/models'
 
@@ -49,38 +52,27 @@ export default function Messages() {
     }
 
     return (
-        <div className='flex h-full max-h-[100vh-64] flex-1 flex-col gap-2 justify-end-safe overflow-y-auto rounded-xl p-4'>
-            {data.pages.map((messages, index) => (
-                <div key={`group-${index}`} className='space-y-2'>
-                    {messages.map(message => (
-                        <Message key={message.id} message={message} />
-                    ))}
-                </div>
-            ))}
-        </div>
-    )
-}
-
-function Message({ message }: { message: MessageModel }) {
-    if (message.from_self) {
-        return (
-            <div className='flex justify-end-safe'>
-                <div className='relative inline-block max-w-[95%]'>
-                    <div
-                        className='bg-primary text-primary-foreground text-sm rounded-lg py-2 px-4'
-                        dangerouslySetInnerHTML={{ __html: message.content as string }}
-                    />
-                </div>
+        <MessageScrollerProvider defaultScrollPosition='last-anchor'>
+            <div className='flex-1 max-h-full overflow-hidden'>
+                <MessageScroller>
+                    <MessageScrollerViewport>
+                        <MessageScrollerContent className='justify-end py-4 px-2'>
+                            {data.pages.flat().map(message => (
+                                <MessageScrollerItem key={message.id} messageId={message.id.toString()}>
+                                    <Message align={message.from_self ? 'end' : 'start'}>
+                                        <MessageContent>
+                                            <Bubble variant={message.from_self ? 'default' : 'muted'}>
+                                                <BubbleContent dangerouslySetInnerHTML={{ __html: message.content as string }} />
+                                            </Bubble>
+                                        </MessageContent>
+                                    </Message>
+                                </MessageScrollerItem>
+                            ))}
+                        </MessageScrollerContent>
+                    </MessageScrollerViewport>
+                    <MessageScrollerButton />
+                </MessageScroller>
             </div>
-        )
-    }
-
-    return (
-        <div>
-            <div
-                className='inline-block max-w-[95%] bg-muted text-foreground text-sm rounded-lg py-2 px-4'
-                dangerouslySetInnerHTML={{ __html: message.content as string }}
-            />
-        </div>
+        </MessageScrollerProvider>
     )
 }
