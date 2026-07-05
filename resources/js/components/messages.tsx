@@ -1,10 +1,9 @@
 import { usePage } from '@inertiajs/react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { Bubble, BubbleContent } from '@/components/ui/bubble'
-import { Message, MessageContent } from '@/components/ui/message'
-import { MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerItem, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
+import MessageModel from '@/components/message-model'
+import { MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { Message as MessageModel } from '@/types/models'
+import type { Message as MessageType } from '@/types/models'
 
 type PageProps = {
     conversation: { id: number; }
@@ -12,7 +11,7 @@ type PageProps = {
 
 export default function Messages() {
     const { props } = usePage<PageProps>()
-    const { data, isLoading } = useInfiniteQuery<MessageModel[]>({
+    const { data, isLoading } = useInfiniteQuery<MessageType[]>({
         queryKey: ['messages', props.conversation.id],
         queryFn: async () => (await fetch(`/messages?conversation_id=${props.conversation.id}`)).json(),
         initialPageParam: 0,
@@ -58,15 +57,7 @@ export default function Messages() {
                     <MessageScrollerViewport>
                         <MessageScrollerContent className='justify-end py-4 px-2'>
                             {data.pages.flat().map(message => (
-                                <MessageScrollerItem key={message.id} messageId={message.id.toString()}>
-                                    <Message align={message.from_self ? 'end' : 'start'}>
-                                        <MessageContent>
-                                            <Bubble variant={message.from_self ? 'default' : 'muted'}>
-                                                <BubbleContent dangerouslySetInnerHTML={{ __html: message.content as string }} />
-                                            </Bubble>
-                                        </MessageContent>
-                                    </Message>
-                                </MessageScrollerItem>
+                                <MessageModel key={message.id} message={message} />
                             ))}
                         </MessageScrollerContent>
                     </MessageScrollerViewport>
