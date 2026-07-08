@@ -55,7 +55,7 @@ export default function Messages() {
             <div className='flex-1 max-h-full overflow-hidden'>
                 <MessageScroller>
                     <MessageScrollerViewport>
-                        <MessageScrollerContent className='justify-end py-4 px-2'>
+                        <MessageScrollerContent className='justify-end gap-2 py-4 px-2'>
                             {data.pages.flat().map(message => (
                                 <MessageModel key={message.id} message={message} />
                             ))}

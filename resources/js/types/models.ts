@@ -5,7 +5,9 @@ export type User = {
 
 export type Conversation = {
     id: number;
-    user: User;
+    user: User & {
+        is_online: boolean;
+    };
 }
 
 export type Message = {

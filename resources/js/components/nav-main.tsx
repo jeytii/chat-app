@@ -93,7 +93,9 @@ export function NavMain() {
                                                 className='rounded-full border-2 border-primary fill-secondary'
                                             />
                                         )}
-                                        <span className='absolute bottom-px right-px size-2.5 bg-green-700 border border-primary rounded-full' />
+                                        {conversation.user.is_online && (
+                                            <span className='absolute bottom-px right-px size-2.5 bg-green-700 border border-primary rounded-full' />
+                                        )}
                                     </div>
                                     <div>
                                         <h5>{conversation.user.name}</h5>

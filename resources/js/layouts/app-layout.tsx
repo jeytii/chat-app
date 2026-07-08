@@ -5,7 +5,15 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useCurrentUrl } from '@/hooks/use-current-url'
 import { cn } from '@/lib/utils'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+        },
+    },
+})
 
 export default function AppLayout({ children }: { children: React.ReactNode; }) {
     const { currentUrl } = useCurrentUrl()

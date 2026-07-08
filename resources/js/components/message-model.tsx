@@ -13,11 +13,23 @@ export default function MessageModel({ message }: { message: MessageType }) {
             <Message align={message.from_self ? 'end' : 'start'}>
                 <MessageContent className='gap-1'>
                     <Bubble variant={message.from_self ? 'default' : 'muted'}>
-                        <BubbleContent dangerouslySetInnerHTML={{ __html: message.content as string }} />
+                        <BubbleContent dangerouslySetInnerHTML={{ __html: message.content as string }} className='space-y-2' />
                     </Bubble>
 
                     {!!message.image_url && (
                         <Image imageUrl={message.image_url} />
+                    )}
+
+                    {!!message.gif && (
+                        <Attachment orientation='vertical' className='cursor-pointer w-[20vw]'>
+                            <div className='p-2'>
+                                <img
+                                    src={message.gif}
+                                    alt=''
+                                    className='block w-full object-cover rounded-md'
+                                />
+                            </div>
+                        </Attachment>
                     )}
                 </MessageContent>
             </Message>
@@ -64,16 +76,20 @@ function Image({ imageUrl }: { imageUrl: string }) {
             <DialogTrigger>
                 <Attachment orientation='vertical' className='cursor-pointer w-[20vw]'>
                     <div className='p-2'>
-                        <img src={blobUrl}
+                        <img
+                            src={blobUrl}
                             alt=''
-                            className='block w-full object-cover rounded-md' />
+                            className='block w-full object-cover rounded-md'
+                        />
                     </div>
                 </Attachment>
             </DialogTrigger>
             <DialogContent>
-                <img src={blobUrl}
+                <img
+                    src={blobUrl}
                     alt=''
-                    className='block w-full' />
+                    className='block w-full'
+                />
             </DialogContent>
         </Dialog>
     )
