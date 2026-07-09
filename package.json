@@ -52,6 +52,7 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.2",
+        "emoji-picker-react": "^4.19.1",
         "globals": "^17.6",
         "input-otp": "^1.4.2",
         "laravel-vite-plugin": "^3.1",
