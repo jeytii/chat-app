@@ -1,7 +1,8 @@
 import { usePage } from '@inertiajs/react'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import MessageModel from '@/components/message-model'
-import { MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
+import { MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerViewport, useMessageScroller } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Message as MessageType } from '@/types/models'
 
@@ -16,6 +17,12 @@ export default function Messages() {
         queryFn: async () => (await fetch(`/messages?conversation_id=${props.conversation.id}`)).json(),
         initialPageParam: 0,
         getNextPageParam: () => 1,
+    })
+
+    const { scrollToEnd } = useMessageScroller()
+
+    useEffect(() => {
+        scrollToEnd()
     })
 
     if (isLoading || !data) {
@@ -51,19 +58,17 @@ export default function Messages() {
     }
 
     return (
-        <MessageScrollerProvider defaultScrollPosition='last-anchor'>
-            <div className='flex-1 max-h-full overflow-hidden'>
-                <MessageScroller>
-                    <MessageScrollerViewport>
-                        <MessageScrollerContent className='justify-end gap-2 py-4 px-2'>
-                            {data.pages.flat().map(message => (
-                                <MessageModel key={message.id} message={message} />
-                            ))}
-                        </MessageScrollerContent>
-                    </MessageScrollerViewport>
-                    <MessageScrollerButton />
-                </MessageScroller>
-            </div>
-        </MessageScrollerProvider>
+        <div className='flex-1 max-h-full overflow-hidden'>
+            <MessageScroller>
+                <MessageScrollerViewport>
+                    <MessageScrollerContent className='justify-end gap-2 py-4 px-2'>
+                        {data.pages.flat().map(message => (
+                            <MessageModel key={message.id} message={message} />
+                        ))}
+                    </MessageScrollerContent>
+                </MessageScrollerViewport>
+                <MessageScrollerButton />
+            </MessageScroller>
+        </div>
     )
 }

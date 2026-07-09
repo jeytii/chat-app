@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import MessageBox from '@/components/message-box'
 import Messages from '@/components/messages'
 import { DefaultPhoto } from '@/components/photo'
+import { MessageScrollerProvider } from '@/components/ui/message-scroller'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Conversation as ConversationModel } from '@/types/models'
@@ -32,7 +33,7 @@ export default function Conversation() {
     }, [queryClient, id, isFetchingConversations])
 
     return (
-        <>
+        <MessageScrollerProvider>
             {/* ===== HEADER ===== */}
             <header className='flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 z-10 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4'>
                 <div className='flex items-center gap-2'>
@@ -67,6 +68,6 @@ export default function Conversation() {
 
             {/* ===== MESSAGE BOX ===== */}
             <MessageBox />
-        </>
+        </MessageScrollerProvider>
     )
 }
