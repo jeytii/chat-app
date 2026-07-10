@@ -12,8 +12,20 @@ export type Conversation = {
 
 export type Message = {
     id: number;
+    reference?: {
+        id: number;
+        content: string | null;
+        gif: string | null;
+        image_url: string | null;
+        from_self: boolean;
+    } | null;
     content: string | null;
     gif: string | null;
     image_url: string | null;
     from_self: boolean;
+}
+
+export type MessageResponse = {
+    items: Message[];
+    next_cursor: string | null;
 }
