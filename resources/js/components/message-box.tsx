@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react'
+import { useMessageScroller } from '@shadcn/react/message-scroller'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AxiosResponse } from 'axios'
@@ -7,13 +8,12 @@ import type { EmojiClickData } from 'emoji-picker-react'
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
 import { Image, SendHorizonal, Smile } from 'lucide-react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Remarkable } from 'remarkable'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
-import { useMessageScroller } from '@/components/ui/message-scroller'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppearance } from '@/hooks/use-appearance'
-import type { Message } from '@/types/models'
+import type { Message, MessageResponse } from '@/types/models'
 
 type PageProps = {
     conversation: { id: number; }
@@ -24,19 +24,10 @@ export default function MessageBox() {
     const [message, setMessage] = useState<string>('')
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
     const queryClient = useQueryClient()
-    const { scrollToEnd } = useMessageScroller()
     const textarea = useRef<HTMLTextAreaElement>(null)
+    const { scrollToEnd } = useMessageScroller()
     const { appearance } = useAppearance()
-    const emojiTheme = useMemo(() => (
-        {
-            light: Theme.LIGHT,
-            dark: Theme.DARK,
-            system: Theme.AUTO,
-        }[appearance]
-    ), [appearance])
-
     const queryKey = ['messages', id]
-    const md = new Remarkable({ html: false, breaks: true })
 
     useEffect(() => {
         return () => {
@@ -44,7 +35,7 @@ export default function MessageBox() {
         }
     }, [])
 
-    const { mutate } = useMutation<AxiosResponse<{ message: Message }>, Error, string, { id: number }>({
+    const { mutate } = useMutation<AxiosResponse<Message>, Error, string, { id: number }>({
         mutationFn: message => axios.post('/messages', {
             conversation_id: id,
             message,
@@ -54,43 +45,92 @@ export default function MessageBox() {
 
             const itemId = Math.floor(Math.random() * 1000000000)
 
-            queryClient.setQueryData<InfiniteData<Message[]>>(
+            queryClient.setQueryData<InfiniteData<MessageResponse>>(
                 queryKey,
                 current => {
                     if (!current) {
                         return current
                     }
 
+                    const newItem = {
+                        id: itemId,
+                        content: new Remarkable({ html: false, breaks: true }).render(message),
+                        gif: null,
+                        image_url: null,
+                        from_self: true,
+                    }
+
+                    // Insert new item into a new page if the latest one has reached the pagination count
+                    if (current.pages[current.pages.length - 1].items.length >= 20) {
+                        return {
+                            pageParams: [
+                                null,
+                                ...current.pageParams,
+                            ],
+                            pages: [
+                                ...current.pages,
+                                {
+                                    items: [newItem],
+                                    next_cursor: null,
+                                },
+                            ],
+                        }
+                    }
+
+                    // Else, push it into the latest page
                     return {
                         ...current,
-                        pages: current.pages.map((messages, index) => {
-                            if (index === 0) {
-                                return [
-                                    ...messages,
-                                    {
-                                        id: itemId,
-                                        content: md.render(message),
-                                        gif: null,
-                                        image_url: null,
-                                        from_self: true,
-                                    },
-                                ]
+                        pages: current.pages.map((page, index, pages) => {
+                            if (index === pages.length - 1) {
+                                return {
+                                    ...page,
+                                    items: [...page.items, newItem],
+                                }
                             }
 
-                            return messages
+                            return page
                         }),
                     }
                 },
             )
 
-            scrollToEnd()
+            setTimeout(() => [
+                scrollToEnd({
+                    behavior: 'instant',
+                }),
+            ])
 
             setMessage('')
 
             return { id: itemId }
         },
+        onSuccess({ data }, variables, context) {
+            queryClient.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => {
+                if (!current) {
+                    return current
+                }
+
+                return {
+                    ...current,
+                    pages: current.pages.map((page, index, pages) => {
+                        // If the onMutate() placeholder is found in the 2 latest pages, replace it with the Message model returned by the server.
+                        if (index >= pages.length - 2) {
+                            return {
+                                ...page,
+                                items: page.items.map(page => page.id === context.id ? data : page),
+                            }
+                        }
+
+                        return page
+                    }),
+                }
+            })
+        },
         onSettled() {
-            queryClient.invalidateQueries({ queryKey })
+            queryClient.invalidateQueries({
+                queryKey,
+                refetchType: 'none',
+            })
         },
     })
 
@@ -163,7 +203,13 @@ export default function MessageBox() {
                         <PopoverContent align='start' className='w-auto p-2'>
                             <EmojiPicker
                                 open={showEmojis}
-                                theme={emojiTheme}
+                                theme={
+                                    {
+                                        light: Theme.LIGHT,
+                                        dark: Theme.DARK,
+                                        system: Theme.AUTO,
+                                    }[appearance]
+                                }
                                 emojiStyle={EmojiStyle.GOOGLE}
                                 autoFocusSearch={false}
                                 previewConfig={{ showPreview: false }}
