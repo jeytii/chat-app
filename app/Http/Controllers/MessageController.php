@@ -11,7 +11,10 @@ use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
 
 class MessageController extends Controller
 {
-    public function index(Request $request): JsonResource
+    /**
+     * @return array<string, JsonResource|string|null>
+     */
+    public function index(Request $request): array
     {
         $request->validate([
             'conversation_id' => ['bail', 'required', 'integer', 'exists:conversations,id'],
@@ -21,16 +24,15 @@ class MessageController extends Controller
             ->where('conversation_id', $request->integer('conversation_id'))
             ->latest()
             ->with('reference')
-            ->paginate(20)
-            ->reverse();
+            ->cursorPaginate(20);
 
-        return MessageResource::collection($messages);
+        return [
+            'items' => MessageResource::collection($messages->reverse()),
+            'next_cursor' => $messages->nextCursor()?->encode(),
+        ];
     }
 
-    /**
-     * @return array<string, JsonResource>
-     */
-    public function store(Request $request): array
+    public function store(Request $request): JsonResource
     {
         $data = $request->validate([
             'conversation_id' => ['bail', 'required', 'integer', 'exists:conversations,id'],
@@ -57,8 +59,6 @@ class MessageController extends Controller
             'content' => $content,
         ]);
 
-        return [
-            'message' => $message->toResource(),
-        ];
+        return $message->toResource();
     }
 }
