@@ -2,7 +2,6 @@ import { Link, usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
 import { EllipsisVertical } from 'lucide-react'
 import { DefaultPhoto, Photo } from '@/components/photo'
-import { Input } from '@/components/ui/input'
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -24,9 +23,6 @@ export function NavMain() {
 
     return (
         <SidebarGroup className='px-2 py-0'>
-            <div className='my-1'>
-                <Input placeholder='Search contact...' className='text-xs' />
-            </div>
             <SidebarGroupLabel>Contacts</SidebarGroupLabel>
 
             {isLoading && (

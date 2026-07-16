@@ -23,7 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
             <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset className={cn(
-                    currentUrl.startsWith('/conversations') ? 'h-[calc(100vh-16px)]' : 'min-h-svh',
+                    currentUrl.startsWith('/conversations') ? 'h-svh md:h-[calc(100svh-16px)]' : 'min-h-svh',
                 )}>
                     {children}
                 </SidebarInset>
