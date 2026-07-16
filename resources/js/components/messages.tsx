@@ -2,9 +2,10 @@ import { usePage } from '@inertiajs/react'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import axios from 'axios'
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import MessageModel from '@/components/message-model'
-import { MessageScrollerContent, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
+import { Marker, MarkerContent } from '@/components/ui/marker'
+import { MessageScrollerContent, MessageScrollerItem, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Message, MessageResponse } from '@/types/models'
 
@@ -12,7 +13,35 @@ type PageProps = {
     conversation: { id: number; }
 }
 
-async function getMessages(pageParam: string|null, conversationId: number, signal: AbortSignal) {
+function getDateLabel(date: string) {
+    const givenDate = new Date(date)
+
+    // Calculate the difference in milliseconds between the given date and today
+    const mlsDiff = Math.abs(givenDate.getTime() - Date.now())
+
+    // Convert milliseconds back to days
+    const dayDiff = Math.floor(mlsDiff / (1000 * 60 * 60 * 24))
+
+    if (dayDiff <= 0) {
+        return 'Today'
+    }
+
+    if (dayDiff === 1) {
+        return 'Yesterday'
+    }
+
+    return givenDate.toLocaleDateString('en-PH', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+    })
+}
+
+function areSameDate(date: string, previousDate: string) {
+    return new Date(date).getTime() !== new Date(previousDate).getTime()
+}
+
+async function getMessages(pageParam: string | null, conversationId: number, signal: AbortSignal) {
     const { data } = await axios<MessageResponse>('/messages', {
         params: {
             conversation_id: conversationId,
@@ -26,7 +55,7 @@ async function getMessages(pageParam: string|null, conversationId: number, signa
 
 export default function Messages() {
     const { id } = usePage<PageProps>().props.conversation
-    const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage } = useInfiniteQuery<MessageResponse, Error, InfiniteData<Message>, readonly unknown[], string|null>({
+    const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<MessageResponse, Error, InfiniteData<Message>, readonly unknown[], string | null>({
         queryKey: ['messages', id],
         queryFn: ({ pageParam, signal }) => getMessages(pageParam, id, signal),
         initialPageParam: null,
@@ -48,7 +77,7 @@ export default function Messages() {
 
     if (isLoading || !data) {
         return (
-            <div className='flex h-full max-h-[100vh-64] flex-1 flex-col gap-2 justify-end-safe overflow-y-auto rounded-xl p-4'>
+            <div className='flex h-full max-h-screen flex-1 flex-col gap-2 justify-end-safe overflow-y-auto rounded-xl p-4'>
                 <div>
                     <Skeleton className='h-10 max-w-[10%] ml-auto' />
                 </div>
@@ -72,7 +101,7 @@ export default function Messages() {
 
     if (!data.pages.length) {
         return (
-            <div className='flex h-full max-h-[100vh-64] flex-1 flex-col gap-2 justify-end-safe overflow-y-auto rounded-xl p-4'>
+            <div className='flex h-full max-h-screen flex-1 flex-col gap-2 justify-end-safe overflow-y-auto rounded-xl p-4'>
                 <p className='text-muted-foreground text-center'>Say hello to start a conversation.</p>
             </div>
         )
@@ -82,8 +111,21 @@ export default function Messages() {
         <MessageScrollerContent className='justify-end gap-2 py-4 px-2'>
             {isFetchingPreviousPage && <p className='text-center text-muted-foreground py-2'>Loading...</p>}
 
-            {data.pages.map(message => (
-                <MessageModel key={message.id} message={message} />
+            {data.pages.map((message, index, messages) => (
+                <Fragment key={message.id}>
+                    {(
+                        (index !== 0 && areSameDate(message.date, messages[index - 1].date))
+                        || !index && !hasPreviousPage
+                    ) && (
+                        <MessageScrollerItem>
+                            <Marker variant='separator'>
+                                <MarkerContent>{getDateLabel(message.date)}</MarkerContent>
+                            </Marker>
+                        </MessageScrollerItem>
+                    )}
+
+                    <MessageModel message={message} />
+                </Fragment>
             ))}
         </MessageScrollerContent>
     )
