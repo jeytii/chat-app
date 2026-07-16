@@ -58,6 +58,11 @@ export default function MessageBox() {
                         gif: null,
                         image_url: null,
                         from_self: true,
+                        date: new Date().toLocaleString('en-PH', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            year: 'numeric',
+                        }),
                     }
 
                     // Insert new item into a new page if the latest one has reached the pagination count
@@ -94,11 +99,11 @@ export default function MessageBox() {
                 },
             )
 
-            setTimeout(() => [
+            setTimeout(() => {
                 scrollToEnd({
                     behavior: 'instant',
-                }),
-            ])
+                })
+            })
 
             setMessage('')
 

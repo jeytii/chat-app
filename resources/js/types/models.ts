@@ -23,6 +23,7 @@ export type Message = {
     gif: string | null;
     image_url: string | null;
     from_self: boolean;
+    date: string;
 }
 
 export type MessageResponse = {

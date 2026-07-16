@@ -22,6 +22,7 @@ class MessageResource extends JsonResource
             'gif' => $this->gif,
             'image_url' => $this->image ? Storage::url($this->image) : null,
             'from_self' => $this->sender_id === auth()->id(),
+            'date' => $this->created_at->format('Y-m-d'),
         ];
     }
 }
