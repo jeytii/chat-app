@@ -1,5 +1,6 @@
 import type { ImgHTMLAttributes, SVGAttributes } from 'react'
 import { useEffect, useState } from 'react'
+
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface Props extends ImgHTMLAttributes<HTMLImageElement> {

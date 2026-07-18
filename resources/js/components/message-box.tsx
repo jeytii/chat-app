@@ -10,6 +10,7 @@ import { Image, SendHorizonal, Smile } from 'lucide-react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Remarkable } from 'remarkable'
+
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppearance } from '@/hooks/use-appearance'

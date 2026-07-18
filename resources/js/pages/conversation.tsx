@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react'
 import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
+
 import MessageBox from '@/components/message-box'
 import Messages from '@/components/messages'
 import { DefaultPhoto } from '@/components/photo'

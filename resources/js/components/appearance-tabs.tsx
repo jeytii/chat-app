@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { Monitor, Moon, Sun } from 'lucide-react'
 import type { HTMLAttributes } from 'react'
+
 import type { Appearance } from '@/hooks/use-appearance'
 import { useAppearance } from '@/hooks/use-appearance'
 import { cn } from '@/lib/utils'
@@ -28,6 +29,7 @@ export default function AppearanceToggleTab({
             {tabs.map(({ value, icon: Icon, label }) => (
                 <button
                     key={value}
+                    type='button'
                     onClick={() => updateAppearance(value)}
                     className={cn(
                         'flex items-center rounded-md px-3.5 py-1.5 transition-colors',

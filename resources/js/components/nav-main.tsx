@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
 import { EllipsisVertical } from 'lucide-react'
+
 import { DefaultPhoto, Photo } from '@/components/photo'
 import {
     SidebarGroup,

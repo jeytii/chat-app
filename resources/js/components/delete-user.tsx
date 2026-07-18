@@ -1,5 +1,6 @@
 import { Form } from '@inertiajs/react'
 import { useRef } from 'react'
+
 import Heading from '@/components/heading'
 import InputError from '@/components/input-error'
 import PasswordInput from '@/components/password-input'

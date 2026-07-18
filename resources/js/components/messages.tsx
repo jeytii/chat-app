@@ -3,6 +3,7 @@ import type { InfiniteData } from '@tanstack/react-query'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { Fragment, useEffect } from 'react'
+
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent } from '@/components/ui/marker'
 import { MessageScrollerContent, MessageScrollerItem, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
@@ -113,10 +114,7 @@ export default function Messages() {
 
             {data.pages.map((message, index, messages) => (
                 <Fragment key={message.id}>
-                    {(
-                        (index !== 0 && areSameDate(message.date, messages[index - 1].date))
-                        || !index && !hasPreviousPage
-                    ) && (
+                    {((index !== 0 && areSameDate(message.date, messages[index - 1].date)) || (!index && !hasPreviousPage)) && (
                         <MessageScrollerItem>
                             <Marker variant='separator'>
                                 <MarkerContent>{getDateLabel(message.date)}</MarkerContent>
