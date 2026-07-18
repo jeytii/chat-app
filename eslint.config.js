@@ -1,9 +1,9 @@
 import js from '@eslint/js'
 import stylistic from '@stylistic/eslint-plugin'
 import queryPlugin from '@tanstack/eslint-plugin-query'
-import importPlugin from 'eslint-plugin-import'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
+import importSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
 import typescript from 'typescript-eslint'
 
@@ -51,47 +51,11 @@ export default [
     },
     {
         plugins: {
-            import: importPlugin,
-        },
-        settings: {
-            'import/resolver': {
-                typescript: {
-                    alwaysTryTypes: true,
-                    project: './tsconfig.json',
-                },
-                node: true,
-            },
+            'import-sort': importSort,
         },
         rules: {
-            '@typescript-eslint/no-explicit-any': 'off',
-            '@typescript-eslint/consistent-type-imports': [
-                'error',
-                {
-                    prefer: 'type-imports',
-                    fixStyle: 'separate-type-imports',
-                },
-            ],
-            'import/order': [
-                'error',
-                {
-                    groups: [
-                        'builtin',
-                        'external',
-                        'internal',
-                        'parent',
-                        'sibling',
-                        'index',
-                    ],
-                    alphabetize: {
-                        order: 'asc',
-                        caseInsensitive: true,
-                    },
-                },
-            ],
-            'import/consistent-type-specifier-style': [
-                'error',
-                'prefer-top-level',
-            ],
+            'import-sort/imports': 'error',
+            'import-sort/exports': 'error',
         },
     },
     {

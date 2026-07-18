@@ -2,5 +2,6 @@ allowBuilds:
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - eslint@10.6.0
+  - eslint-plugin-simple-import-sort@14.0.0
 publicHoistPattern:
   - '@inertiajs/core'
