@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react'
-
 import { Attachment, AttachmentMedia } from '@/components/ui/attachment'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
@@ -13,24 +11,14 @@ export default function MessageModel({ message }: { message: MessageType }) {
         <MessageScrollerItem messageId={message.id.toString()}>
             <Message align={message.from_self ? 'end' : 'start'}>
                 <MessageContent className='gap-1'>
-                    <Bubble variant={message.from_self ? 'default' : 'muted'}>
-                        <BubbleContent dangerouslySetInnerHTML={{ __html: message.content as string }} className='space-y-2' />
-                    </Bubble>
-
-                    {!!message.image_url && (
-                        <Image imageUrl={message.image_url} />
+                    {!!message.content && (
+                        <Bubble variant={message.from_self ? 'default' : 'muted'}>
+                            <BubbleContent dangerouslySetInnerHTML={{ __html: message.content }} className='space-y-2' />
+                        </Bubble>
                     )}
 
-                    {!!message.gif && (
-                        <Attachment orientation='vertical' className='cursor-pointer w-[20vw]'>
-                            <div className='p-2'>
-                                <img
-                                    src={message.gif}
-                                    alt=''
-                                    className='block w-full object-cover rounded-md'
-                                />
-                            </div>
-                        </Attachment>
+                    {(message.is_placeholder_with_image || !!message.gif || !!message.image_url) && (
+                        <Media message={message} />
                     )}
                 </MessageContent>
             </Message>
@@ -38,33 +26,10 @@ export default function MessageModel({ message }: { message: MessageType }) {
     )
 }
 
-function Image({ imageUrl }: { imageUrl: string }) {
-    const [state, setState] = useState<'uploading' | 'error' | 'done'>('uploading')
-    const [blobUrl, setBlobUrl] = useState<string>()
-
-    useEffect(() => {
-        fetch(imageUrl)
-            .then(response => response.blob())
-            .then(blob => {
-                const url = URL.createObjectURL(blob)
-
-                setBlobUrl(url)
-                setState('done')
-            })
-            .catch(() => {
-                setState('error')
-            })
-
-        return () => {
-            if (blobUrl) {
-                URL.revokeObjectURL(blobUrl)
-            }
-        }
-    }, [imageUrl, blobUrl])
-
-    if (state === 'uploading') {
+function Media({ message }: { message: MessageType }) {
+    if (message.is_placeholder_with_image) {
         return (
-            <Attachment orientation='vertical' state={state}>
+            <Attachment orientation='vertical' state='uploading'>
                 <AttachmentMedia>
                     <Spinner />
                 </AttachmentMedia>
@@ -72,25 +37,25 @@ function Image({ imageUrl }: { imageUrl: string }) {
         )
     }
 
+    if (message.gif) {
+        return (
+            <Attachment orientation='vertical' className='cursor-pointer w-[20vw]'>
+                <div className='p-2'>
+                    <img src={message.gif} className='block w-full object-cover rounded-md' />
+                </div>
+            </Attachment>
+        )
+    }
+
     return (
         <Dialog>
             <DialogTrigger>
-                <Attachment orientation='vertical' className='cursor-pointer w-[20vw]'>
-                    <div className='p-2'>
-                        <img
-                            src={blobUrl}
-                            alt=''
-                            className='block w-full object-cover rounded-md'
-                        />
-                    </div>
+                <Attachment orientation='vertical' className='cursor-pointer w-full max-w-[70vw] md:max-w-[50vw] lg:max-w-120'>
+                    <img src={message.image_url as string} className='block w-full max-h-120 object-cover rounded-md' />
                 </Attachment>
             </DialogTrigger>
-            <DialogContent>
-                <img
-                    src={blobUrl}
-                    alt=''
-                    className='block w-full'
-                />
+            <DialogContent className='w-auto! max-w-full! sm:max-w-full!'>
+                <img src={message.image_url as string} className='block min-size-full max-w-[90vw] max-h-[90vh]' />
             </DialogContent>
         </Dialog>
     )

@@ -6,7 +6,10 @@ use App\Http\Resources\MessageResource;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
 
 class MessageController extends Controller
@@ -36,10 +39,26 @@ class MessageController extends Controller
     {
         $data = $request->validate([
             'conversation_id' => ['bail', 'required', 'integer', 'exists:conversations,id'],
-            'message' => ['required', 'string'],
+            'content' => ['nullable', 'required_without:file', 'string'],
+            'file' => [
+                'nullable',
+                'required_without:content',
+                Rule::anyOf([
+                    ['image', 'mimes:jpg,png,webp'],
+                    ['string', 'starts_with:https://', 'ends_with:.gif'],
+                ]),
+            ],
         ]);
 
-        $content = Str::markdown($data['message'], [
+        if ($data['file'] instanceof UploadedFile) {
+            $data['image'] = $data['file']->store('conversations/'.$data['conversation_id']);
+        }
+
+        if (\is_string($data['file'])) {
+            $data['gif'] = $data['file'];
+        }
+
+        $data['content'] = Str::markdown($data['content'], [
             'html_input' => 'escape',
             'allow_unsafe_links' => false,
             'renderer' => [
@@ -54,10 +73,9 @@ class MessageController extends Controller
             new ExternalLinkExtension,
         ]);
 
-        $message = auth()->user()->messages()->create([
-            'conversation_id' => $data['conversation_id'],
-            'content' => $content,
-        ]);
+        $message = auth()->user()->messages()->create(
+            Arr::only($data, ['conversation_id', 'content', 'image', 'gif']),
+        );
 
         return $message->toResource();
     }

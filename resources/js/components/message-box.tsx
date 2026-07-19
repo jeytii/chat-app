@@ -6,11 +6,12 @@ import type { AxiosResponse } from 'axios'
 import axios from 'axios'
 import type { EmojiClickData } from 'emoji-picker-react'
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
-import { Image, SendHorizonal, Smile } from 'lucide-react'
+import { Image, SendHorizonal, Smile, X } from 'lucide-react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Remarkable } from 'remarkable'
 
+import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppearance } from '@/hooks/use-appearance'
@@ -23,25 +24,38 @@ type PageProps = {
 export default function MessageBox() {
     const { id } = usePage<PageProps>().props.conversation
     const [message, setMessage] = useState<string>('')
+    const [image, setImage] = useState<File | string | null>(null)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
     const queryClient = useQueryClient()
     const textarea = useRef<HTMLTextAreaElement>(null)
     const { scrollToEnd } = useMessageScroller()
     const { appearance } = useAppearance()
+    const previewImage = useRef<string | null>(null)
     const queryKey = ['messages', id]
 
     useEffect(() => {
         return () => {
             setMessage('')
+            setImage(null)
+            setShowEmojis(false)
+
+            if (previewImage.current) {
+                URL.revokeObjectURL(previewImage.current)
+                previewImage.current = null
+            }
         }
     }, [])
 
-    const { mutate } = useMutation<AxiosResponse<Message>, Error, string, { id: number }>({
-        mutationFn: message => axios.post('/messages', {
-            conversation_id: id,
-            message,
+    const { mutate } = useMutation<
+        AxiosResponse<Message>,
+        Error,
+        { conversation_id: number; content: string; file: File | string | null; },
+        { id: number }
+    >({
+        mutationFn: data => axios.post('/messages', data, {
+            headers: { 'Content-Type': 'multipart/form-data' },
         }),
-        async onMutate() {
+        async onMutate({ content, file }) {
             await queryClient.cancelQueries({ queryKey })
 
             const itemId = Math.floor(Math.random() * 1000000000)
@@ -55,7 +69,7 @@ export default function MessageBox() {
 
                     const newItem = {
                         id: itemId,
-                        content: new Remarkable({ html: false, breaks: true }).render(message),
+                        content: new Remarkable({ html: false, breaks: true }).render(content),
                         gif: null,
                         image_url: null,
                         from_self: true,
@@ -64,6 +78,7 @@ export default function MessageBox() {
                             day: '2-digit',
                             year: 'numeric',
                         }),
+                        is_placeholder_with_image: !!file,
                     }
 
                     // Insert new item into a new page if the latest one has reached the pagination count
@@ -107,6 +122,12 @@ export default function MessageBox() {
             })
 
             setMessage('')
+            setImage(null)
+
+            if (previewImage.current) {
+                URL.revokeObjectURL(previewImage.current)
+                previewImage.current = null
+            }
 
             return { id: itemId }
         },
@@ -171,6 +192,27 @@ export default function MessageBox() {
         setShowEmojis(true)
     }
 
+    function upload(event: ChangeEvent<HTMLInputElement>) {
+        const file = (event.target.files as FileList)[0]
+
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            return
+        }
+
+        if (previewImage.current?.endsWith('.gif')) {
+            URL.revokeObjectURL(previewImage.current)
+        }
+
+        setImage(file)
+        previewImage.current = URL.createObjectURL(file)
+    }
+
+    function removeUpload() {
+        setImage(null)
+        URL.revokeObjectURL(previewImage.current as string)
+        previewImage.current = null
+    }
+
     function handleSubmit(event: KeyboardEvent<HTMLTextAreaElement>) {
         if (!event.shiftKey && event.key === 'Enter') {
             event.preventDefault()
@@ -181,11 +223,15 @@ export default function MessageBox() {
     function send() {
         const value = message.trim()
 
-        if (!value.length) {
+        if (!value.length && !image) {
             return
         }
 
-        mutate(value)
+        mutate({
+            conversation_id: id,
+            content: value,
+            file: image,
+        })
     }
 
     return (
@@ -225,8 +271,20 @@ export default function MessageBox() {
                             />
                         </PopoverContent>
                     </Popover>
-                    <InputGroupButton variant='ghost' size='icon-xs'>
-                        <Image />
+                    <InputGroupButton
+                        variant='ghost'
+                        size='icon-xs'
+                        asChild
+                    >
+                        <label>
+                            <Image />
+                            <input
+                                type='file'
+                                accept='image/jpeg, image/png, image/webp'
+                                className='hidden'
+                                onChange={upload}
+                            />
+                        </label>
                     </InputGroupButton>
                     <InputGroupButton variant='ghost' size='xs'>
                         GIF
@@ -234,7 +292,7 @@ export default function MessageBox() {
                     <InputGroupButton
                         variant='ghost'
                         size='icon-xs'
-                        disabled={!message.trim().length}
+                        disabled={!message.trim().length && !image}
                         className='ml-auto'
                         onClick={send}
                     >
@@ -242,6 +300,27 @@ export default function MessageBox() {
                     </InputGroupButton>
                 </InputGroupAddon>
             </InputGroup>
+
+            {!!image && (
+                <div className='px-4 pb-4'>
+                    <div className='relative inline-block'>
+                        {typeof image === 'string' ? (
+                            <img src={image} className='block max-w-[100px] max-h-[100px] rounded' />
+                        ) : (
+                            <img src={previewImage.current as string} className='block max-w-[100px] max-h-[100px] rounded' />
+                        )}
+
+                        <Button
+                            variant='outline'
+                            size='icon-xs'
+                            className='absolute -top-2.5 -right-2.5 bg-background!'
+                            onClick={removeUpload}
+                        >
+                            <X />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
