@@ -56,7 +56,13 @@ async function getMessages(pageParam: string | null, conversationId: number, sig
 
 export default function Messages() {
     const { id } = usePage<PageProps>().props.conversation
-    const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<MessageResponse, Error, InfiniteData<Message>, readonly unknown[], string | null>({
+    const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
+        MessageResponse,
+        Error,
+        InfiniteData<Message>,
+        readonly unknown[],
+        string | null
+    >({
         queryKey: ['messages', id],
         queryFn: ({ pageParam, signal }) => getMessages(pageParam, id, signal),
         initialPageParam: null,
@@ -71,10 +77,10 @@ export default function Messages() {
     const { start, end } = useMessageScrollerScrollable()
 
     useEffect(() => {
-        if (end && !start && !isFetchingPreviousPage) {
+        if (end && !start && hasPreviousPage && !isFetchingPreviousPage) {
             fetchPreviousPage()
         }
-    }, [start, end, isFetchingPreviousPage, fetchPreviousPage])
+    }, [start, end, hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage])
 
     if (isLoading || !data) {
         return (
