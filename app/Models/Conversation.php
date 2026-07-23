@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
+/**
+ * @property int $accepter_id
+ * @property int $requestor_id
+ */
 #[Table(name: 'conversations', incrementing: true)]
 class Conversation extends Pivot
 {
