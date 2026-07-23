@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/react'
+import { configureEcho } from '@laravel/echo-react'
 
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -39,3 +40,7 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme()
+
+configureEcho({
+    broadcaster: 'reverb',
+})
