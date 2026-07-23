@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react'
+import { useSocketId } from '@laravel/echo-react'
 import { useMessageScroller } from '@shadcn/react/message-scroller'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppearance } from '@/hooks/use-appearance'
+import { useInsertMessage } from '@/hooks/use-insert-message'
 import type { Message, MessageResponse } from '@/types/models'
 
 type PageProps = {
@@ -27,10 +29,12 @@ export default function MessageBox() {
     const [image, setImage] = useState<File | string | null>(null)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
     const queryClient = useQueryClient()
+    const insertMessage = useInsertMessage()
     const textarea = useRef<HTMLTextAreaElement>(null)
     const { scrollToEnd } = useMessageScroller()
     const { appearance } = useAppearance()
     const previewImage = useRef<string | null>(null)
+    const socketId = useSocketId()
     const queryKey = ['messages', id]
 
     useEffect(() => {
@@ -53,73 +57,35 @@ export default function MessageBox() {
         { id: number }
     >({
         mutationFn: data => axios.post('/messages', data, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'X-Socket-ID': socketId,
+            },
         }),
         async onMutate({ content, file }) {
             await queryClient.cancelQueries({ queryKey })
 
             const itemId = Math.floor(Math.random() * 1000000000)
 
-            queryClient.setQueryData<InfiniteData<MessageResponse>>(
-                queryKey,
-                current => {
-                    if (!current) {
-                        return current
-                    }
-
-                    const newItem = {
-                        id: itemId,
-                        content: new Remarkable({ html: false, breaks: true }).render(content),
-                        gif: null,
-                        image_url: null,
-                        from_self: true,
-                        date: new Date().toLocaleString('en-PH', {
-                            month: '2-digit',
-                            day: '2-digit',
-                            year: 'numeric',
-                        }),
-                        is_placeholder_with_image: !!file,
-                    }
-
-                    // Insert new item into a new page if the latest one has reached the pagination count
-                    if (current.pages[current.pages.length - 1].items.length >= 20) {
-                        return {
-                            pageParams: [
-                                null,
-                                ...current.pageParams,
-                            ],
-                            pages: [
-                                ...current.pages,
-                                {
-                                    items: [newItem],
-                                    next_cursor: null,
-                                },
-                            ],
-                        }
-                    }
-
-                    // Else, push it into the latest page
-                    return {
-                        ...current,
-                        pages: current.pages.map((page, index, pages) => {
-                            if (index === pages.length - 1) {
-                                return {
-                                    ...page,
-                                    items: [...page.items, newItem],
-                                }
-                            }
-
-                            return page
-                        }),
-                    }
-                },
-            )
+            insertMessage(id, {
+                id: itemId,
+                content: new Remarkable({ html: false, breaks: true }).render(content),
+                gif: null,
+                image_url: null,
+                from_self: true,
+                date: new Date().toLocaleString('en-PH', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    year: 'numeric',
+                }),
+                is_placeholder_with_image: !!file,
+            })
 
             setTimeout(() => {
                 scrollToEnd({
                     behavior: 'instant',
                 })
-            })
+            }, 0)
 
             setMessage('')
             setImage(null)
@@ -131,7 +97,7 @@ export default function MessageBox() {
 
             return { id: itemId }
         },
-        onSuccess({ data }, variables, context) {
+        onSuccess({ data }, payload, context) {
             queryClient.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => {
                 if (!current) {
                     return current

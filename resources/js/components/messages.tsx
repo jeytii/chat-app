@@ -1,13 +1,15 @@
 import { usePage } from '@inertiajs/react'
+import { useEcho } from '@laravel/echo-react'
 import type { InfiniteData } from '@tanstack/react-query'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Fragment, useEffect } from 'react'
 
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent } from '@/components/ui/marker'
-import { MessageScrollerContent, MessageScrollerItem, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
+import { MessageScrollerContent, MessageScrollerItem, useMessageScroller, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useInsertMessage } from '@/hooks/use-insert-message'
 import type { Message, MessageResponse } from '@/types/models'
 
 type PageProps = {
@@ -56,6 +58,7 @@ async function getMessages(pageParam: string | null, conversationId: number, sig
 
 export default function Messages() {
     const { id } = usePage<PageProps>().props.conversation
+
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
         Error,
@@ -74,13 +77,39 @@ export default function Messages() {
         }),
     })
 
+    const queryClient = useQueryClient()
+    const insertMessage = useInsertMessage()
+    const { scrollToEnd } = useMessageScroller()
     const { start, end } = useMessageScrollerScrollable()
+
+    const { stopListening } = useEcho<Message>(`conversation.${id}`, 'MessageSent', async message => {
+        await queryClient.cancelQueries({ queryKey: ['messages', id] })
+
+        insertMessage(id, message, true)
+
+        await queryClient.invalidateQueries({
+            queryKey: ['messages', id],
+            refetchType: 'none',
+        })
+
+        setTimeout(() => {
+            scrollToEnd({
+                behavior: 'instant',
+            })
+        }, 0)
+    })
 
     useEffect(() => {
         if (end && !start && hasPreviousPage && !isFetchingPreviousPage) {
             fetchPreviousPage()
         }
     }, [start, end, hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage])
+
+    useEffect(() => {
+        return () => {
+            stopListening()
+        }
+    }, [stopListening])
 
     if (isLoading || !data) {
         return (

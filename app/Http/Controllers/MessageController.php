@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Http\Resources\MessageResource;
 use App\Models\Message;
 use Illuminate\Http\Request;
@@ -50,8 +51,10 @@ class MessageController extends Controller
             ],
         ]);
 
+        $conversationId = $data['conversation_id'];
+
         if ($data['file'] instanceof UploadedFile) {
-            $data['image'] = $data['file']->store('conversations/'.$data['conversation_id']);
+            $data['image'] = $data['file']->store("conversations/{$conversationId}");
         }
 
         if (\is_string($data['file'])) {
@@ -73,10 +76,15 @@ class MessageController extends Controller
             new ExternalLinkExtension,
         ]);
 
-        $message = auth()->user()->messages()->create(
-            Arr::only($data, ['conversation_id', 'content', 'image', 'gif']),
-        );
+        $message = auth()->user()
+            ->messages()
+            ->create(
+                Arr::only($data, ['conversation_id', 'content', 'image', 'gif']),
+            )
+            ->toResource();
 
-        return $message->toResource();
+        broadcast(new MessageSent($conversationId, $message->toArray($request)))->toOthers();
+
+        return $message;
     }
 }
