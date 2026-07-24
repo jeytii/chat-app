@@ -7,8 +7,8 @@ interface Props extends ImgHTMLAttributes<HTMLImageElement> {
     size?: number;
 }
 
-export function Photo({ alt, size = 36, ...props }: Props) {
-    const [status, setStatus] = useState<'loading' | 'broken' | 'loaded'>('loading')
+export function Photo({ size = 36, ...props }: Props) {
+    const [status, setStatus] = useState<'loading' | 'broken' | 'loaded'>(props.src ? 'loading' : 'broken')
 
     useEffect(() => {
         if (!props.src) {
@@ -42,10 +42,10 @@ export function Photo({ alt, size = 36, ...props }: Props) {
     }
 
     if (status === 'loading') {
-        return <Skeleton className='size-9' />
+        return <Skeleton style={{ width: `${size}px`, height: `${size}px` }} />
     }
 
-    return <img {...props} alt={alt} />
+    return <img {...props} />
 }
 
 export function DefaultPhoto(props: SVGAttributes<SVGElement>) {
