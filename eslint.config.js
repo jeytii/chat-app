@@ -84,7 +84,7 @@ export default [
             '@stylistic/jsx-tag-spacing': 'error',
             '@stylistic/jsx-max-props-per-line': ['error', {
                 maximum: {
-                    single: 2,
+                    single: 3,
                     multi: 1,
                 },
             }],

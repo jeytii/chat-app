@@ -13,13 +13,12 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel'
 createInertiaApp({
     title: title => (title ? `${title} - ${appName}` : appName),
     layout: name => {
-
         if (name.startsWith('auth/')) {
             return AuthLayout
         }
 
         if (name.startsWith('settings/')) {
-            return [AppLayout, SettingsLayout]
+            return SettingsLayout
         }
 
         return AppLayout
