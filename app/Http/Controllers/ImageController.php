@@ -4,19 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\Message;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ImageController extends Controller
 {
-    public function __invoke(Message $message): BinaryFileResponse
+    public function __invoke(string $path): StreamedResponse
     {
-        abort_if($message->sender_id !== auth()->id(), 403);
+        $message = Message::query()
+            ->where('image', 'like', "%{$path}%")
+            ->with('conversation')
+            ->firstOrFail();
 
-        $path = Storage::path($message->image);
+        $authId = auth()->id();
 
-        return response()->file($path, [
-            'Content-Type' => Storage::mimeType($path),
-            'Cache-Control' => 'public, max-age=86400',
-        ]);
+        abort_if(
+            $message->conversation->accepter_id !== $authId && $message->conversation->requestor_id !== $authId,
+            403,
+        );
+
+        return Storage::response(
+            $message->image,
+            headers: [
+                'Cache-Control' => 'public, max-age=86400',
+            ]
+        );
     }
 }

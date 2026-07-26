@@ -14,7 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('messages', MessageController::class)
         ->only(['index', 'store']);
 
-    Route::get('image/{message:image}', ImageController::class);
+    Route::get('image/{path}', ImageController::class)->name('image');
 });
 
 require __DIR__.'/settings.php';
