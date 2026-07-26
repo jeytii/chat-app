@@ -8,10 +8,16 @@ interface Props extends ImgHTMLAttributes<HTMLImageElement> {
 }
 
 export function Photo({ size = 36, ...props }: Props) {
-    const [status, setStatus] = useState<'loading' | 'broken' | 'loaded'>(props.src ? 'loading' : 'broken')
+    const [status, setStatus] = useState<'loading' | 'broken' | 'loaded'>('loading')
 
     useEffect(() => {
         if (!props.src) {
+            return
+        }
+
+        if (!props.src.startsWith('https://')) {
+            setStatus.call(null, 'loaded')
+
             return
         }
 
@@ -33,7 +39,7 @@ export function Photo({ size = 36, ...props }: Props) {
         }
     }, [props.src, size])
 
-    if (status === 'broken') {
+    if (!props.src || status === 'broken') {
         return <DefaultPhoto
             width={size}
             height={size}
@@ -42,7 +48,7 @@ export function Photo({ size = 36, ...props }: Props) {
     }
 
     if (status === 'loading') {
-        return <Skeleton style={{ width: `${size}px`, height: `${size}px` }} />
+        return <Skeleton {...props} />
     }
 
     return <img {...props} />

@@ -36,7 +36,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        /** @var User */
+        /** @var User|null */
         $user = $request->user();
 
         return [

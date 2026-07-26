@@ -96,7 +96,7 @@ export function NavMain() {
                                     </div>
                                     <div>
                                         <h5>{conversation.user.name}</h5>
-                                        <p className='text-xs text-muted-foreground'>Lorem ipsum</p>
+                                        <p className='text-xs text-muted-foreground'>{conversation.user.username}</p>
                                     </div>
                                 </Link>
                             </SidebarMenuButton>
