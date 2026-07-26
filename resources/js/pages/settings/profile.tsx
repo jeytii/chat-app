@@ -1,11 +1,9 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react'
-import { Trash2, Undo2, Upload } from 'lucide-react'
-import { ChangeEvent, useMemo, useState } from 'react'
 
 import DeleteUser from '@/components/delete-user'
 import Heading from '@/components/heading'
+import { ImageUploader } from '@/components/image-uploader'
 import InputError from '@/components/input-error'
-import { Photo } from '@/components/photo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,41 +16,6 @@ export default function Profile({
     status?: string;
 }) {
     const { user } = usePage().props.auth
-    const [currentImage, setCurrentImage] = useState<string | null>(user.image_url)
-    const [image, setImage] = useState<string | null>(null)
-    const profilePhoto = useMemo(() => {
-        if (!currentImage && !image) {
-            return null
-        }
-
-        if (image) {
-            return image
-        }
-
-        return undefined
-    }, [image, currentImage])
-
-    function upload(event: ChangeEvent<HTMLInputElement>) {
-        const file = (event.target.files as FileList)[0]
-
-        if (image) {
-            URL.revokeObjectURL(image)
-        }
-
-        setImage(URL.createObjectURL(file))
-    }
-
-    function resetImage() {
-        if (image) {
-            URL.revokeObjectURL(image)
-            setImage(null)
-        }
-    }
-
-    function removeImage() {
-        resetImage()
-        setCurrentImage(null)
-    }
 
     return (
         <>
@@ -63,14 +26,12 @@ export default function Profile({
             <div className='space-y-6'>
                 <Heading variant='small' title='Profile information' />
 
+                <ImageUploader src={user.image_url as string} />
+
                 <Form
                     action='/settings/profile'
                     method='post'
-                    transform={data => ({
-                        ...data,
-                        image: profilePhoto,
-                        _method: 'PATCH',
-                    })}
+                    transform={data => ({ ...data, _method: 'PATCH' })}
                     options={{
                         preserveScroll: true,
                     }}
@@ -78,54 +39,6 @@ export default function Profile({
                 >
                     {({ processing, errors }) => (
                         <>
-                            <div className='flex items-center gap-4'>
-                                {image ? (
-                                    <img
-                                        src={image}
-                                        width={120}
-                                        height={120}
-                                        className='size-[120px] rounded-full'
-                                    />
-                                ) : (
-                                    <Photo src={currentImage as string} size={120} />
-                                )}
-
-                                <Button type='button' size='sm' asChild>
-                                    <label>
-                                        <input
-                                            type='file'
-                                            accept='image/jpeg, image/png, image/webp'
-                                            className='hidden'
-                                            onChange={upload}
-                                        />
-                                        <Upload />
-                                        <span>Upload</span>
-                                    </label>
-                                </Button>
-                                {!!image && (
-                                    <Button
-                                        type='button'
-                                        variant='outline'
-                                        size='sm'
-                                        onClick={resetImage}
-                                    >
-                                        <Undo2 />
-                                        <span>Reset</span>
-                                    </Button>
-                                )}
-                                {!!currentImage && (
-                                    <Button
-                                        type='button'
-                                        variant='destructive'
-                                        size='sm'
-                                        onClick={removeImage}
-                                    >
-                                        <Trash2 />
-                                        <span>Remove</span>
-                                    </Button>
-                                )}
-                            </div>
-
                             <div className='grid gap-2'>
                                 <Label htmlFor='name'>Name</Label>
 

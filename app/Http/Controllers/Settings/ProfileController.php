@@ -10,8 +10,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,27 +40,45 @@ class ProfileController extends Controller
             $data['email_verified_at'] = null;
         }
 
-        if ($image = $request->image('image')) {
-            $data['image'] = $image?->store("profile_photos/{$user->id}");
-        }
+        $user->update($data);
 
-        DB::beginTransaction();
-
-        try {
-            $user->update($data);
-
-            DB::commit();
-
-            Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            if ($image = $data['image']) {
-                Storage::delete($image);
-            }
-        }
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 
         return to_route('profile.edit');
+    }
+
+    public function changeProfilePhoto(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'image' => ['required', 'image', 'mimes:jpg,png,webp'],
+            'rect' => ['required', 'array'],
+            'rect.width' => ['required', 'numeric'],
+            'rect.height' => ['required', 'numeric'],
+            'rect.x' => ['required', 'numeric'],
+            'rect.y' => ['required', 'numeric'],
+        ]);
+
+        /** @var User */
+        $user = $request->user();
+        $dir = "profile_photos/{$user->id}";
+        $filename = Str::random(40).'.webp';
+
+        if ($user->update(['image' => "{$dir}/{$filename}"])) {
+            $image = $request->image('image');
+
+            $width = ($image->width() * $data['rect']['width']) / 100;
+            $height = ($image->height() * $data['rect']['height']) / 100;
+            $x = ($image->width() * $data['rect']['x']) / 100;
+            $y = ($image->height() * $data['rect']['y']) / 100;
+
+            $image->crop($width, $height, $x, $y)
+                ->toWebp()
+                ->storeAs($dir, $filename, 'public');
+
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile picture updated.')]);
+        }
+
+        return back();
     }
 
     /**
