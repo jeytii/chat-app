@@ -63,6 +63,7 @@
         "radix-ui": "^1.6.2",
         "react": "^19.2",
         "react-dom": "^19.2",
+        "react-easy-crop": "^6.2.2",
         "remarkable": "^2.0.1",
         "sonner": "^2.0",
         "tailwind-merge": "^3.6",
