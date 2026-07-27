@@ -3,13 +3,15 @@ import { useEcho } from '@laravel/echo-react'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { Fragment, useEffect } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent } from '@/components/ui/marker'
 import { MessageScrollerContent, MessageScrollerItem, useMessageScroller, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useInsertMessage } from '@/hooks/use-insert-message'
+import { useDebounce } from '@/hooks/use-limit'
+import { toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
 
 type PageProps = {
@@ -33,11 +35,7 @@ function getDateLabel(date: string) {
         return 'Yesterday'
     }
 
-    return givenDate.toLocaleDateString('en-PH', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-    })
+    return toReadableDate(givenDate, 'short')
 }
 
 function areSameDate(date: string, previousDate: string) {
@@ -57,7 +55,8 @@ async function getMessages(pageParam: string | null, conversationId: number, sig
 }
 
 export default function Messages() {
-    const { id } = usePage<PageProps>().props.conversation
+    const { conversation, auth } = usePage<PageProps>().props
+    const [typing, setTyping] = useState<boolean>(false)
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
@@ -66,8 +65,8 @@ export default function Messages() {
         readonly unknown[],
         string | null
     >({
-        queryKey: ['messages', id],
-        queryFn: ({ pageParam, signal }) => getMessages(pageParam, id, signal),
+        queryKey: ['messages', conversation.id],
+        queryFn: ({ pageParam, signal }) => getMessages(pageParam, conversation.id, signal),
         initialPageParam: null,
         getPreviousPageParam: lastPage => lastPage.next_cursor,
         getNextPageParam: () => null,
@@ -81,16 +80,21 @@ export default function Messages() {
     const insertMessage = useInsertMessage()
     const { scrollToEnd } = useMessageScroller()
     const { start, end } = useMessageScrollerScrollable()
+    const { debouncedFn: typingDebouncedFn, stopTimeout: stopTypingDebouncedFn } = useDebounce(1000)
 
-    const { stopListening } = useEcho<Message>(`conversation.${id}`, 'MessageSent', async message => {
-        await queryClient.cancelQueries({ queryKey: ['messages', id] })
+    const { stopListening, channel } = useEcho<Message>(`conversation.${conversation.id}`, 'MessageSent', async message => {
+        await queryClient.cancelQueries({ queryKey: ['messages', conversation.id] })
 
-        insertMessage(id, message, true)
+        insertMessage(conversation.id, message, true)
 
         await queryClient.invalidateQueries({
-            queryKey: ['messages', id],
+            queryKey: ['messages', conversation.id],
             refetchType: 'none',
         })
+
+        setTyping(false)
+
+        stopTypingDebouncedFn()
 
         setTimeout(() => {
             scrollToEnd({
@@ -106,10 +110,21 @@ export default function Messages() {
     }, [start, end, hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage])
 
     useEffect(() => {
+        channel()?.listenForWhisper('typing', ({ username }) => {
+            if (username !== auth.user.username) {
+                setTyping(true)
+
+                typingDebouncedFn(() => {
+                    setTyping(false)
+                })
+            }
+        })
+
         return () => {
             stopListening()
+            channel()?.stopListeningForWhisper('typing')
         }
-    }, [stopListening])
+    }, [auth, channel, stopListening, typingDebouncedFn])
 
     if (isLoading || !data) {
         return (
@@ -160,6 +175,17 @@ export default function Messages() {
                     <MessageModel message={message} />
                 </Fragment>
             ))}
+
+            {typing && (
+                <MessageScrollerItem className='flex gap-1 items-end'>
+                    <p className='text-xs text-muted-foreground'>Typing</p>
+                    <div className='relative flex gap-1 bottom-1'>
+                        <span className='block size-[3.5px] bg-secondary rounded-full animate-[blink_900ms_infinite_linear_300ms]' />
+                        <span className='block size-[3.5px] bg-secondary rounded-full animate-[blink_900ms_infinite_linear_600ms]' />
+                        <span className='block size-[3.5px] bg-secondary rounded-full animate-[blink_900ms_infinite_linear_900ms]' />
+                    </div>
+                </MessageScrollerItem>
+            )}
         </MessageScrollerContent>
     )
 }

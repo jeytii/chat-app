@@ -3,8 +3,7 @@ import { useSocketId } from '@laravel/echo-react'
 import { useMessageScroller } from '@shadcn/react/message-scroller'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { AxiosResponse } from 'axios'
-import axios from 'axios'
+import axios, { type AxiosResponse } from 'axios'
 import type { EmojiClickData } from 'emoji-picker-react'
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
@@ -17,6 +16,8 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } fro
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppearance } from '@/hooks/use-appearance'
 import { useInsertMessage } from '@/hooks/use-insert-message'
+import { useThrottle } from '@/hooks/use-limit'
+import { echo, toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
 
 type PageProps = {
@@ -24,7 +25,7 @@ type PageProps = {
 }
 
 export default function MessageBox() {
-    const { id } = usePage<PageProps>().props.conversation
+    const { conversation, auth } = usePage<PageProps>().props
     const [message, setMessage] = useState<string>('')
     const [image, setImage] = useState<File | string | null>(null)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
@@ -34,8 +35,10 @@ export default function MessageBox() {
     const { scrollToEnd } = useMessageScroller()
     const { appearance } = useAppearance()
     const previewImage = useRef<string | null>(null)
+    const indicateTyping = useThrottle(1000)
     const socketId = useSocketId()
-    const queryKey = ['messages', id]
+    const queryKey = ['messages', conversation.id]
+
 
     useEffect(() => {
         return () => {
@@ -67,18 +70,15 @@ export default function MessageBox() {
 
             const itemId = Math.floor(Math.random() * 1000000000)
 
-            insertMessage(id, {
+            insertMessage(conversation.id, {
                 id: itemId,
                 content: new Remarkable({ html: false, breaks: true }).render(content),
                 gif: null,
                 image_url: null,
                 from_self: true,
-                date: new Date().toLocaleString('en-PH', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    year: 'numeric',
-                }),
-                is_placeholder_with_image: !!file,
+                date: toReadableDate(new Date(), '2-digit'),
+                is_fake: true,
+                has_image: !!file,
             })
 
             setTimeout(() => {
@@ -129,6 +129,13 @@ export default function MessageBox() {
 
     function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
         setMessage(event.target.value)
+
+        indicateTyping(() => {
+            echo.private(`conversation.${conversation.id}`)
+                .whisper('typing', {
+                    username: auth.user.username,
+                })
+        })
     }
 
     function insertEmoji({ emoji }: EmojiClickData): void {
@@ -194,7 +201,7 @@ export default function MessageBox() {
         }
 
         mutate({
-            conversation_id: id,
+            conversation_id: conversation.id,
             content: value,
             file: image,
         })

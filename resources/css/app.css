@@ -183,3 +183,8 @@
         @apply bg-background text-foreground;
     }
 }
+
+@keyframes blink {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
