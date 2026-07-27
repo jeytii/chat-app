@@ -17,7 +17,7 @@ export default function MessageModel({ message }: { message: MessageType }) {
                         </Bubble>
                     )}
 
-                    {(message.is_placeholder_with_image || !!message.gif || !!message.image_url) && (
+                    {((message.is_fake && message.has_image) || !!message.gif || !!message.image_url) && (
                         <Media message={message} />
                     )}
                 </MessageContent>
@@ -27,7 +27,7 @@ export default function MessageModel({ message }: { message: MessageType }) {
 }
 
 function Media({ message }: { message: MessageType }) {
-    if (message.is_placeholder_with_image) {
+    if (message.is_fake && message.has_image) {
         return (
             <Attachment orientation='vertical' state='uploading'>
                 <AttachmentMedia>

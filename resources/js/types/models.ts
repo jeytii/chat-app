@@ -27,7 +27,8 @@ export type Message = {
     image_url: string | null;
     from_self: boolean;
     date: string;
-    is_placeholder_with_image?: boolean;
+    is_fake?: boolean;
+    has_image?: boolean;
 }
 
 export type MessageResponse = {
