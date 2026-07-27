@@ -52,13 +52,14 @@ class MessageController extends Controller
         ]);
 
         $conversationId = $data['conversation_id'];
+        $file = data_get($data, 'file');
 
-        if ($data['file'] instanceof UploadedFile) {
-            $data['image'] = $data['file']->store("conversations/{$conversationId}");
+        if ($file instanceof UploadedFile) {
+            $data['image'] = $file->store("conversations/{$conversationId}");
         }
 
-        if (\is_string($data['file'])) {
-            $data['gif'] = $data['file'];
+        if (\is_string($file)) {
+            $data['gif'] = $file;
         }
 
         $data['content'] = Str::markdown($data['content'], [

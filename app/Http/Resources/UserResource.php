@@ -6,6 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @property string $name
+ * @property string $email
+ * @property string $username
+ * @property ?string $image
+ */
 class UserResource extends JsonResource
 {
     public function __construct(mixed $resource, protected ?int $conversationId = null)

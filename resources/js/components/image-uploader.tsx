@@ -25,7 +25,7 @@ export function ImageUploader({ src }: { src: string }) {
     function set() {
         rect.transform(data => ({
             image,
-            rect: data,
+            crop: data,
             _method: 'PATCH',
         }))
 

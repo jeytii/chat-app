@@ -2,9 +2,18 @@
 
 namespace App\Http\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property int $id
+ * @property int $sender_id
+ * @property ?string $content
+ * @property ?string $gif
+ * @property ?string $image
+ * @property Carbon $created_at
+ */
 class MessageResource extends JsonResource
 {
     /**
@@ -25,6 +34,9 @@ class MessageResource extends JsonResource
         ];
     }
 
+    /**
+     * Transform image path into route.
+     */
     private function getImageUrl(?string $file): ?string
     {
         if (! $file) {

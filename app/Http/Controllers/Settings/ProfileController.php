@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Image\Image;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -51,11 +52,11 @@ class ProfileController extends Controller
     {
         $data = $request->validate([
             'image' => ['required', 'image', 'mimes:jpg,png,webp'],
-            'rect' => ['required', 'array'],
-            'rect.width' => ['required', 'numeric'],
-            'rect.height' => ['required', 'numeric'],
-            'rect.x' => ['required', 'numeric'],
-            'rect.y' => ['required', 'numeric'],
+            'crop' => ['required', 'array'],
+            'crop.width' => ['required', 'numeric'],
+            'crop.height' => ['required', 'numeric'],
+            'crop.x' => ['required', 'numeric'],
+            'crop.y' => ['required', 'numeric'],
         ]);
 
         /** @var User */
@@ -66,13 +67,16 @@ class ProfileController extends Controller
         if ($user->update(['image' => "{$dir}/{$filename}"])) {
             $image = $request->image('image');
 
-            $width = ($image->width() * $data['rect']['width']) / 100;
-            $height = ($image->height() * $data['rect']['height']) / 100;
-            $x = ($image->width() * $data['rect']['x']) / 100;
-            $y = ($image->height() * $data['rect']['y']) / 100;
+            $width = ($image->width() * $data['crop']['width']) / 100;
+            $height = ($image->height() * $data['crop']['height']) / 100;
+            $x = ($image->width() * $data['crop']['x']) / 100;
+            $y = ($image->height() * $data['crop']['y']) / 100;
 
             $image->crop($width, $height, $x, $y)
-                ->toWebp()
+                ->when(
+                    fn (Image $img) => $img->mimeType() !== 'image/webp',
+                    fn (Image $img) => $img->toWebp(),
+                )
                 ->storeAs($dir, $filename, 'public');
 
             Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile picture updated.')]);
