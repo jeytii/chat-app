@@ -7,19 +7,27 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', '/settings/profile');
 
-    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::patch('settings/change-profile-photo', [ProfileController::class, 'changeProfilePhoto'])->name('profile.change-profile-photo');
-});
+    Route::controller(ProfileController::class)->name('profile.')->group(function () {
+        Route::get('settings/profile', 'edit')
+            ->name('edit');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        Route::patch('settings/profile', 'update')
+            ->name('update');
 
-    Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');
+        Route::patch('settings/change-profile-photo', 'changeProfilePhoto')
+            ->name('change-profile-photo');
 
-    Route::put('settings/password', [SecurityController::class, 'update'])
-        ->middleware('throttle:6,1')
-        ->name('user-password.update');
+        Route::delete('settings/profile', 'destroy')
+            ->middleware('verified')
+            ->name('destroy');
+    });
 
-    Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    Route::middleware(['verified'])->controller(SecurityController::class)->group(function () {
+        Route::get('settings/security', 'edit')
+            ->name('security.edit');
+
+        Route::put('settings/password', 'update')
+            ->middleware('throttle:6,1')
+            ->name('user-password.update');
+    });
 });

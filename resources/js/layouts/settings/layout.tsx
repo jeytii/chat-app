@@ -20,11 +20,6 @@ const sidebarNavItems: NavItem[] = [
         href: '/settings/security',
         icon: null,
     },
-    {
-        title: 'Appearance',
-        href: '/settings/appearance',
-        icon: null,
-    },
 ]
 
 export default function SettingsLayout({ children }: PropsWithChildren) {

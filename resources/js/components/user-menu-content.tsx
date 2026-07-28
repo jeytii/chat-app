@@ -1,22 +1,21 @@
 import { Link, router } from '@inertiajs/react'
-import { LogOut, Settings } from 'lucide-react'
+import { LogOut, type LucideIcon, Monitor, Moon, Settings, Sun } from 'lucide-react'
 
-import {
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
-import { UserInfo } from '@/components/user-info'
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { Separator } from '@/components/ui/separator'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { type Appearance, useAppearance } from '@/hooks/use-appearance'
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation'
-import type { User } from '@/types/models'
 
-type Props = {
-    user: User;
-}
-
-export function UserMenuContent({ user }: Props) {
+export function UserMenuContent() {
     const cleanup = useMobileNavigation()
+    const { appearance, updateAppearance } = useAppearance()
+
+    const themes: { value: Appearance; icon: LucideIcon }[] = [
+        { value: 'light', icon: Sun },
+        { value: 'dark', icon: Moon },
+        { value: 'system', icon: Monitor },
+    ]
 
     const handleLogout = () => {
         cleanup()
@@ -25,27 +24,39 @@ export function UserMenuContent({ user }: Props) {
 
     return (
         <>
-            <DropdownMenuLabel className='p-0 font-normal'>
-                <div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
-                    <UserInfo user={user} showEmail={true} />
-                </div>
-            </DropdownMenuLabel>
+            <DropdownMenuItem asChild className='p-0'>
+                <ToggleGroup
+                    value={appearance}
+                    type='single'
+                    size='sm'
+                    className='w-full gap-0'
+                    onValueChange={updateAppearance}
+                >
+                    {themes.map((theme, index, items) => (
+                        <>
+                            <ToggleGroupItem key={theme.value} value={theme.value} className='flex-1 cursor-pointer data-[state=on]:bg-sidebar-accent data-[state=on]:[&>svg]:text-sidebar-accent-foreground! first:rounded-bl-none first:rounded-tl-sm! last:rounded-br-none last:rounded-tr-sm!'>
+                                <theme.icon size={16} />
+                            </ToggleGroupItem>
+
+                            {(index < items.length - 1) && <Separator orientation='vertical' />}
+                        </>
+                    ))}
+                </ToggleGroup>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                    <Link
-                        className='block w-full cursor-pointer'
-                        href='/settings/profile'
-                        prefetch
-                        onClick={cleanup}
-                    >
-                        <Settings className='mr-2' />
-                        Settings
-                    </Link>
-                </DropdownMenuItem>
-            </DropdownMenuGroup>
+            <DropdownMenuItem asChild className='rounded-xs hover:bg-muted! hover:text-foreground!'>
+                <Link
+                    className='block w-full cursor-pointer'
+                    href='/settings/profile'
+                    prefetch
+                    onClick={cleanup}
+                >
+                    <Settings className='mr-2' />
+                    Settings
+                </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className='rounded-t-xs hover:bg-muted! hover:text-foreground!'>
                 <Link
                     className='block w-full cursor-pointer'
                     href='/logout'
