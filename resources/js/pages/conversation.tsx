@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 
 import MessageBox from '@/components/message-box'
 import Messages from '@/components/messages'
-import { DefaultPhoto } from '@/components/photo'
+import Photo from '@/components/photo'
 import { MessageScroller, MessageScrollerButton, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -41,24 +41,24 @@ export default function Conversation() {
                     <SidebarTrigger className='-ml-1' />
 
                     {user ? (
-                        <DefaultPhoto width={40} height={40} />
-                    ) : (
-                        <Skeleton className='size-10 rounded-full' />
-                    )}
-
-                    {user ? (
-                        <div>
-                            <h1>{user.name}</h1>
-                            {user.is_online ? (
-                                <p className='text-xs text-green-600 dark:text-green-400'>Online</p>
-                            ) : (
-                                <p className='text-xs text-muted-foreground'>Offline</p>
-                            )}
+                        <div className='flex items-center gap-2'>
+                            <Photo src={user.image_url as string} size={40} className='size-10 rounded-full' />
+                            <div>
+                                <h1>{user.name}</h1>
+                                {user.is_online ? (
+                                    <p className='text-xs text-green-600 dark:text-green-400'>Online</p>
+                                ) : (
+                                    <p className='text-xs text-muted-foreground'>Offline</p>
+                                )}
+                            </div>
                         </div>
                     ) : (
-                        <div className='space-y-2'>
-                            <Skeleton className='h-4 w-60' />
-                            <Skeleton className='h-4 w-10' />
+                        <div className='flex items-center gap-2'>
+                            <Skeleton className='size-10 rounded-full' />
+                            <div className='space-y-2'>
+                                <Skeleton className='h-4 w-60' />
+                                <Skeleton className='h-4 w-10' />
+                            </div>
                         </div>
                     )}
                 </div>

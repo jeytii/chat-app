@@ -3,7 +3,7 @@ import { Upload } from 'lucide-react'
 import { type ChangeEvent, useMemo, useRef, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 
-import { Photo } from '@/components/photo'
+import Photo from '@/components/photo'
 import { Button } from '@/components/ui/button'
 
 export function ImageUploader({ src }: { src: string }) {
