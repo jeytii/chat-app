@@ -16,56 +16,26 @@ trait ProfileValidationRules
     protected function profileRules(?int $userId = null): array
     {
         return [
-            'name' => $this->nameRules(),
-            'email' => $this->emailRules($userId),
-            'username' => $this->usernameRules($userId),
-        ];
-    }
-
-    /**
-     * Get the validation rules used to validate user names.
-     *
-     * @return array<int, ValidationRule|array<mixed>|string>
-     */
-    protected function nameRules(): array
-    {
-        return ['required', 'string', 'max:255'];
-    }
-
-    /**
-     * Get the validation rules used to validate user emails.
-     *
-     * @return array<int, ValidationRule|array<mixed>|string>
-     */
-    protected function emailRules(?int $userId = null): array
-    {
-        return [
-            'required',
-            'string',
-            'email',
-            'max:255',
-            $userId === null
-                ? Rule::unique(User::class)
-                : Rule::unique(User::class)->ignore($userId),
-        ];
-    }
-
-    /**
-     * Get the validation rules used to validate username.
-     *
-     * @return array<int, ValidationRule|array<mixed>|string>
-     */
-    protected function usernameRules(?int $userId = null): array
-    {
-        return [
-            'required',
-            'string',
-            'min:8',
-            'max:40',
-            'regex:/^[^@]*$/',
-            $userId === null
-                ? Rule::unique(User::class)
-                : Rule::unique(User::class)->ignore($userId),
+            'name' => ['required', 'string', 'max:255'],
+            // 'email' => [
+            //     'required',
+            //     'string',
+            //     'email',
+            //     'max:255',
+            //     $userId === null
+            //         ? Rule::unique(User::class)
+            //         : Rule::unique(User::class)->ignore($userId),
+            // ],
+            'username' => [
+                'required',
+                'string',
+                'min:8',
+                'max:40',
+                'regex:/^[^@]*$/',
+                $userId === null
+                    ? Rule::unique(User::class)
+                    : Rule::unique(User::class)->ignore($userId),
+            ],
         ];
     }
 }

@@ -10,12 +10,14 @@ class ImageController extends Controller
 {
     public function __invoke(string $path): StreamedResponse
     {
+        $authId = auth()->id();
+
+        abort_unless($authId, 403);
+
         $message = Message::query()
             ->where('image', 'like', "%{$path}%")
             ->with('conversation')
             ->firstOrFail();
-
-        $authId = auth()->id();
 
         abort_if(
             $message->conversation->accepter_id !== $authId && $message->conversation->requestor_id !== $authId,
@@ -25,7 +27,7 @@ class ImageController extends Controller
         return Storage::response(
             $message->image,
             headers: [
-                'Cache-Control' => 'public, max-age=86400',
+                'Cache-Control' => 'private, max-age=86400',
             ]
         );
     }
