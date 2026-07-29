@@ -4,7 +4,6 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useCurrentUrl } from '@/hooks/use-current-url'
-import { cn } from '@/lib/utils'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -23,10 +22,15 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
         <QueryClientProvider client={queryClient}>
             <SidebarProvider>
                 <AppSidebar />
-                <SidebarInset className={cn(
-                    currentUrl.startsWith('/conversations') ? 'h-svh md:h-[calc(100svh-16px)]' : 'min-h-svh',
-                )}>
-                    {children}
+                <SidebarInset className={currentUrl.startsWith('/conversations') ? 'h-svh md:h-[calc(100svh-16px)]' : 'min-h-svh'}>
+                    {currentUrl === '/settings'
+                        ? (
+                            <section className='max-w-2xl space-y-4 p-4'>
+                                {children}
+                            </section>
+                        )
+                        : children
+                    }
                 </SidebarInset>
             </SidebarProvider>
 
