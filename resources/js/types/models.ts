@@ -3,7 +3,6 @@ export type User = {
     email?: string;
     username: string;
     image_url: string | null;
-    is_verified?: boolean;
 }
 
 export type Conversation = {
