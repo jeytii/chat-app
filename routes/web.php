@@ -3,6 +3,7 @@
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -15,6 +16,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->only(['index', 'store']);
 
     Route::get('image/{path}', ImageController::class)->name('image');
-});
 
-require __DIR__.'/settings.php';
+    Route::controller(SettingsController::class)->name('settings.')->group(function () {
+        Route::inertia('settings', 'settings')
+            ->name('index');
+
+        Route::patch('settings/profile', 'updateProfile')
+            ->name('profile');
+
+        Route::put('settings/profile-photo', 'updateProfilePhoto')
+            ->name('profile-photo');
+
+        Route::put('settings/password', 'updatePassword')
+            ->middleware(['verified', 'throttle:6,1'])
+            ->name('password');
+
+        // Route::delete('settings/delete-account', 'deleteAccount')
+        //     ->middleware('verified')
+        //     ->name('delete-account');
+    });
+});

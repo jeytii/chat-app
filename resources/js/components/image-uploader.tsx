@@ -26,10 +26,10 @@ export function ImageUploader({ src }: { src: string }) {
         rect.transform(data => ({
             image,
             crop: data,
-            _method: 'PATCH',
+            _method: 'PUT',
         }))
 
-        rect.post('/settings/change-profile-photo', {
+        rect.post('/settings/profile-photo', {
             onSuccess() {
                 reset()
                 cancel()

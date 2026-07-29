@@ -47,7 +47,7 @@ export function UserMenuContent() {
             <DropdownMenuItem asChild className='rounded-xs hover:bg-muted! hover:text-foreground!'>
                 <Link
                     className='block w-full cursor-pointer'
-                    href='/settings/profile'
+                    href='/settings'
                     prefetch
                     onClick={cleanup}
                 >

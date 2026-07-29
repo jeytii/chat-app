@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Concerns\PasswordValidationRules;
+use App\Concerns\ProfileValidationRules;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Image\Image;
+use Illuminate\Support\Str;
+
+class SettingsController extends Controller
+{
+    use ProfileValidationRules, PasswordValidationRules;
+
+    // public function index(Request $request): Response
+    // {
+    //     return inertia('settings/profile', [
+    //         'mustVerifyEmail' => $request->user()->hasVerifiedEmail(),
+    //         'status' => $request->session()->get('status'),
+    //     ]);
+    // }
+
+    public function updateProfile(Request $request): RedirectResponse
+    {
+        $data = $request->validate($this->profileRules($request->user()->id));
+
+        $request->user()->update($data);
+
+        inertia()->flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
+
+        return back();
+    }
+
+    public function updateProfilePhoto(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'image' => ['required', 'image', 'mimes:jpg,png,webp'],
+            'crop' => ['required', 'array'],
+            'crop.width' => ['required', 'numeric'],
+            'crop.height' => ['required', 'numeric'],
+            'crop.x' => ['required', 'numeric'],
+            'crop.y' => ['required', 'numeric'],
+        ]);
+
+        /** @var \App\Models\User */
+        $user = $request->user();
+        $dir = "profile_photos/{$user->id}";
+        $filename = Str::random(40).'.webp';
+
+        if ($user->update(['image' => "{$dir}/{$filename}"])) {
+            $image = $request->image('image');
+
+            $width = ($image->width() * $data['crop']['width']) / 100;
+            $height = ($image->height() * $data['crop']['height']) / 100;
+            $x = ($image->width() * $data['crop']['x']) / 100;
+            $y = ($image->height() * $data['crop']['y']) / 100;
+
+            $image->crop($width, $height, $x, $y)
+                ->when(
+                    fn (Image $img) => $img->mimeType() !== 'image/webp',
+                    fn (Image $img) => $img->toWebp(),
+                )
+                ->storeAs($dir, $filename, 'public');
+
+            inertia()->flash('toast', ['type' => 'success', 'message' => __('Profile picture updated.')]);
+        }
+
+        return back();
+    }
+
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'current_password' => $this->currentPasswordRules(),
+            'password' => $this->passwordRules(),
+        ]);
+
+        $request->user()->update([
+            'password' => $data['password'],
+        ]);
+
+        inertia()->flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
+
+        return back();
+    }
+
+    // public function deleteAccount(Request $request): RedirectResponse
+    // {
+    //     $request->validate($this->currentPasswordRules());
+
+    //     $user = $request->user();
+
+    //     Auth::logout();
+
+    //     $user->delete();
+
+    //     $request->session()->invalidate();
+    //     $request->session()->regenerateToken();
+
+    //     return inertia()->location('/login');
+    // }
+}
