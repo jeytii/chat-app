@@ -1,6 +1,5 @@
 import { Link, usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
-import { EllipsisVertical } from 'lucide-react'
 
 import Photo from '@/components/photo'
 import {
@@ -81,21 +80,23 @@ export function NavMain() {
                                         <Photo
                                             src={conversation.user.image_url as string}
                                             size={40}
-                                            className='size-10 rounded-full border-2 border-primary'
+                                            className='size-10 rounded-full'
                                         />
                                         {conversation.user.is_online && (
                                             <span className='absolute bottom-px right-px size-2.5 bg-green-700 border border-primary rounded-full' />
                                         )}
                                     </div>
-                                    <div>
-                                        <h5>{conversation.user.name}</h5>
-                                        <p className='text-xs text-muted-foreground'>{conversation.user.username}</p>
+                                    <div className='overflow-hidden'>
+                                        <h5 className='truncate'>{conversation.user.name}</h5>
+                                        <p className='text-xs text-muted-foreground truncate'>{conversation.user.username}</p>
                                     </div>
                                 </Link>
                             </SidebarMenuButton>
-                            <SidebarMenuAction showOnHover className='top-1/2! right-2 -translate-y-1/2 cursor-pointer hover:bg-transparent'>
-                                <EllipsisVertical />
-                            </SidebarMenuAction>
+                            {conversation.has_new_message && (
+                                <SidebarMenuAction className='w-auto top-1/2! -translate-y-1/2'>
+                                    <div className='size-2 rounded-full bg-primary' />
+                                </SidebarMenuAction>
+                            )}
                         </SidebarMenuItem>
                     ))}
                 </SidebarMenu>

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 
 export default function Profile() {
     const { user } = usePage().props.auth
@@ -20,10 +21,10 @@ export default function Profile() {
         <>
             <Head title='Settings' />
 
-            <Heading
-                title='Settings'
-                description='Update your personal information and account'
-            />
+            <div className='flex items-center gap-2'>
+                <SidebarTrigger className='-ml-1' />
+                <Heading title='Settings' />
+            </div>
 
             <Card>
                 <CardContent className='space-y-6'>

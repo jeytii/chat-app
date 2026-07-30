@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react'
 import { ChevronsUpDown } from 'lucide-react'
 
+import Photo from '@/components/photo'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,16 +13,15 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar'
-import { UserInfo } from '@/components/user-info'
 import { UserMenuContent } from '@/components/user-menu-content'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 export function NavUser() {
-    const { auth } = usePage().props
+    const { user } = usePage().props.auth
     const { state } = useSidebar()
     const isMobile = useIsMobile()
 
-    if (!auth.user) {
+    if (!user) {
         return null
     }
 
@@ -35,7 +35,14 @@ export function NavUser() {
                             className='group data-[state=open]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent'
                             data-test='sidebar-menu-button'
                         >
-                            <UserInfo user={auth.user} />
+                            <Photo src={user.image_url as string} size={32} className='size-8 rounded-full' />
+                            <div className='grid flex-1 text-left text-sm leading-tight'>
+                                <span className='truncate font-medium'>{user.name}</span>
+                                <span className='truncate text-xs text-muted-foreground'>
+                                    {user.username}
+                                </span>
+                            </div>
+
                             <ChevronsUpDown className='ml-auto size-4' />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>

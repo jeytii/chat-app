@@ -12,7 +12,7 @@ class ImageController extends Controller
     {
         $authId = auth()->id();
 
-        abort_unless($authId, 403);
+        abort_unless((bool) $authId, 403);
 
         $message = Message::query()
             ->where('image', 'like', "%{$path}%")
