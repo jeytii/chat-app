@@ -4,14 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Image\Image;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class SettingsController extends Controller
 {
-    use ProfileValidationRules, PasswordValidationRules;
+    use PasswordValidationRules, ProfileValidationRules;
 
     // public function index(Request $request): Response
     // {
@@ -35,15 +37,22 @@ class SettingsController extends Controller
     public function updateProfilePhoto(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'image' => ['required', 'image', 'mimes:jpg,png,webp'],
+            'image' => [
+                'required',
+                'image',
+                'mimes:jpg,png,webp',
+                Rule::dimensions()
+                    ->minWidth(200)
+                    ->minHeight(200),
+            ],
             'crop' => ['required', 'array'],
-            'crop.width' => ['required', 'numeric'],
-            'crop.height' => ['required', 'numeric'],
+            'crop.width' => ['required', 'numeric', 'same:crop.height'],
+            'crop.height' => ['required', 'numeric', 'same:crop.width'],
             'crop.x' => ['required', 'numeric'],
             'crop.y' => ['required', 'numeric'],
         ]);
 
-        /** @var \App\Models\User */
+        /** @var User */
         $user = $request->user();
         $dir = "profile_photos/{$user->id}";
         $filename = Str::random(40).'.webp';

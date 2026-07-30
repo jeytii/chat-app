@@ -1,6 +1,6 @@
 import { useForm } from '@inertiajs/react'
 import { Upload } from 'lucide-react'
-import { type ChangeEvent, useMemo, useRef, useState } from 'react'
+import { type ChangeEvent, useRef, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 
 import Photo from '@/components/photo'
@@ -12,14 +12,36 @@ export function ImageUploader({ src }: { src: string }) {
     const [crop, setCrop] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
     const [zoom, setZoom] = useState<number>(1)
     const modal = useRef<HTMLDialogElement>(null)
-    const preview = useMemo(() => image ? URL.createObjectURL(image) : null, [image])
+    const preview = useRef<string>(null)
 
-    function upload(event: ChangeEvent<HTMLInputElement>) {
+    async function upload(event: ChangeEvent<HTMLInputElement>) {
         const file = (event.target.files as FileList)[0]
 
-        setImage(file)
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            return
+        }
 
-        modal.current?.showModal()
+        const blob = URL.createObjectURL(file)
+        let img: HTMLImageElement | null = new Image()
+        let isBelowMinimum = false
+
+        img.src = blob
+
+        img.onload = () => {
+            isBelowMinimum = (img?.naturalWidth as number) < 200 || (img?.naturalHeight as number) < 200
+        }
+
+        if (isBelowMinimum) {
+            URL.revokeObjectURL(img.src)
+        } else {
+            setImage(file)
+
+            preview.current = blob
+
+            modal.current?.showModal()
+        }
+
+        img = null
     }
 
     function set() {
@@ -30,10 +52,7 @@ export function ImageUploader({ src }: { src: string }) {
         }))
 
         rect.post('/settings/profile-photo', {
-            onSuccess() {
-                reset()
-                cancel()
-            },
+            onSuccess: cancel,
         })
     }
 
@@ -47,43 +66,50 @@ export function ImageUploader({ src }: { src: string }) {
     }
 
     function cancel() {
-        if (image) {
-            URL.revokeObjectURL(preview as string)
+        if (image && preview.current) {
+            URL.revokeObjectURL(preview.current)
             setImage(null)
         }
+
+        reset()
 
         modal.current?.close()
     }
 
     return (
         <>
-            <div className='flex items-center gap-4'>
-                <Photo
-                    src={src}
-                    size={120}
-                    className='size-30 rounded-full'
-                />
+            <div className='flex items-center gap-2'>
+                <div className='min-w-30 min-h-30 relative inline-block'>
+                    <Photo
+                        src={src}
+                        size={120}
+                        className='size-30 rounded-full'
+                    />
 
-                <Button type='button' size='sm' className='px-0'>
-                    <label className='flex items-center gap-2 size-full rounded-md px-3'>
-                        <input
-                            type='file'
-                            name='image'
-                            accept='image/jpeg, image/png, image/webp'
-                            className='hidden'
-                            onChange={upload}
-                        />
-                        <Upload />
-                        <span>Upload</span>
-                    </label>
-                </Button>
+                    <Button type='button' size='icon-sm' className='absolute bottom-0 right-0 px-0'>
+                        <label className='flex items-center justify-center size-full rounded-full'>
+                            <input
+                                type='file'
+                                name='image'
+                                accept='image/jpeg, image/png, image/webp'
+                                className='hidden'
+                                onChange={upload}
+                            />
+                            <Upload />
+                        </label>
+                    </Button>
+                </div>
+                <div className='space-y-1'>
+                    <p className='text-sm text-muted-foreground'><b>Dimensions</b>: at least 200x200</p>
+                    <p className='text-sm text-muted-foreground'><b>Formats</b>: JPG, PNG, WEBP</p>
+                </div>
             </div>
 
             <dialog ref={modal} className='backdrop:opacity-90 backdrop:bg-black m-auto'>
                 {!!image && (
                     <div className='min-w-full max-w-[90vw] max-h-[90vh] min-h-full overflow-auto space-y-4 p-4'>
                         <Cropper
-                            image={preview as string}
+                            image={preview.current as string}
                             crop={crop}
                             zoom={zoom}
                             aspect={1 / 1}
@@ -99,11 +125,12 @@ export function ImageUploader({ src }: { src: string }) {
                             }}
                         />
 
-                        <div className='text-right'>
+                        <div className='text-right space-x-2'>
                             <Button
                                 variant='outline'
                                 size='sm'
                                 disabled={rect.processing}
+                                className='text-xs sm:text-sm'
                                 onClick={cancel}
                             >
                                 Cancel
@@ -112,11 +139,17 @@ export function ImageUploader({ src }: { src: string }) {
                                 variant='outline'
                                 size='sm'
                                 disabled={rect.processing}
+                                className='text-xs sm:text-sm'
                                 onClick={reset}
                             >
                                 Reset
                             </Button>
-                            <Button size='sm' disabled={rect.processing} onClick={set}>
+                            <Button
+                                size='sm'
+                                disabled={rect.processing}
+                                className='text-xs sm:text-sm'
+                                onClick={set}
+                            >
                                 Set as profile photo
                             </Button>
                         </div>

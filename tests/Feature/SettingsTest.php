@@ -1,7 +1,10 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Image;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseMissing;
@@ -30,6 +33,95 @@ test('profile information can be updated and user is still verified', function (
     expect($user->name)->toBe($newName);
     expect($user->username)->toBe($newUsername);
     expect($user->hasVerifiedEmail())->toBeTrue();
+});
+
+test('cannot update profile photo if crop ratio is not square', function () {
+    $user = User::factory()->create();
+
+    actingAs($user)
+        ->put(route('settings.profile-photo'), [
+            'image' => UploadedFile::fake()->image('image.jpg', 1280, 720),
+            'crop' => [
+                'width' => 30,
+                'height' => 20,
+                'x' => 0,
+                'y' => 0,
+            ],
+        ])
+        ->assertRedirectBackWithErrors(['crop.width', 'crop.height']);
+
+    expect($user->refresh()->image)->toBeNull();
+});
+
+test('cannot update profile photo if the dimensions are smaller than minimum', function () {
+    $user = User::factory()->create();
+
+    actingAs($user)
+        ->put(route('settings.profile-photo'), [
+            'image' => UploadedFile::fake()->image('image.jpg', 100, 100),
+            'crop' => [
+                'width' => 100,
+                'height' => 100,
+                'x' => 0,
+                'y' => 0,
+            ],
+        ])
+        ->assertRedirectBackWithErrors(['image']);
+
+    expect($user->refresh()->image)->toBeNull();
+});
+
+test('cannot update profile photo if the format is not JPG/PNG/WEBP', function () {
+    $user = User::factory()->create();
+
+    actingAs($user)
+        ->put(route('settings.profile-photo'), [
+            'image' => UploadedFile::fake()->image('image.gif', 200, 200),
+            'crop' => [
+                'width' => 100,
+                'height' => 100,
+                'x' => 0,
+                'y' => 0,
+            ],
+        ])
+        ->assertRedirectBackWithErrors(['image']);
+
+    expect($user->refresh()->image)->toBeNull();
+});
+
+test('can update profile photo', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $originalWidth = 1280;
+    $originalHeight = 720;
+    $cropWidth = 20;
+    $cropHeight = 20;
+    $file = UploadedFile::fake()->image('image.jpg', $originalWidth, $originalHeight);
+
+    actingAs($user)
+        ->put(route('settings.profile-photo'), [
+            'image' => $file,
+            'crop' => [
+                'width' => $cropWidth,
+                'height' => $cropHeight,
+                'x' => 400,
+                'y' => 100,
+            ],
+        ])
+        ->assertRedirectBackWithoutErrors();
+
+    $path = $user->refresh()->image;
+
+    expect(is_null($path))->toBeFalse();
+
+    Storage::disk('public')->assertExists($path);
+
+    $image = Image::fromStorage($path, 'public');
+
+    expect($image->width())->toBe(($originalWidth * $cropWidth) / 100); // Must be {$cropWidth}% of $originalWidth
+    expect($image->height())->toBe(($originalHeight * $cropHeight) / 100); // Must be {$cropHeight}% of $originalHeight
+    expect($image->mimeType())->toBe('image/webp');
 });
 
 test('password can be updated', function () {
