@@ -24,6 +24,7 @@ class ConversationResource extends JsonResource
             'user' => $this->requestor_id !== $request->user()->id
                 ? new UserResource($this->whenLoaded('requestor'))
                 : new UserResource($this->whenLoaded('accepter')),
+            'has_new_message' => false,
         ];
     }
 }

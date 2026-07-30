@@ -9,6 +9,7 @@ export type Conversation = {
     user: User & {
         is_online: boolean;
     };
+    has_new_message?: boolean;
 }
 
 export type Message = {
