@@ -209,7 +209,7 @@ export default function MessageBox() {
 
     return (
         <div className='z-10'>
-            <InputGroup className='items-end border-x-0 border-b-0 rounded-none dark:bg-transparent'>
+            <InputGroup className='items-end rounded-none border-x-0 border-b-0 dark:bg-transparent'>
                 <InputGroupTextarea
                     ref={textarea}
                     placeholder='Write a message'
@@ -278,9 +278,9 @@ export default function MessageBox() {
                 <div className='px-4 pb-4'>
                     <div className='relative inline-block'>
                         {typeof image === 'string' ? (
-                            <img src={image} className='block max-w-[100px] max-h-[100px] rounded' />
+                            <img src={image} className='block max-h-25 max-w-25 rounded' />
                         ) : (
-                            <img src={previewImage.current as string} className='block max-w-[100px] max-h-[100px] rounded' />
+                            <img src={previewImage.current as string} className='block max-h-25 max-w-25 rounded' />
                         )}
 
                         <Button

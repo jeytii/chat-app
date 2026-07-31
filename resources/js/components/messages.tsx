@@ -128,23 +128,23 @@ export default function Messages() {
 
     if (isLoading || !data) {
         return (
-            <div className='flex h-full max-h-screen flex-1 flex-col gap-2 justify-end-safe overflow-y-auto rounded-xl p-4'>
+            <div className='flex h-full max-h-screen flex-1 flex-col justify-end-safe gap-2 overflow-y-auto rounded-xl p-4'>
                 <div>
-                    <Skeleton className='h-10 max-w-[10%] ml-auto' />
+                    <Skeleton className='ml-auto h-10 max-w-[10%]' />
                 </div>
                 <div>
-                    <Skeleton className='h-10 max-w-[30%] ml-auto' />
+                    <Skeleton className='ml-auto h-10 max-w-[30%]' />
                 </div>
                 <Skeleton className='h-10 max-w-[70%]' />
                 <Skeleton className='h-10 max-w-[20%]' />
                 <div>
-                    <Skeleton className='h-10 max-w-[40%] ml-auto' />
+                    <Skeleton className='ml-auto h-10 max-w-[40%]' />
                 </div>
                 <div>
-                    <Skeleton className='h-10 max-w-[20%] ml-auto' />
+                    <Skeleton className='ml-auto h-10 max-w-[20%]' />
                 </div>
                 <div>
-                    <Skeleton className='h-16 max-w-[70%] ml-auto' />
+                    <Skeleton className='ml-auto h-16 max-w-[70%]' />
                 </div>
             </div>
         )
@@ -152,15 +152,15 @@ export default function Messages() {
 
     if (!data.pages.length) {
         return (
-            <div className='flex h-full max-h-screen flex-1 flex-col gap-2 justify-end-safe overflow-y-auto rounded-xl p-4'>
-                <p className='text-muted-foreground text-center'>Say hello to start a conversation.</p>
+            <div className='flex h-full max-h-screen flex-1 flex-col justify-end-safe gap-2 overflow-y-auto rounded-xl p-4'>
+                <p className='text-center text-muted-foreground'>Say hello to start a conversation.</p>
             </div>
         )
     }
 
     return (
-        <MessageScrollerContent className='justify-end gap-2 py-4 px-2'>
-            {isFetchingPreviousPage && <p className='text-center text-muted-foreground py-2'>Loading...</p>}
+        <MessageScrollerContent className='justify-end gap-2 px-2 py-4'>
+            {isFetchingPreviousPage && <p className='py-2 text-center text-muted-foreground'>Loading...</p>}
 
             {data.pages.map((message, index, messages) => (
                 <Fragment key={message.id}>
@@ -177,12 +177,12 @@ export default function Messages() {
             ))}
 
             {typing && (
-                <MessageScrollerItem className='flex gap-1 items-end'>
+                <MessageScrollerItem className='flex items-end gap-1'>
                     <p className='text-xs text-muted-foreground'>Typing</p>
-                    <div className='relative flex gap-1 bottom-1'>
-                        <span className='block size-[3.5px] bg-secondary rounded-full animate-[blink_900ms_infinite_linear_300ms]' />
-                        <span className='block size-[3.5px] bg-secondary rounded-full animate-[blink_900ms_infinite_linear_600ms]' />
-                        <span className='block size-[3.5px] bg-secondary rounded-full animate-[blink_900ms_infinite_linear_900ms]' />
+                    <div className='relative bottom-1 flex gap-1'>
+                        <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_300ms] rounded-full bg-secondary' />
+                        <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_600ms] rounded-full bg-secondary' />
+                        <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_900ms] rounded-full bg-secondary' />
                     </div>
                 </MessageScrollerItem>
             )}

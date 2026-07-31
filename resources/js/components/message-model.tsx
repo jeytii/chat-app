@@ -39,9 +39,9 @@ function Media({ message }: { message: MessageType }) {
 
     if (message.gif) {
         return (
-            <Attachment orientation='vertical' className='cursor-pointer w-[20vw]'>
+            <Attachment orientation='vertical' className='w-[20vw] cursor-pointer'>
                 <div className='p-2'>
-                    <img src={message.gif} className='block w-full object-cover rounded-md' />
+                    <img src={message.gif} className='block w-full rounded-md object-cover' />
                 </div>
             </Attachment>
         )
@@ -50,12 +50,12 @@ function Media({ message }: { message: MessageType }) {
     return (
         <Dialog>
             <DialogTrigger>
-                <Attachment orientation='vertical' className='cursor-pointer w-full max-w-[70vw] md:max-w-[50vw] lg:max-w-120'>
-                    <img src={message.image_url as string} className='block w-full max-h-120 object-cover rounded-md' />
+                <Attachment orientation='vertical' className='w-full max-w-[70vw] cursor-pointer md:max-w-[50vw] lg:max-w-120'>
+                    <img src={message.image_url as string} className='block max-h-120 w-full rounded-md object-cover' />
                 </Attachment>
             </DialogTrigger>
             <DialogContent className='w-auto! max-w-full! sm:max-w-full!'>
-                <img src={message.image_url as string} className='block min-size-full max-w-[90vw] max-h-[90vh]' />
+                <img src={message.image_url as string} className='block max-h-[90vh] max-w-[90vw]' />
             </DialogContent>
         </Dialog>
     )

@@ -4,6 +4,7 @@ import queryPlugin from '@tanstack/eslint-plugin-query'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import importSort from 'eslint-plugin-simple-import-sort'
+import tailwindcss from 'eslint-plugin-tailwindcss'
 import globals from 'globals'
 import typescript from 'typescript-eslint'
 
@@ -28,6 +29,7 @@ const paddingAroundControl = [
 export default [
     js.configs.recommended,
     reactHooks.configs.flat['recommended-latest'],
+    tailwindcss.configs.recommended,
     ...queryPlugin.configs['flat/recommended'],
     ...typescript.configs.recommended,
     {
@@ -56,6 +58,23 @@ export default [
         rules: {
             'import-sort/imports': 'error',
             'import-sort/exports': 'error',
+        },
+    },
+    {
+        settings: {
+            tailwindcss: {
+                cssConfigPath: './resources/css/app.css',
+            },
+        },
+        rules: {
+            'tailwindcss/classnames-order': 'error',
+            'tailwindcss/enforces-negative-arbitrary-values': 'error',
+            'tailwindcss/enforces-shorthand': 'error',
+            'tailwindcss/important-modifier-suffix': 'error',
+            'tailwindcss/no-arbitrary-value': 'off',
+            'tailwindcss/no-custom-classname': 'off',
+            'tailwindcss/no-contradicting-classname': 'error',
+            'tailwindcss/no-unnecessary-arbitrary-value': 'error',
         },
     },
     {

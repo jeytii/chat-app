@@ -32,7 +32,7 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size='lg'
-                            className='group data-[state=open]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent'
+                            className='group data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
                             data-test='sidebar-menu-button'
                         >
                             <Photo src={user.image_url as string} size={32} className='size-8 rounded-full' />

@@ -26,7 +26,7 @@ export function NavMain() {
             <SidebarGroupLabel>Contacts</SidebarGroupLabel>
 
             {isLoading && (
-                <div className='px-2 space-y-4'>
+                <div className='space-y-4 px-2'>
                     <div className='flex items-center gap-2'>
                         <Skeleton className='size-10 rounded-full' />
                         <div className='flex-1 space-y-1'>
@@ -83,17 +83,17 @@ export function NavMain() {
                                             className='size-10 rounded-full'
                                         />
                                         {conversation.user.is_online && (
-                                            <span className='absolute bottom-px right-px size-2.5 bg-green-700 border border-primary rounded-full' />
+                                            <span className='absolute right-px bottom-px size-2.5 rounded-full border border-primary bg-green-700' />
                                         )}
                                     </div>
                                     <div className='overflow-hidden'>
                                         <h5 className='truncate'>{conversation.user.name}</h5>
-                                        <p className='text-xs text-muted-foreground truncate'>{conversation.user.username}</p>
+                                        <p className='truncate text-xs text-muted-foreground'>{conversation.user.username}</p>
                                     </div>
                                 </Link>
                             </SidebarMenuButton>
                             {conversation.has_new_message && (
-                                <SidebarMenuAction className='w-auto top-1/2! -translate-y-1/2'>
+                                <SidebarMenuAction className='top-1/2! w-auto -translate-y-1/2'>
                                     <div className='size-2 rounded-full bg-primary' />
                                 </SidebarMenuAction>
                             )}

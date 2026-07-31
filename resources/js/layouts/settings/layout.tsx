@@ -26,7 +26,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl()
 
     return (
-        <div className='min-h-screen px-4 py-6 space-y-8'>
+        <div className='min-h-screen space-y-8 px-4 py-6'>
             <div className='flex items-center gap-2'>
                 <Link href='/'>
                     <Button variant='ghost' size='icon'>
@@ -52,7 +52,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                             >
                                 <Link href={item.href}>
                                     {item.icon && (
-                                        <item.icon className='h-4 w-4' />
+                                        <item.icon className='size-4' />
                                     )}
                                     {item.title}
                                 </Link>

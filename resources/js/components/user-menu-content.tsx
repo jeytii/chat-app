@@ -1,5 +1,6 @@
 import { Link, router } from '@inertiajs/react'
 import { LogOut, type LucideIcon, Monitor, Moon, Settings, Sun } from 'lucide-react'
+import { Fragment } from 'react'
 
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
@@ -33,13 +34,13 @@ export function UserMenuContent() {
                     onValueChange={updateAppearance}
                 >
                     {themes.map((theme, index, items) => (
-                        <>
-                            <ToggleGroupItem key={theme.value} value={theme.value} className='flex-1 cursor-pointer data-[state=on]:bg-sidebar-accent data-[state=on]:[&>svg]:text-sidebar-accent-foreground! first:rounded-bl-none first:rounded-tl-sm! last:rounded-br-none last:rounded-tr-sm!'>
+                        <Fragment key={theme.value}>
+                            <ToggleGroupItem value={theme.value} className='flex-1 cursor-pointer first:rounded-tl-sm! first:rounded-bl-none last:rounded-tr-sm! last:rounded-br-none data-[state=on]:bg-sidebar-accent data-[state=on]:[&>svg]:text-sidebar-accent-foreground!'>
                                 <theme.icon size={16} />
                             </ToggleGroupItem>
 
                             {(index < items.length - 1) && <Separator orientation='vertical' />}
-                        </>
+                        </Fragment>
                     ))}
                 </ToggleGroup>
             </DropdownMenuItem>
