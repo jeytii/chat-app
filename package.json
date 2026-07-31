@@ -13,20 +13,22 @@
     "devDependencies": {
         "@eslint/js": "^10.0",
         "@laravel/echo-react": "^2.4.0",
+        "@rolldown/plugin-babel": "^0.2.3",
         "@stylistic/eslint-plugin": "^5.10.0",
         "@tanstack/eslint-plugin-query": "^5.101",
         "@types/node": "^26.0",
         "@types/remarkable": "^2.0.8",
         "@typescript/native": "npm:typescript@^7.0.2",
         "babel-plugin-react-compiler": "^1.0.0",
-        "eslint": "^10.7",
+        "eslint": "^10.8",
         "eslint-plugin-react": "^7.37",
         "eslint-plugin-react-hooks": "^7.1",
         "eslint-plugin-simple-import-sort": "^14.0.0",
+        "eslint-plugin-tailwindcss": "^4.2.0",
         "laravel-echo": "^2.4.0",
-        "pusher-js": "^8.5.0",
+        "pusher-js": "^8.6.0",
         "typescript": "npm:@typescript/typescript6@^6.0.2",
-        "typescript-eslint": "^8.64"
+        "typescript-eslint": "^8.65"
     },
     "dependencies": {
         "@inertiajs/react": "^3.6",
@@ -51,16 +53,16 @@
         "@types/react": "^19.2",
         "@types/react-dom": "^19.2",
         "@vitejs/plugin-react": "^6.0",
-        "axios": "^1.18.1",
+        "axios": "^1.19",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^10.0",
         "emoji-picker-react": "^4.19.1",
-        "globals": "^17.7",
+        "globals": "^17.8",
         "input-otp": "^1.4.2",
         "laravel-vite-plugin": "^3.1",
-        "lucide-react": "^1.24",
-        "radix-ui": "^1.6.2",
+        "lucide-react": "^1.27",
+        "radix-ui": "^1.6",
         "react": "^19.2",
         "react-dom": "^19.2",
         "react-easy-crop": "^6.2.2",
@@ -76,7 +78,7 @@
         "@rollup/rollup-win32-x64-msvc": "4.62",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.3",
         "@tailwindcss/oxide-win32-x64-msvc": "^4.3",
-        "lightningcss-linux-x64-gnu": "^1.32",
-        "lightningcss-win32-x64-msvc": "^1.32"
+        "lightningcss-linux-x64-gnu": "^1.33",
+        "lightningcss-win32-x64-msvc": "^1.33"
     }
 }
