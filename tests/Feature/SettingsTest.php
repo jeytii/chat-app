@@ -35,25 +35,7 @@ test('profile information can be updated and user is still verified', function (
     expect($user->hasVerifiedEmail())->toBeTrue();
 });
 
-test('cannot update profile photo if crop ratio is not square', function () {
-    $user = User::factory()->create();
-
-    actingAs($user)
-        ->put(route('settings.profile-photo'), [
-            'image' => UploadedFile::fake()->image('image.jpg', 1280, 720),
-            'crop' => [
-                'width' => 30,
-                'height' => 20,
-                'x' => 0,
-                'y' => 0,
-            ],
-        ])
-        ->assertRedirectBackWithErrors(['crop.width', 'crop.height']);
-
-    expect($user->refresh()->image)->toBeNull();
-});
-
-test('cannot update profile photo if the dimensions are smaller than minimum', function () {
+test('cannot update profile photo if the dimensions are smaller than 200x200', function () {
     $user = User::factory()->create();
 
     actingAs($user)

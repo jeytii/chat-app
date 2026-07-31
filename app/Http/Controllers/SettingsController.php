@@ -46,8 +46,8 @@ class SettingsController extends Controller
                     ->minHeight(200),
             ],
             'crop' => ['required', 'array'],
-            'crop.width' => ['required', 'numeric', 'same:crop.height'],
-            'crop.height' => ['required', 'numeric', 'same:crop.width'],
+            'crop.width' => ['required', 'numeric'],
+            'crop.height' => ['required', 'numeric'],
             'crop.x' => ['required', 'numeric'],
             'crop.y' => ['required', 'numeric'],
         ]);

@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react'
 import { Upload } from 'lucide-react'
 import { type ChangeEvent, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Cropper, { type Area } from 'react-easy-crop'
 
 import Photo from '@/components/photo'
@@ -39,6 +40,8 @@ export function ImageUploader({ src }: { src: string }) {
             preview.current = blob
 
             modal.current?.showModal()
+
+            document.body.classList.add('overflow-hidden')
         }
 
         img = null
@@ -74,20 +77,22 @@ export function ImageUploader({ src }: { src: string }) {
         reset()
 
         modal.current?.close()
+
+        document.body.classList.remove('overflow-hidden')
     }
 
     return (
         <>
             <div className='flex items-center gap-2'>
-                <div className='min-w-30 min-h-30 relative inline-block'>
+                <div className='relative inline-block min-h-30 min-w-30'>
                     <Photo
                         src={src}
                         size={120}
                         className='size-30 rounded-full'
                     />
 
-                    <Button type='button' size='icon-sm' className='absolute bottom-0 right-0 px-0'>
-                        <label className='flex items-center justify-center size-full rounded-full'>
+                    <Button type='button' size='icon-sm' className='absolute right-0 bottom-0 px-0'>
+                        <label className='flex size-full items-center justify-center rounded-full'>
                             <input
                                 type='file'
                                 name='image'
@@ -105,9 +110,9 @@ export function ImageUploader({ src }: { src: string }) {
                 </div>
             </div>
 
-            <dialog ref={modal} className='backdrop:opacity-90 backdrop:bg-black m-auto'>
-                {!!image && (
-                    <div className='min-w-full max-w-[90vw] max-h-[90vh] min-h-full overflow-auto space-y-4 p-4'>
+            {createPortal(
+                <dialog ref={modal} className='m-auto bg-transparent backdrop:bg-black backdrop:opacity-90'>
+                    <div className='space-y-4'>
                         <Cropper
                             image={preview.current as string}
                             crop={crop}
@@ -119,13 +124,12 @@ export function ImageUploader({ src }: { src: string }) {
                             onZoomChange={setZoom}
                             onCropComplete={finish}
                             classes={{
-                                containerClassName: 'relative! max-w-[900px] max-h-[900px]',
-                                cropAreaClassName: 'top-auto! left-auto! translate-1/2!',
-                                mediaClassName: 'static!',
+                                containerClassName: 'relative! max-h-[calc(90vh-48px)] max-w-[90vw] border rounded-md',
+                                mediaClassName: 'static! max-w-[90vw]! max-h-[calc(90vh-48px)]!',
                             }}
                         />
 
-                        <div className='text-right space-x-2'>
+                        <div className='space-x-2 text-right'>
                             <Button
                                 variant='outline'
                                 size='sm'
@@ -154,8 +158,9 @@ export function ImageUploader({ src }: { src: string }) {
                             </Button>
                         </div>
                     </div>
-                )}
-            </dialog>
+                </dialog>,
+                document.body,
+            )}
         </>
     )
 }
