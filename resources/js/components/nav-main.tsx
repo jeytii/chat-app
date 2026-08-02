@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { Conversation } from '@/types/models'
 
 export function NavMain() {
-    const { props } = usePage<{ conversation?: Conversation; }>()
+    const conversationId = usePage<{ conversation_id?: number; }>().props.conversation_id
 
     const { data, isLoading } = useQuery<Conversation[]>({
         queryKey: ['conversations'],
@@ -72,7 +72,7 @@ export function NavMain() {
                             <SidebarMenuButton
                                 asChild
                                 size='lg'
-                                isActive={props.conversation?.id === conversation.id}
+                                isActive={conversationId === conversation.id}
                                 className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
                             >
                                 <Link href={`/conversations/${conversation.id}`} replace>

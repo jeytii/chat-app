@@ -5,17 +5,13 @@ import MessageBox from '@/components/message-box'
 import Messages, { Placeholder as MessagesPlaceholder } from '@/components/messages'
 import Photo from '@/components/photo'
 import PresenceIndicator from '@/components/presence-indicator'
-import { MessageScroller, MessageScrollerButton, MessageScrollerProvider, MessageScrollerViewport, useMessageScroller } from '@/components/ui/message-scroller'
+import { MessageScroller, MessageScrollerButton, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Conversation as ConversationModel } from '@/types/models'
 
-type PageProps = {
-    conversation: { id: number; }
-}
-
 export default function Conversation() {
-    const { id } = usePage<PageProps>().props.conversation
+    const id = usePage<{ conversation_id: number }>().props.conversation_id
     const { data, isLoading } = useQuery<ConversationModel[]>({
         queryKey: ['conversations'],
         queryFn: async () => (await fetch('/conversations')).json(),

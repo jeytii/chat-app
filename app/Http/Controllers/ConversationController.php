@@ -28,7 +28,7 @@ class ConversationController extends Controller
     public function show(Conversation $conversation): Response
     {
         return inertia('conversation', [
-            'conversation' => $conversation->toResource(),
+            'conversation' => $conversation->id,
         ]);
     }
 }

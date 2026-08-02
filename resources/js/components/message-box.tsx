@@ -20,12 +20,8 @@ import { useThrottle } from '@/hooks/use-limit'
 import { toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
 
-type PageProps = {
-    conversation: { id: number; }
-}
-
 export default function MessageBox() {
-    const { conversation, auth } = usePage<PageProps>().props
+    const { conversation_id: conversationId, auth } = usePage<{ conversation_id: number }>().props
     const [message, setMessage] = useState<string>('')
     const [image, setImage] = useState<File | string | null>(null)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
@@ -37,8 +33,8 @@ export default function MessageBox() {
     const previewImage = useRef<string | null>(null)
     const indicateTyping = useThrottle(1000)
     const socketId = useSocketId()
-    const { channel } = useEcho(`conversation.${conversation.id}`, '', () => { })
-    const queryKey = ['messages', conversation.id]
+    const { channel } = useEcho(`conversation.${conversationId}`, '', () => { })
+    const queryKey = ['messages', conversationId]
 
 
     useEffect(() => {
@@ -71,7 +67,7 @@ export default function MessageBox() {
 
             const itemId = Math.floor(Math.random() * 1000000000)
 
-            insertMessage(conversation.id, {
+            insertMessage(conversationId, {
                 id: itemId,
                 content: new Remarkable({ html: false, breaks: true }).render(content),
                 gif: null,
@@ -201,7 +197,7 @@ export default function MessageBox() {
         }
 
         mutate({
-            conversation_id: conversation.id,
+            conversation_id: conversationId,
             content: value,
             file: image,
         })

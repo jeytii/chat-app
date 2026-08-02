@@ -13,10 +13,6 @@ import { useInsertMessage } from '@/hooks/use-insert-message'
 import { toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
 
-type PageProps = {
-    conversation: { id: number; }
-}
-
 function getDateLabel(date: string) {
     const givenDate = new Date(date)
 
@@ -54,7 +50,7 @@ async function getMessages(pageParam: string | null, conversationId: number, sig
 }
 
 export default function Messages() {
-    const { conversation } = usePage<PageProps>().props
+    const conversationId = usePage<{ conversation_id: number }>().props.conversation_id
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
@@ -63,8 +59,8 @@ export default function Messages() {
         readonly unknown[],
         string | null
     >({
-        queryKey: ['messages', conversation.id],
-        queryFn: ({ pageParam, signal }) => getMessages(pageParam, conversation.id, signal),
+        queryKey: ['messages', conversationId],
+        queryFn: ({ pageParam, signal }) => getMessages(pageParam, conversationId, signal),
         initialPageParam: null,
         getPreviousPageParam: lastPage => lastPage.next_cursor,
         getNextPageParam: () => null,
@@ -79,13 +75,13 @@ export default function Messages() {
     const { scrollToEnd } = useMessageScroller()
     const { start, end } = useMessageScrollerScrollable()
 
-    const { stopListening } = useEcho<Message>(`conversation.${conversation.id}`, 'MessageSent', async message => {
-        await queryClient.cancelQueries({ queryKey: ['messages', conversation.id] })
+    const { stopListening } = useEcho<Message>(`conversation.${conversationId}`, 'MessageSent', async message => {
+        await queryClient.cancelQueries({ queryKey: ['messages', conversationId] })
 
-        insertMessage(conversation.id, message, true)
+        insertMessage(conversationId, message, true)
 
         await queryClient.invalidateQueries({
-            queryKey: ['messages', conversation.id],
+            queryKey: ['messages', conversationId],
             refetchType: 'none',
         })
 
