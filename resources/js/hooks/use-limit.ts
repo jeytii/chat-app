@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useRef } from 'react'
 
 export function useDebounce(delay: number = 600) {
     const timeout = useRef<number | null>(null)
@@ -9,13 +9,13 @@ export function useDebounce(delay: number = 600) {
         }
     }
 
-    const debouncedFn = useCallback((action: CallableFunction) => {
+    const debouncedFn = (action: CallableFunction) => {
         stopTimeout()
 
         timeout.current = setTimeout(() => {
             action()
         }, delay)
-    }, [delay])
+    }
 
     return { debouncedFn, stopTimeout }
 }
@@ -23,7 +23,7 @@ export function useDebounce(delay: number = 600) {
 export function useThrottle(delay: number = 600) {
     const throttle = useRef<boolean>(false)
 
-    return useCallback((action: CallableFunction) => {
+    return (action: CallableFunction) => {
         if (throttle.current) {
             return
         }
@@ -35,5 +35,5 @@ export function useThrottle(delay: number = 600) {
         setTimeout(() => {
             throttle.current = false
         }, delay)
-    }, [delay])
+    }
 }

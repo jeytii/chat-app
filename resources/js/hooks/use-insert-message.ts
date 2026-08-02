@@ -1,12 +1,11 @@
 import { type InfiniteData, useQueryClient } from '@tanstack/react-query'
-import { useCallback } from 'react'
 
 import type { Message, MessageResponse } from '@/types/models'
 
 export function useInsertMessage() {
     const queryClient = useQueryClient()
 
-    return useCallback((conversationId: number, message: Message, notFromSelf: boolean = false) => {
+    return (conversationId: number, message: Message, notFromSelf: boolean = false) => {
         queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', conversationId], current => {
             if (!current) {
                 return current
@@ -47,5 +46,5 @@ export function useInsertMessage() {
                 }),
             }
         })
-    }, [queryClient])
+    }
 }
