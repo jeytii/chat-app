@@ -3,14 +3,13 @@ import { useEcho } from '@laravel/echo-react'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect } from 'react'
 
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent } from '@/components/ui/marker'
 import { MessageScrollerContent, MessageScrollerItem, useMessageScroller, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useInsertMessage } from '@/hooks/use-insert-message'
-import { useDebounce } from '@/hooks/use-limit'
 import { toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
 
@@ -55,8 +54,7 @@ async function getMessages(pageParam: string | null, conversationId: number, sig
 }
 
 export default function Messages() {
-    const { conversation, auth } = usePage<PageProps>().props
-    const [typing, setTyping] = useState<boolean>(false)
+    const { conversation } = usePage<PageProps>().props
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
@@ -80,9 +78,8 @@ export default function Messages() {
     const insertMessage = useInsertMessage()
     const { scrollToEnd } = useMessageScroller()
     const { start, end } = useMessageScrollerScrollable()
-    const { debouncedFn: typingDebouncedFn, stopTimeout: stopTypingDebouncedFn } = useDebounce(1000)
 
-    const { stopListening, channel } = useEcho<Message>(`conversation.${conversation.id}`, 'MessageSent', async message => {
+    const { stopListening } = useEcho<Message>(`conversation.${conversation.id}`, 'MessageSent', async message => {
         await queryClient.cancelQueries({ queryKey: ['messages', conversation.id] })
 
         insertMessage(conversation.id, message, true)
@@ -91,10 +88,6 @@ export default function Messages() {
             queryKey: ['messages', conversation.id],
             refetchType: 'none',
         })
-
-        setTyping(false)
-
-        stopTypingDebouncedFn()
 
         setTimeout(() => {
             scrollToEnd({
@@ -110,44 +103,13 @@ export default function Messages() {
     }, [start, end, hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage])
 
     useEffect(() => {
-        channel()?.listenForWhisper('typing', ({ username }) => {
-            if (username !== auth.user.username) {
-                setTyping(true)
-
-                typingDebouncedFn(() => {
-                    setTyping(false)
-                })
-            }
-        })
-
         return () => {
             stopListening()
-            channel()?.stopListeningForWhisper('typing')
         }
-    }, [auth, channel, stopListening, typingDebouncedFn])
+    }, [stopListening])
 
     if (isLoading || !data) {
-        return (
-            <div className='flex h-full max-h-screen flex-1 flex-col justify-end-safe gap-2 overflow-y-auto rounded-xl p-4'>
-                <div>
-                    <Skeleton className='ml-auto h-10 max-w-[10%]' />
-                </div>
-                <div>
-                    <Skeleton className='ml-auto h-10 max-w-[30%]' />
-                </div>
-                <Skeleton className='h-10 max-w-[70%]' />
-                <Skeleton className='h-10 max-w-[20%]' />
-                <div>
-                    <Skeleton className='ml-auto h-10 max-w-[40%]' />
-                </div>
-                <div>
-                    <Skeleton className='ml-auto h-10 max-w-[20%]' />
-                </div>
-                <div>
-                    <Skeleton className='ml-auto h-16 max-w-[70%]' />
-                </div>
-            </div>
-        )
+        return <Placeholder />
     }
 
     if (!data.pages.length) {
@@ -175,17 +137,30 @@ export default function Messages() {
                     <MessageModel message={message} />
                 </Fragment>
             ))}
-
-            {typing && (
-                <MessageScrollerItem className='flex items-end gap-1'>
-                    <p className='text-xs text-muted-foreground'>Typing</p>
-                    <div className='relative bottom-1 flex gap-1'>
-                        <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_300ms] rounded-full bg-secondary' />
-                        <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_600ms] rounded-full bg-secondary' />
-                        <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_900ms] rounded-full bg-secondary' />
-                    </div>
-                </MessageScrollerItem>
-            )}
         </MessageScrollerContent>
+    )
+}
+
+export function Placeholder() {
+    return (
+        <div className='flex h-full max-h-screen flex-1 flex-col justify-end-safe gap-2 overflow-y-auto rounded-xl p-4'>
+            <div>
+                <Skeleton className='ml-auto h-10 max-w-[10%]' />
+            </div>
+            <div>
+                <Skeleton className='ml-auto h-10 max-w-[30%]' />
+            </div>
+            <Skeleton className='h-10 max-w-[70%]' />
+            <Skeleton className='h-10 max-w-[20%]' />
+            <div>
+                <Skeleton className='ml-auto h-10 max-w-[40%]' />
+            </div>
+            <div>
+                <Skeleton className='ml-auto h-10 max-w-[20%]' />
+            </div>
+            <div>
+                <Skeleton className='ml-auto h-16 max-w-[70%]' />
+            </div>
+        </div>
     )
 }
