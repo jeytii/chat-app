@@ -9,6 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @property int $id
  * @property int $sender_id
+ * @property ?string $raw_content
  * @property ?string $content
  * @property ?string $gif
  * @property ?string $image
@@ -26,6 +27,7 @@ class MessageResource extends JsonResource
         return [
             'id' => $this->id,
             'reference' => $this->whenLoaded('reference'),
+            'raw_content' => $this->raw_content,
             'content' => $this->content,
             'gif' => $this->gif,
             'image_url' => $this->getImageUrl($this->image),

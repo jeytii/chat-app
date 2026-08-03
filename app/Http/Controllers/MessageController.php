@@ -62,6 +62,7 @@ class MessageController extends Controller
             $data['gif'] = $file;
         }
 
+        $data['raw_content'] = $data['content'];
         $data['content'] = Str::markdown($data['content'], [
             'html_input' => 'escape',
             'allow_unsafe_links' => false,
@@ -80,7 +81,7 @@ class MessageController extends Controller
         $message = auth()->user()
             ->messages()
             ->create(
-                Arr::only($data, ['conversation_id', 'content', 'image', 'gif']),
+                Arr::only($data, ['conversation_id', 'content', 'raw_content', 'image', 'gif']),
             )
             ->toResource();
 
