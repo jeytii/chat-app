@@ -21,6 +21,7 @@ export type Message = {
         image_url: string | null;
         from_self: boolean;
     } | null;
+    raw_content?: string | null;
     content: string | null;
     gif: string | null;
     image_url: string | null;

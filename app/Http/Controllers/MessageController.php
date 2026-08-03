@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
 
 class MessageController extends Controller
 {
@@ -62,26 +60,10 @@ class MessageController extends Controller
             $data['gif'] = $file;
         }
 
-        $data['raw_content'] = $data['content'];
-        $data['content'] = Str::markdown($data['content'], [
-            'html_input' => 'escape',
-            'allow_unsafe_links' => false,
-            'renderer' => [
-                'soft_break' => "<br />\n",
-            ],
-            'external_link' => [
-                'internal_hosts' => 'http://localhost:8000',
-                'open_in_new_window' => true,
-                'html_class' => 'underline',
-            ],
-        ], [
-            new ExternalLinkExtension,
-        ]);
-
         $message = auth()->user()
             ->messages()
             ->create(
-                Arr::only($data, ['conversation_id', 'content', 'raw_content', 'image', 'gif']),
+                Arr::only($data, ['conversation_id', 'content', 'image', 'gif']),
             )
             ->toResource();
 

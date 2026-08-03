@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('sender_id')->constrained('users');
             $table->foreignId('conversation_id')->constrained();
             $table->foreignId('reference_id')->nullable()->constrained('messages')->nullOnDelete();
-            $table->longText('raw_content')->nullable();
             $table->longText('content')->nullable();
             $table->string('gif')->nullable();
             $table->string('image')->nullable();
