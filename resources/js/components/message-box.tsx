@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import type { EmojiClickData } from 'emoji-picker-react'
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
+import Echo from 'laravel-echo'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
@@ -17,9 +18,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useAppearance } from '@/hooks/use-appearance'
 import { useInsertMessage } from '@/hooks/use-insert-message'
 import { useThrottle } from '@/hooks/use-limit'
-import usePrivateChannel from '@/hooks/use-private-channel'
 import { toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
+
+const echo = new Echo({
+    broadcaster: 'reverb',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: import.meta.env.VITE_REVERB_HOST,
+    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
+    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    enabledTransports: ['ws', 'wss'],
+})
 
 export default function MessageBox() {
     const { conversation_id: conversationId, auth } = usePage<{ conversation_id: number }>().props
@@ -34,7 +44,7 @@ export default function MessageBox() {
     const previewImage = useRef<string | null>(null)
     const indicateTyping = useThrottle(1000)
     const socketId = useSocketId()
-    const channel = usePrivateChannel(`conversation.${conversationId}`)
+    const channel = echo.private(`conversation.${conversationId}`)
     const queryKey = ['messages', conversationId]
 
 
@@ -206,7 +216,7 @@ export default function MessageBox() {
 
     return (
         <div className='z-10'>
-            <InputGroup className='items-end rounded-none border-x-0 border-b-0 dark:bg-transparent'>
+            <InputGroup className='items-end rounded-none border-x-0 border-b-0 border-border dark:border-input/60 dark:bg-transparent'>
                 <InputGroupTextarea
                     ref={textarea}
                     placeholder='Write a message'
