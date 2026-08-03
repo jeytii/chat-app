@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react'
-import { useEcho, useSocketId } from '@laravel/echo-react'
+import { useSocketId } from '@laravel/echo-react'
 import { useMessageScroller } from '@shadcn/react/message-scroller'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useAppearance } from '@/hooks/use-appearance'
 import { useInsertMessage } from '@/hooks/use-insert-message'
 import { useThrottle } from '@/hooks/use-limit'
+import usePrivateChannel from '@/hooks/use-private-channel'
 import { toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
 
@@ -33,7 +34,7 @@ export default function MessageBox() {
     const previewImage = useRef<string | null>(null)
     const indicateTyping = useThrottle(1000)
     const socketId = useSocketId()
-    const { channel } = useEcho(`conversation.${conversationId}`, '', () => { })
+    const channel = usePrivateChannel(`conversation.${conversationId}`)
     const queryKey = ['messages', conversationId]
 
 
@@ -128,7 +129,7 @@ export default function MessageBox() {
         setMessage(event.target.value)
 
         indicateTyping(() => {
-            channel()?.whisper('typing', {
+            channel.whisper('typing', {
                 username: auth.user.username,
             })
         })
