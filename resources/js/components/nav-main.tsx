@@ -77,11 +77,8 @@ export function NavMain() {
                             >
                                 <Link href={`/conversations/${conversation.id}`} replace>
                                     <div className='relative'>
-                                        <Photo
-                                            src={conversation.user.image_url as string}
-                                            size={40}
-                                            className='size-10 rounded-full'
-                                        />
+                                        <Photo src={conversation.user.image_url as string} />
+
                                         {conversation.user.is_online && (
                                             <span className='absolute right-px bottom-px size-2.5 rounded-full border border-primary bg-green-700' />
                                         )}

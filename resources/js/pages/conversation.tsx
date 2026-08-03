@@ -43,7 +43,7 @@ export default function Conversation() {
                     <SidebarTrigger className='-ml-1' />
 
                     <div className='flex items-center gap-2'>
-                        <Photo src={user.image_url as string} size={40} className='size-10 rounded-full' />
+                        <Photo src={user.image_url as string} />
                         <div>
                             <h1>{user.name}</h1>
                             <PresenceIndicator conversationId={id} isOnline={user.is_online} />
