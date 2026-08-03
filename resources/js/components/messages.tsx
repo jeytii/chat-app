@@ -117,7 +117,7 @@ export default function Messages() {
     }
 
     return (
-        <MessageScrollerContent className='justify-end gap-2 px-2 py-4'>
+        <MessageScrollerContent className='justify-end gap-2 p-4'>
             {isFetchingPreviousPage && <p className='py-2 text-center text-muted-foreground'>Loading...</p>}
 
             {data.pages.map((message, index, messages) => (

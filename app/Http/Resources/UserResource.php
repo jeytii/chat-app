@@ -13,11 +13,6 @@ use Illuminate\Support\Facades\Storage;
  */
 class UserResource extends JsonResource
 {
-    public function __construct(mixed $resource, protected ?int $conversationId = null)
-    {
-        parent::__construct($resource);
-    }
-
     /**
      * Transform the resource into an array.
      *
@@ -26,7 +21,6 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'conversation_id' => $this->whenNotNull($this->conversationId),
             'name' => $this->name,
             'username' => $this->username,
             'image_url' => $this->image ? Storage::disk('public')->url($this->image) : null,
