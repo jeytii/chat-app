@@ -18,7 +18,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useAppearance } from '@/hooks/use-appearance'
 import { useInsertMessage } from '@/hooks/use-insert-message'
 import { useThrottle } from '@/hooks/use-limit'
-import { toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
 
 const echo = new Echo({
@@ -84,7 +83,9 @@ export default function MessageBox() {
                 gif: null,
                 image_url: null,
                 from_self: true,
-                date: toReadableDate(new Date(), '2-digit'),
+                date: 'Today',
+                time: new Date().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }),
+                created_at: new Date().toLocaleDateString('en-PH'),
                 is_fake: true,
                 has_image: !!file,
             })

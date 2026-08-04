@@ -10,32 +10,7 @@ import { Marker, MarkerContent } from '@/components/ui/marker'
 import { MessageScrollerContent, MessageScrollerItem, useMessageScroller, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useInsertMessage } from '@/hooks/use-insert-message'
-import { toReadableDate } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
-
-function getDateLabel(date: string) {
-    const givenDate = new Date(date)
-
-    // Calculate the difference in milliseconds between the given date and today
-    const mlsDiff = Math.abs(givenDate.getTime() - Date.now())
-
-    // Convert milliseconds back to days
-    const dayDiff = Math.floor(mlsDiff / (1000 * 60 * 60 * 24))
-
-    if (dayDiff <= 0) {
-        return 'Today'
-    }
-
-    if (dayDiff === 1) {
-        return 'Yesterday'
-    }
-
-    return toReadableDate(givenDate, 'short')
-}
-
-function areSameDate(date: string, previousDate: string) {
-    return new Date(date).getTime() !== new Date(previousDate).getTime()
-}
 
 async function getMessages(pageParam: string | null, conversationId: number, signal: AbortSignal) {
     const { data } = await axios<MessageResponse>('/messages', {
@@ -122,15 +97,25 @@ export default function Messages() {
 
             {data.pages.map((message, index, messages) => (
                 <Fragment key={message.id}>
-                    {((index !== 0 && areSameDate(message.date, messages[index - 1].date)) || (!index && !hasPreviousPage)) && (
+                    {((index !== 0 && message.date !== messages[index - 1].date) || (!index && !hasPreviousPage)) && (
                         <MessageScrollerItem>
                             <Marker variant='separator'>
-                                <MarkerContent>{getDateLabel(message.date)}</MarkerContent>
+                                <MarkerContent>{message.date}</MarkerContent>
                             </Marker>
                         </MessageScrollerItem>
                     )}
 
-                    <MessageModel message={message} />
+                    <MessageModel
+                        message={message}
+                        firstInAMinute={
+                            (
+                                index !== 0 // is not the very first message
+                                && message.time !== messages[index - 1].time // current message's time and previous message's time are different
+                                && message.from_self === messages[index - 1].from_self // both current and previous messages have the same sender
+                            )
+                            || (!index && !hasPreviousPage) // is the very first message
+                        }
+                    />
                 </Fragment>
             ))}
         </MessageScrollerContent>

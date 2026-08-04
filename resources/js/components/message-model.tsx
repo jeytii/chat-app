@@ -1,3 +1,6 @@
+import { intervalToDuration, isToday } from 'date-fns'
+import { useEffect, useMemo, useState } from 'react'
+
 import { Attachment, AttachmentMedia } from '@/components/ui/attachment'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
@@ -6,11 +9,63 @@ import { MessageScrollerItem } from '@/components/ui/message-scroller'
 import { Spinner } from '@/components/ui/spinner'
 import type { Message as MessageType } from '@/types/models'
 
-export default function MessageModel({ message }: { message: MessageType }) {
+export default function MessageModel({ message, firstInAMinute }: { message: MessageType; firstInAMinute: boolean; }) {
+    const [diffs, setDiffs] = useState(intervalToDuration({
+        start: new Date(message.created_at),
+        end: new Date(),
+    }))
+
+    const timeDiff = useMemo(() => {
+        if ((diffs.minutes || 0) < 1) {
+            return 'Now'
+        }
+
+        if ((diffs.hours || 0) < 1) {
+            return `${diffs.minutes}m ago`
+        }
+
+        const date = new Date(message.created_at)
+        const time = date.toLocaleTimeString('en-PH', {
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+
+        if ((diffs.hours || 0) >= 1 && isToday(date)) {
+            return `${diffs.hours}h ago (${time})`
+        }
+
+        return time
+    }, [diffs, message.created_at])
+
+    useEffect(() => {
+        const date = new Date(message.created_at)
+
+        if (message.is_fake || !firstInAMinute) {
+            return
+        }
+
+        const interval = setInterval(() => {
+            setDiffs(intervalToDuration({
+                start: date,
+                end: new Date(),
+            }))
+        }, 60000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [message.created_at, message.is_fake, firstInAMinute])
+
     return (
         <MessageScrollerItem messageId={message.id.toString()}>
             <Message align={message.from_self ? 'end' : 'start'}>
                 <MessageContent className='gap-1'>
+                    {(!message.is_fake && firstInAMinute) && (
+                        <p className='text-xs text-muted-foreground group-data-[align=end]/message:text-right'>
+                            {timeDiff}
+                        </p>
+                    )}
+
                     {!!message.content && (
                         <Bubble variant={message.from_self ? 'default' : 'muted'}>
                             <BubbleContent dangerouslySetInnerHTML={{ __html: message.content }} className='space-y-2' />
