@@ -3,12 +3,14 @@ import { useEcho } from '@laravel/echo-react'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import { differenceInMinutes, isSameDay } from 'date-fns'
 import { Fragment, useEffect } from 'react'
 
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent } from '@/components/ui/marker'
 import { MessageScrollerContent, MessageScrollerItem, useMessageScroller, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useInsertMessage } from '@/hooks/use-insert-message'
 import type { Message, MessageResponse } from '@/types/models'
 
@@ -41,7 +43,13 @@ export default function Messages() {
         getNextPageParam: () => null,
         select: data => ({
             ...data,
-            pages: data.pages.flatMap(page => page.items),
+            pages: data.pages
+                .flatMap(page => page.items)
+                .map(message => ({
+                    ...message,
+                    date_diff: getDateDiff(message.date),
+                    time_diff: getTimeDiff(message.date),
+                })),
         }),
     })
 
@@ -97,10 +105,10 @@ export default function Messages() {
 
             {data.pages.map((message, index, messages) => (
                 <Fragment key={message.id}>
-                    {((index !== 0 && message.date !== messages[index - 1].date) || (!index && !hasPreviousPage)) && (
+                    {((index !== 0 && !isSameDay(message.date, messages[index - 1].date)) || (!index && !hasPreviousPage)) && (
                         <MessageScrollerItem>
                             <Marker variant='separator'>
-                                <MarkerContent>{message.date}</MarkerContent>
+                                <MarkerContent>{message.date_diff}</MarkerContent>
                             </Marker>
                         </MessageScrollerItem>
                     )}
@@ -110,7 +118,7 @@ export default function Messages() {
                         firstInAMinute={
                             (
                                 index !== 0 // is not the very first message
-                                && message.time !== messages[index - 1].time // current message's time and previous message's time are different
+                                && differenceInMinutes(message.date, messages[index - 1].date) >= 1 // difference in minutes between current previous at least 1
                                 && message.from_self === messages[index - 1].from_self // both current and previous messages have the same sender
                             )
                             || (!index && !hasPreviousPage) // is the very first message

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppearance } from '@/hooks/use-appearance'
+import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useInsertMessage } from '@/hooks/use-insert-message'
 import { useThrottle } from '@/hooks/use-limit'
 import type { Message, MessageResponse } from '@/types/models'
@@ -83,9 +84,9 @@ export default function MessageBox() {
                 gif: null,
                 image_url: null,
                 from_self: true,
-                date: 'Today',
-                time: new Date().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }),
-                created_at: new Date().toLocaleDateString('en-PH'),
+                date: new Date().toLocaleString(),
+                date_diff: 'Today',
+                time_diff: 'Now',
                 is_fake: true,
                 has_image: !!file,
             })
@@ -119,7 +120,15 @@ export default function MessageBox() {
                         if (index >= pages.length - 2) {
                             return {
                                 ...page,
-                                items: page.items.map(page => page.id === context.id ? data : page),
+                                items: page.items.map(item => (
+                                    item.id !== context.id
+                                        ? item
+                                        : {
+                                            ...data,
+                                            date_diff: getDateDiff(data.date),
+                                            time_diff: getTimeDiff(data.date),
+                                        }
+                                )),
                             }
                         }
 

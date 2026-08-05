@@ -27,8 +27,8 @@ export type Message = {
     image_url: string | null;
     from_self: boolean;
     date: string;
-    time: string;
-    created_at: string;
+    date_diff: string;
+    time_diff: string;
     is_fake?: boolean;
     has_image?: boolean;
 }

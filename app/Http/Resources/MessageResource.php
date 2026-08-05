@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -47,9 +46,7 @@ class MessageResource extends JsonResource
             'gif' => $this->gif,
             'image_url' => $this->getImageUrl($this->image),
             'from_self' => $this->sender_id === auth()->id(),
-            'date' => $this->getDateDiff($this->created_at),
-            'time' => $this->getTimeDiff($this->created_at),
-            'created_at' => $this->created_at,
+            'date' => $this->created_at,
         ];
     }
 
@@ -62,43 +59,5 @@ class MessageResource extends JsonResource
         $path = explode('/', $file);
 
         return route('image', end($path));
-    }
-
-    private function getDateDiff(CarbonImmutable $date): string
-    {
-        if ($date->isToday()) {
-            return 'Today';
-        }
-
-        if ($date->isYesterday()) {
-            return 'Yesterday';
-        }
-
-        if ($date->diffInYears(now()) >= 1) {
-            return $date->format('M d, Y');
-        }
-
-        return $date->format('M d');
-    }
-
-    private function getTimeDiff(CarbonImmutable $date): string
-    {
-        $now = now();
-
-        $hrsDiff = $date->diffInHours($now);
-
-        if ($date->diffInMinutes($now) < 1) {
-            return 'Now';
-        }
-
-        if ($hrsDiff < 1) {
-            return $now->diffForHumans($date, CarbonInterface::DIFF_ABSOLUTE, short: true) . ' ago';
-        }
-
-        if ($hrsDiff > 1 && $date->isToday()) {
-            return $now->diffForHumans($date, CarbonInterface::DIFF_ABSOLUTE, short: true) . ' ago (' . $date->format('h:i A') . ')';
-        }
-
-        return $date->format('h:i A');
     }
 }
