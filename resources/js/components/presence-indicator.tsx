@@ -17,7 +17,7 @@ const echo = new Echo({
 export default function PresenceIndicator({ conversationId, isOnline }: { conversationId: number; isOnline: boolean; }) {
     const { username } = usePage().props.auth.user
     const [isTyping, setIsTyping] = useState<boolean>(false)
-    const { debouncedFn } = useDebounce(1000)
+    const debounce = useDebounce(1000)
     const channel = echo.private(`conversation.${conversationId}`)
 
     useEffect(() => {
@@ -25,7 +25,7 @@ export default function PresenceIndicator({ conversationId, isOnline }: { conver
             if (data.username !== username) {
                 setIsTyping(true)
 
-                debouncedFn(() => {
+                debounce(() => {
                     setIsTyping(false)
                 })
             }
@@ -36,7 +36,7 @@ export default function PresenceIndicator({ conversationId, isOnline }: { conver
 
             setIsTyping(false)
         }
-    }, [conversationId, username, channel, debouncedFn])
+    }, [conversationId, username, channel, debounce])
 
     if (isTyping) {
         return (

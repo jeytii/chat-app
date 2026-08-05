@@ -2,7 +2,7 @@ import { usePage } from '@inertiajs/react'
 import { useSocketId } from '@laravel/echo-react'
 import { useMessageScroller } from '@shadcn/react/message-scroller'
 import type { InfiniteData } from '@tanstack/react-query'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import type { EmojiClickData } from 'emoji-picker-react'
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
@@ -36,13 +36,12 @@ export default function MessageBox() {
     const [message, setMessage] = useState<string>('')
     const [image, setImage] = useState<File | string | null>(null)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
-    const queryClient = useQueryClient()
     const insertMessage = useInsertMessage()
     const textarea = useRef<HTMLTextAreaElement>(null)
     const { scrollToEnd } = useMessageScroller()
     const { appearance } = useAppearance()
     const previewImage = useRef<string | null>(null)
-    const indicateTyping = useThrottle(1000)
+    const throttle = useThrottle(1000)
     const socketId = useSocketId()
     const channel = echo.private(`conversation.${conversationId}`)
     const queryKey = ['messages', conversationId]
@@ -73,8 +72,8 @@ export default function MessageBox() {
                 'X-Socket-ID': socketId,
             },
         }),
-        async onMutate({ content, file }) {
-            await queryClient.cancelQueries({ queryKey })
+        async onMutate({ content, file }, { client }) {
+            await client.cancelQueries({ queryKey })
 
             const itemId = Math.floor(Math.random() * 1000000000)
 
@@ -107,8 +106,8 @@ export default function MessageBox() {
 
             return { id: itemId }
         },
-        onSuccess({ data }, payload, context) {
-            queryClient.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => {
+        onSuccess({ data }, payload, context, { client }) {
+            client.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => {
                 if (!current) {
                     return current
                 }
@@ -137,8 +136,8 @@ export default function MessageBox() {
                 }
             })
         },
-        onSettled() {
-            queryClient.invalidateQueries({
+        onSettled(data, error, payload, context, { client }) {
+            client.invalidateQueries({
                 queryKey,
                 refetchType: 'none',
             })
@@ -148,7 +147,7 @@ export default function MessageBox() {
     function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
         setMessage(event.target.value)
 
-        indicateTyping(() => {
+        throttle(() => {
             channel.whisper('typing', {
                 username: auth.user.username,
             })

@@ -7,6 +7,7 @@ import { Message, MessageContent } from '@/components/ui/message'
 import { MessageScrollerItem } from '@/components/ui/message-scroller'
 import { Spinner } from '@/components/ui/spinner'
 import { getTimeDiff } from '@/hooks/use-datetime'
+import { cn } from '@/lib/utils'
 import type { Message as MessageType } from '@/types/models'
 
 export default function MessageModel({ message, firstInAMinute }: { message: MessageType; firstInAMinute: boolean; }) {
@@ -35,7 +36,10 @@ export default function MessageModel({ message, firstInAMinute }: { message: Mes
                     )}
 
                     {!!message.content && (
-                        <Bubble variant={message.from_self ? 'default' : 'muted'}>
+                        <Bubble
+                            variant={message.from_self ? 'default' : 'muted'}
+                            className={cn({ 'opacity-60': message.is_fake })}
+                        >
                             <BubbleContent dangerouslySetInnerHTML={{ __html: message.content }} className='space-y-2' />
                         </Bubble>
                     )}

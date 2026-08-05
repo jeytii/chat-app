@@ -3,21 +3,17 @@ import { useRef } from 'react'
 export function useDebounce(delay: number = 600) {
     const timeout = useRef<number | null>(null)
 
-    function stopTimeout() {
+    const debouncedFn = (action: CallableFunction) => {
         if (timeout.current) {
             clearTimeout(timeout.current)
         }
-    }
-
-    const debouncedFn = (action: CallableFunction) => {
-        stopTimeout()
 
         timeout.current = setTimeout(() => {
             action()
         }, delay)
     }
 
-    return { debouncedFn, stopTimeout }
+    return debouncedFn
 }
 
 export function useThrottle(delay: number = 600) {
