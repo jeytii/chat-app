@@ -8,20 +8,29 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
-use Override;
 
 class Message extends Model
 {
     use SoftDeletes;
 
-    #[Override]
     protected static function booted(): void
     {
+        static::creating(function (self $model): void {
+            $model->updated_at = null;
+        });
+
         static::deleted(function (self $model): void {
             if ($image = $model->image) {
                 Storage::delete($image);
             }
         });
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'updated_at' => 'boolean',
+        ];
     }
 
     /**

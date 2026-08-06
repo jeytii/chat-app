@@ -15,6 +15,7 @@ use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
  * @property ?string $gif
  * @property ?string $image
  * @property CarbonImmutable $created_at
+ * @property bool $updated_at
  */
 class MessageResource extends JsonResource
 {
@@ -47,6 +48,7 @@ class MessageResource extends JsonResource
             'image_url' => $this->getImageUrl($this->image),
             'from_self' => $this->sender_id === auth()->id(),
             'date' => $this->created_at,
+            'edited' => $this->updated_at,
         ];
     }
 

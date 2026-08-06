@@ -29,6 +29,7 @@ export type Message = {
     date: string;
     date_diff: string;
     time_diff: string;
+    edited: boolean;
     is_fake?: boolean;
     has_image?: boolean;
 }
