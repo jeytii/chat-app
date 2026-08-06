@@ -176,7 +176,7 @@
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        @apply border-border ring-0! ring-offset-0! focus:ring-0! focus:ring-offset-0! outline-none!;
     }
 
     body {

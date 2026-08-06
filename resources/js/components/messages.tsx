@@ -8,7 +8,7 @@ import { Fragment, useEffect } from 'react'
 
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent } from '@/components/ui/marker'
-import { MessageScrollerContent, MessageScrollerItem, useMessageScroller, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
+import { MessageScrollerContent, MessageScrollerItem, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useInsertMessage } from '@/hooks/use-insert-message'
@@ -55,7 +55,6 @@ export default function Messages() {
 
     const queryClient = useQueryClient()
     const insertMessage = useInsertMessage()
-    const { scrollToEnd } = useMessageScroller()
     const { start, end } = useMessageScrollerScrollable()
 
     const { stopListening } = useEcho<Message>(`conversation.${conversationId}`, 'MessageSent', async message => {
@@ -67,12 +66,6 @@ export default function Messages() {
             queryKey: ['messages', conversationId],
             refetchType: 'none',
         })
-
-        setTimeout(() => {
-            scrollToEnd({
-                behavior: 'instant',
-            })
-        }, 0)
     })
 
     useEffect(() => {
