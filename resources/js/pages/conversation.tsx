@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
 
 import MessageBox from '@/components/message-box'
+import { MessageContentProvider } from '@/components/message-content-provider'
 import Messages, { Placeholder as MessagesPlaceholder } from '@/components/messages'
 import Photo from '@/components/photo'
 import PresenceIndicator from '@/components/presence-indicator'
@@ -36,7 +37,7 @@ export default function Conversation() {
     }
 
     return (
-        <MessageScrollerProvider scrollEdgeThreshold={100}>
+        <MessageScrollerProvider scrollEdgeThreshold={100} autoScroll>
             {/* ===== HEADER ===== */}
             <header className='z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4 dark:border-input/60'>
                 <div className='flex items-center gap-2'>
@@ -52,16 +53,18 @@ export default function Conversation() {
                 </div>
             </header>
 
-            {/* ===== MESSAGES ===== */}
-            <MessageScroller>
-                <MessageScrollerViewport>
-                    <Messages />
-                </MessageScrollerViewport>
-                <MessageScrollerButton />
-            </MessageScroller>
+            <MessageContentProvider>
+                {/* ===== MESSAGES ===== */}
+                <MessageScroller>
+                    <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
+                        <Messages />
+                    </MessageScrollerViewport>
+                    <MessageScrollerButton />
+                </MessageScroller>
 
-            {/* ===== MESSAGE BOX ===== */}
-            <MessageBox />
+                {/* ===== MESSAGE BOX ===== */}
+                <MessageBox />
+            </MessageContentProvider>
         </MessageScrollerProvider>
     )
 }

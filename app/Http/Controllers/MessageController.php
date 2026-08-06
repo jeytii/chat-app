@@ -71,4 +71,15 @@ class MessageController extends Controller
 
         return $message;
     }
+
+    public function update(Request $request, Message $message): JsonResource
+    {
+        $data = $request->validate([
+            'content' => ['required', 'string'],
+        ]);
+
+        $message->update($data);
+
+        return $message->toResource();
+    }
 }

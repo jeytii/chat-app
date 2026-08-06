@@ -1,6 +1,5 @@
 import { usePage } from '@inertiajs/react'
 import { useSocketId } from '@laravel/echo-react'
-import { useMessageScroller } from '@shadcn/react/message-scroller'
 import type { InfiniteData } from '@tanstack/react-query'
 import { useMutation } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
@@ -9,9 +8,10 @@ import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
 import Echo from 'laravel-echo'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { Remarkable } from 'remarkable'
 
+import { MessageContentContext } from '@/components/message-content-provider'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -33,12 +33,11 @@ const echo = new Echo({
 
 export default function MessageBox() {
     const { conversation_id: conversationId, auth } = usePage<{ conversation_id: number }>().props
-    const [message, setMessage] = useState<string>('')
+    const { message, editId, setMessage, setEditId } = useContext(MessageContentContext)
     const [image, setImage] = useState<File | string | null>(null)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
     const insertMessage = useInsertMessage()
     const textarea = useRef<HTMLTextAreaElement>(null)
-    const { scrollToEnd } = useMessageScroller()
     const { appearance } = useAppearance()
     const previewImage = useRef<string | null>(null)
     const throttle = useThrottle(1000)
@@ -46,13 +45,8 @@ export default function MessageBox() {
     const channel = echo.private(`conversation.${conversationId}`)
     const queryKey = ['messages', conversationId]
 
-
     useEffect(() => {
         return () => {
-            setMessage('')
-            setImage(null)
-            setShowEmojis(false)
-
             if (previewImage.current) {
                 URL.revokeObjectURL(previewImage.current)
                 previewImage.current = null
@@ -60,7 +54,59 @@ export default function MessageBox() {
         }
     }, [])
 
-    const { mutate } = useMutation<
+    const { mutate: edit } = useMutation<
+        AxiosResponse<Message>,
+        Error,
+        { id: number; content: string; }
+    >({
+        mutationFn: ({ id, content }) => axios.put(`/messages/${id}`, { content }, {
+            headers: {
+                'X-Socket-ID': socketId,
+            },
+        }),
+        async onMutate({ id, content }, { client }) {
+            await client.cancelQueries({ queryKey })
+
+            client.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => (
+                !current ? current : {
+                    ...current,
+                    pages: current.pages.map(page => ({
+                        ...page,
+                        items: page.items.map(item => {
+                            if (item.id === id) {
+                                item.content = new Remarkable({ html: false, breaks: true }).render(content)
+                            }
+
+                            return item
+                        }),
+                    })),
+                }
+            ))
+
+            setMessage('')
+        },
+        onSuccess({ data }, { id }, context, { client }) {
+            client.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => (
+                !current ? current : {
+                    ...current,
+                    pages: current.pages.map(page => ({
+                        ...page,
+                        items: page.items.map(item => item.id === id ? data : item),
+                    })),
+                }
+            ))
+        },
+        async onSettled(data, error, payload, context, { client }) {
+            await client.invalidateQueries({
+                queryKey,
+                refetchType: 'none',
+            })
+
+            setEditId(null)
+        },
+    })
+
+    const { mutate: add } = useMutation<
         AxiosResponse<Message>,
         Error,
         { conversation_id: number; content: string; file: File | string | null; },
@@ -86,15 +132,10 @@ export default function MessageBox() {
                 date: new Date().toLocaleString(),
                 date_diff: 'Today',
                 time_diff: 'Now',
+                edited: false,
                 is_fake: true,
                 has_image: !!file,
             })
-
-            setTimeout(() => {
-                scrollToEnd({
-                    behavior: 'instant',
-                })
-            }, 0)
 
             setMessage('')
             setImage(null)
@@ -206,6 +247,9 @@ export default function MessageBox() {
         if (!event.shiftKey && event.key === 'Enter') {
             event.preventDefault()
             send()
+        } else if (event.key === 'Escape' && editId) {
+            setEditId(null)
+            setMessage('')
         }
     }
 
@@ -216,11 +260,18 @@ export default function MessageBox() {
             return
         }
 
-        mutate({
-            conversation_id: conversationId,
-            content: value,
-            file: image,
-        })
+        if (editId) {
+            edit({
+                id: editId,
+                content: value,
+            })
+        } else {
+            add({
+                conversation_id: conversationId,
+                content: value,
+                file: image,
+            })
+        }
     }
 
     return (
