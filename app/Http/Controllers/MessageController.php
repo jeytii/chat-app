@@ -84,6 +84,9 @@ class MessageController extends Controller
         return $message->toResource();
     }
 
+    /**
+     * @return array<string, bool>
+     */
     public function destroy(Message $message): array
     {
         $message->delete();
