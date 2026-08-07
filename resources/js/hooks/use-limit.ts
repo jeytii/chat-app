@@ -1,19 +1,30 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 export function useDebounce(delay: number = 600) {
     const timeout = useRef<number | null>(null)
+    const [canStopDebounce, setCanStopDebounce] = useState<boolean>(false)
 
-    const debouncedFn = (action: CallableFunction) => {
+    function stopDebounce() {
+        if (timeout.current) {
+            clearTimeout(timeout.current)
+            setCanStopDebounce(false)
+        }
+    }
+
+    const debounce = (action: CallableFunction) => {
+        setCanStopDebounce(true)
+
         if (timeout.current) {
             clearTimeout(timeout.current)
         }
 
         timeout.current = setTimeout(() => {
             action()
+            setCanStopDebounce(false)
         }, delay)
     }
 
-    return debouncedFn
+    return { debounce, stopDebounce, canStopDebounce }
 }
 
 export function useThrottle(delay: number = 600) {
