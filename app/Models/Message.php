@@ -19,18 +19,19 @@ class Message extends Model
             $model->updated_at = null;
         });
 
+        static::deleting(function (self $model): void {
+            $model->reference_id = null;
+            $model->content = null;
+            $model->gif = null;
+        });
+
         static::deleted(function (self $model): void {
             if ($image = $model->image) {
                 Storage::delete($image);
+
+                $model->image = null;
             }
         });
-    }
-
-    protected function casts(): array
-    {
-        return [
-            'updated_at' => 'boolean',
-        ];
     }
 
     /**

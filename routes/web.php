@@ -13,7 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->only(['index', 'show']);
 
     Route::apiResource('messages', MessageController::class)
-        ->only(['index', 'store', 'update']);
+        ->except('show');
 
     Route::get('image/{path}', ImageController::class)->name('image');
 

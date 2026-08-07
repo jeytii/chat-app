@@ -24,6 +24,7 @@ class MessageController extends Controller
 
         $messages = Message::query()
             ->where('conversation_id', $request->integer('conversation_id'))
+            ->withTrashed()
             ->latest()
             ->with('reference')
             ->cursorPaginate(20);
@@ -81,5 +82,12 @@ class MessageController extends Controller
         $message->update($data);
 
         return $message->toResource();
+    }
+
+    public function destroy(Message $message): array
+    {
+        $message->delete();
+
+        return ['success' => true];
     }
 }
