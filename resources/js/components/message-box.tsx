@@ -1,6 +1,5 @@
 import { usePage } from '@inertiajs/react'
 import { useSocketId } from '@laravel/echo-react'
-import type { InfiniteData } from '@tanstack/react-query'
 import { useMutation } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import type { EmojiClickData } from 'emoji-picker-react'
@@ -17,9 +16,9 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } fro
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppearance } from '@/hooks/use-appearance'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
-import { useInsertMessage } from '@/hooks/use-insert-message'
 import { useThrottle } from '@/hooks/use-limit'
-import type { Message, MessageResponse } from '@/types/models'
+import useMessage from '@/hooks/use-message'
+import type { Message } from '@/types/models'
 
 const echo = new Echo({
     broadcaster: 'reverb',
@@ -36,7 +35,7 @@ export default function MessageBox() {
     const { message, editId, setMessage, setEditId } = useContext(MessageContentContext)
     const [image, setImage] = useState<File | string | null>(null)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
-    const insertMessage = useInsertMessage()
+    const { insert, alter } = useMessage()
     const textarea = useRef<HTMLTextAreaElement>(null)
     const { appearance } = useAppearance()
     const previewImage = useRef<string | null>(null)
@@ -67,34 +66,14 @@ export default function MessageBox() {
         async onMutate({ id, content }, { client }) {
             await client.cancelQueries({ queryKey })
 
-            client.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => (
-                !current ? current : {
-                    ...current,
-                    pages: current.pages.map(page => ({
-                        ...page,
-                        items: page.items.map(item => {
-                            if (item.id === id) {
-                                item.content = new Remarkable({ html: false, breaks: true }).render(content)
-                            }
-
-                            return item
-                        }),
-                    })),
-                }
-            ))
+            alter(conversationId, id, {
+                content: new Remarkable({ html: false, breaks: true }).render(content),
+            })
 
             setMessage('')
         },
-        onSuccess({ data }, { id }, context, { client }) {
-            client.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => (
-                !current ? current : {
-                    ...current,
-                    pages: current.pages.map(page => ({
-                        ...page,
-                        items: page.items.map(item => item.id === id ? data : item),
-                    })),
-                }
-            ))
+        onSuccess({ data }, { id }) {
+            alter(conversationId, id, data)
         },
         async onSettled(data, error, payload, context, { client }) {
             await client.invalidateQueries({
@@ -123,7 +102,7 @@ export default function MessageBox() {
 
             const itemId = Math.floor(Math.random() * 1000000000)
 
-            insertMessage(conversationId, {
+            insert(conversationId, {
                 id: itemId,
                 content: new Remarkable({ html: false, breaks: true }).render(content),
                 gif: null,
@@ -132,7 +111,6 @@ export default function MessageBox() {
                 date: new Date().toLocaleString(),
                 date_diff: 'Today',
                 time_diff: 'Now',
-                edited: false,
                 is_fake: true,
                 has_image: !!file,
             })
@@ -147,34 +125,11 @@ export default function MessageBox() {
 
             return { id: itemId }
         },
-        onSuccess({ data }, payload, context, { client }) {
-            client.setQueryData<InfiniteData<MessageResponse>>(queryKey, current => {
-                if (!current) {
-                    return current
-                }
-
-                return {
-                    ...current,
-                    pages: current.pages.map((page, index, pages) => {
-                        // If the onMutate() placeholder is found in the 2 latest pages, replace it with the Message model returned by the server.
-                        if (index >= pages.length - 2) {
-                            return {
-                                ...page,
-                                items: page.items.map(item => (
-                                    item.id !== context.id
-                                        ? item
-                                        : {
-                                            ...data,
-                                            date_diff: getDateDiff(data.date),
-                                            time_diff: getTimeDiff(data.date),
-                                        }
-                                )),
-                            }
-                        }
-
-                        return page
-                    }),
-                }
+        onSuccess({ data }, payload, context) {
+            alter(conversationId, context.id, {
+                ...data,
+                date_diff: getDateDiff(data.date),
+                time_diff: getTimeDiff(data.date),
             })
         },
         onSettled(data, error, payload, context, { client }) {

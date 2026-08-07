@@ -11,7 +11,7 @@ import { Marker, MarkerContent } from '@/components/ui/marker'
 import { MessageScrollerContent, MessageScrollerItem, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
-import { useInsertMessage } from '@/hooks/use-insert-message'
+import useMessage from '@/hooks/use-message'
 import type { Message, MessageResponse } from '@/types/models'
 
 async function getMessages(pageParam: string | null, conversationId: number, signal: AbortSignal) {
@@ -54,13 +54,11 @@ export default function Messages() {
     })
 
     const queryClient = useQueryClient()
-    const insertMessage = useInsertMessage()
+    const { insert } = useMessage()
     const { start, end } = useMessageScrollerScrollable()
 
     const { stopListening } = useEcho<Message>(`conversation.${conversationId}`, 'MessageSent', async message => {
-        await queryClient.cancelQueries({ queryKey: ['messages', conversationId] })
-
-        insertMessage(conversationId, message, true)
+        insert(conversationId, message, true)
 
         await queryClient.invalidateQueries({
             queryKey: ['messages', conversationId],
@@ -107,6 +105,7 @@ export default function Messages() {
                     )}
 
                     <MessageModel
+                        conversationId={conversationId}
                         message={message}
                         firstInAMinute={
                             (
