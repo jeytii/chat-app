@@ -1,8 +1,8 @@
 import { useSocketId } from '@laravel/echo-react'
-import { type InfiniteData, useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import { Edit, EllipsisVertical, Trash2 } from 'lucide-react'
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 
 import { MessageContentContext } from '@/components/message-content-provider'
 import { Attachment, AttachmentMedia } from '@/components/ui/attachment'
@@ -14,9 +14,10 @@ import { Message, MessageContent } from '@/components/ui/message'
 import { MessageScrollerItem } from '@/components/ui/message-scroller'
 import { Spinner } from '@/components/ui/spinner'
 import { getTimeDiff } from '@/hooks/use-datetime'
+import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
 import { cn } from '@/lib/utils'
-import type { Message as MessageType, MessageResponse } from '@/types/models'
+import type { Message as MessageType } from '@/types/models'
 
 type Props = {
     conversationId: number;
@@ -25,41 +26,31 @@ type Props = {
 }
 
 export default function MessageModel({ conversationId, message, firstInAMinute }: Props) {
+    const queryClient = useQueryClient()
+    const deletedMessage = useRef<MessageType>(null)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const [optionsOpen, setOptionsOpen] = useState(false)
     const { editId, setMessage, setEditId } = useContext(MessageContentContext)
     const { alter, remove } = useMessage()
+    const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
     const socketId = useSocketId()
-    const queryKey = ['messages', conversationId]
 
-    const { mutate } = useMutation<AxiosResponse, Error, { id: number }, MessageType>({
+    const { mutate } = useMutation<AxiosResponse, Error, { deleted: MessageType }>({
         mutationFn: () => axios.delete(`/messages/${message.id}`, {
             headers: {
                 'X-Socket-ID': socketId,
             },
         }),
-        async onMutate({ id }, { client }) {
-            await client.cancelQueries({ queryKey })
-
-            const deletedMessage = client.getQueryData<InfiniteData<MessageResponse>>(queryKey)
-                ?.pages
-                .flatMap(page => page.items)
-                .find(item => item.id === id) as MessageType
-
-            remove(conversationId, id)
-
-            return deletedMessage
-        },
-        onError(data, error, deletedMessage) {
-            if (deletedMessage) {
-                alter(conversationId, deletedMessage.id, deletedMessage)
-            }
+        onError(error, { deleted }) {
+            alter(conversationId, deleted.id, deleted)
         },
         async onSettled(data, error, payload, context, { client }) {
             await client.invalidateQueries({
-                queryKey,
+                queryKey: ['messages', conversationId],
                 refetchType: 'none',
             })
+
+            deletedMessage.current = null
         },
     })
 
@@ -72,12 +63,34 @@ export default function MessageModel({ conversationId, message, firstInAMinute }
         setMessage(message.raw_content as string)
     }
 
-    function destroy() {
+    async function destroy() {
         if (!message.from_self || editId) {
             return
         }
 
-        mutate({ id: message.id })
+        await queryClient.cancelQueries({ queryKey: ['messages', conversationId] })
+
+        deletedMessage.current = message
+
+        remove(conversationId, message.id)
+
+        debounce(() => {
+            mutate({ deleted: deletedMessage.current as MessageType })
+        })
+    }
+
+    function undoDestroy() {
+        if (!message.from_self || !canStopDebounce) {
+            return
+        }
+
+        alter(
+            conversationId,
+            message.id,
+            deletedMessage.current as MessageType,
+        )
+
+        stopDebounce()
     }
 
     useEffect(() => {
@@ -104,8 +117,19 @@ export default function MessageModel({ conversationId, message, firstInAMinute }
                 {message.deleted ? (
                     <MessageContent>
                         <Bubble align={message.from_self ? 'end' : 'start'} variant='outline'>
-                            <BubbleContent>
+                            <BubbleContent className='flex items-center gap-2'>
                                 <p className='italic'>Deleted message</p>
+
+                                {(message.from_self && canStopDebounce) && (
+                                    <Button
+                                        variant='ghost'
+                                        size='xs'
+                                        className='bg-muted'
+                                        onClick={undoDestroy}
+                                    >
+                                        Undo
+                                    </Button>
+                                )}
                             </BubbleContent>
                         </Bubble>
                     </MessageContent>
