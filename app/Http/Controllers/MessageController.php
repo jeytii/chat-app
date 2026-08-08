@@ -70,7 +70,10 @@ class MessageController extends Controller
 
         Broadcast::private("conversation.{$conversationId}")
             ->as('MessageSent')
-            ->with($message->toArray($request))
+            ->with([
+                'event' => 'MessageSent',
+                'message' => $message->toArray($request),
+            ])
             ->toOthers()
             ->send();
 
@@ -83,7 +86,19 @@ class MessageController extends Controller
             'content' => ['required', 'string'],
         ]);
 
-        $message->update($data);
+        if ($message->update(['content' => $data['content']])) {
+            Broadcast::private("conversation.{$message->conversation_id}")
+                ->as('MessageEdited')
+                ->with([
+                    'event' => 'MessageEdited',
+                    'message' => Arr::only(
+                        $message->toResource()->toArray($request),
+                        ['id', 'raw_content', 'content', 'edited'],
+                    ),
+                ])
+                ->toOthers()
+                ->send();
+        }
 
         return $message->toResource();
     }
@@ -93,7 +108,16 @@ class MessageController extends Controller
      */
     public function destroy(Message $message): array
     {
-        $message->delete();
+        if ($message->delete()) {
+            Broadcast::private("conversation.{$message->conversation_id}")
+                ->as('MessageDeleted')
+                ->with([
+                    'event' => 'MessageDeleted',
+                    'message' => $message->only('id'),
+                ])
+                ->toOthers()
+                ->send();
+        }
 
         return ['success' => true];
     }

@@ -54,17 +54,27 @@ export default function Messages() {
     })
 
     const queryClient = useQueryClient()
-    const { insert } = useMessage()
+    const { insert, alter, remove } = useMessage()
     const { start, end } = useMessageScrollerScrollable()
 
-    const { stopListening } = useEcho<Message>(`conversation.${conversationId}`, '.MessageSent', async message => {
-        insert(conversationId, message, true)
+    const { stopListening } = useEcho<{ event: string; message: Message; }>(
+        `conversation.${conversationId}`,
+        ['.MessageSent', '.MessageEdited', '.MessageDeleted'],
+        ({ event, message }) => {
+            if (event === 'MessageSent') {
+                insert(conversationId, message, true)
+            } else if (event === 'MessageEdited') {
+                alter(conversationId, message.id, message)
+            } else {
+                remove(conversationId, message.id)
+            }
 
-        await queryClient.invalidateQueries({
-            queryKey: ['messages', conversationId],
-            refetchType: 'none',
-        })
-    })
+            queryClient.invalidateQueries({
+                queryKey: ['messages', conversationId],
+                refetchType: 'none',
+            })
+        },
+    )
 
     useEffect(() => {
         if (end && !start && hasPreviousPage && !isFetchingPreviousPage) {
