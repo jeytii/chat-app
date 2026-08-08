@@ -6,6 +6,7 @@ use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Inertia\Response;
 
 class ConversationController extends Controller
@@ -25,6 +26,7 @@ class ConversationController extends Controller
         return ConversationResource::collection($conversations);
     }
 
+    #[Authorize('view', 'conversation')]
     public function show(Conversation $conversation): Response
     {
         return inertia('conversation', [

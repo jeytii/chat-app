@@ -8,6 +8,7 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,7 @@ class MessageController extends Controller
     /**
      * @return array<string, JsonResource|string|null>
      */
+    #[Authorize('viewAny', [Message::class, 'conversation'])]
     public function index(Conversation $conversation): array
     {
         $messages = $conversation->messages()
@@ -31,6 +33,7 @@ class MessageController extends Controller
         ];
     }
 
+    #[Authorize('create', [Message::class, 'conversation'])]
     public function store(Request $request, Conversation $conversation): JsonResource
     {
         $data = $request->validate([
@@ -75,6 +78,7 @@ class MessageController extends Controller
         return $message;
     }
 
+    #[Authorize('update', 'message')]
     public function update(Request $request, Conversation $conversation, Message $message): JsonResource
     {
         $data = $request->validate([
@@ -101,6 +105,7 @@ class MessageController extends Controller
     /**
      * @return array<string, bool>
      */
+    #[Authorize('delete', 'message')]
     public function destroy(Conversation $conversation, Message $message): array
     {
         if ($message->delete()) {
