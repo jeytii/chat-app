@@ -15,11 +15,8 @@ import useMessage from '@/hooks/use-message'
 import type { Message, MessageResponse } from '@/types/models'
 
 async function getMessages(pageParam: string | null, conversationId: number, signal: AbortSignal) {
-    const { data } = await axios<MessageResponse>('/messages', {
-        params: {
-            conversation_id: conversationId,
-            cursor: pageParam,
-        },
+    const { data } = await axios<MessageResponse>(`/conversations/${conversationId}/messages`, {
+        params: { cursor: pageParam },
         signal,
     })
 

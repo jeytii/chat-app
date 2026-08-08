@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\MessageResource;
+use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -16,14 +17,9 @@ class MessageController extends Controller
     /**
      * @return array<string, JsonResource|string|null>
      */
-    public function index(Request $request): array
+    public function index(Conversation $conversation): array
     {
-        $request->validate([
-            'conversation_id' => ['bail', 'required', 'integer', 'exists:conversations,id'],
-        ]);
-
-        $messages = Message::query()
-            ->where('conversation_id', $request->integer('conversation_id'))
+        $messages = $conversation->messages()
             ->withTrashed()
             ->latest()
             ->with('reference')
@@ -35,10 +31,9 @@ class MessageController extends Controller
         ];
     }
 
-    public function store(Request $request): JsonResource
+    public function store(Request $request, Conversation $conversation): JsonResource
     {
         $data = $request->validate([
-            'conversation_id' => ['bail', 'required', 'integer', 'exists:conversations,id'],
             'content' => ['nullable', 'required_without:file', 'string'],
             'file' => [
                 'nullable',
@@ -50,11 +45,10 @@ class MessageController extends Controller
             ],
         ]);
 
-        $conversationId = $data['conversation_id'];
         $file = data_get($data, 'file');
 
         if ($file instanceof UploadedFile) {
-            $data['image'] = $file->store("conversations/{$conversationId}");
+            $data['image'] = $file->store("conversations/{$conversation->id}");
         }
 
         if (\is_string($file)) {
@@ -63,12 +57,13 @@ class MessageController extends Controller
 
         $message = auth()->user()
             ->messages()
-            ->create(
-                Arr::only($data, ['conversation_id', 'content', 'image', 'gif']),
-            )
+            ->create([
+                ...Arr::only($data, ['content', 'image', 'gif']),
+                'conversation_id' => $conversation->id,
+            ])
             ->toResource();
 
-        Broadcast::private("conversation.{$conversationId}")
+        Broadcast::private("conversation.{$conversation->id}")
             ->as('MessageSent')
             ->with([
                 'event' => 'MessageSent',
@@ -80,14 +75,14 @@ class MessageController extends Controller
         return $message;
     }
 
-    public function update(Request $request, Message $message): JsonResource
+    public function update(Request $request, Conversation $conversation, Message $message): JsonResource
     {
         $data = $request->validate([
             'content' => ['required', 'string'],
         ]);
 
         if ($message->update(['content' => $data['content']])) {
-            Broadcast::private("conversation.{$message->conversation_id}")
+            Broadcast::private("conversation.{$conversation->id}")
                 ->as('MessageEdited')
                 ->with([
                     'event' => 'MessageEdited',
@@ -106,10 +101,10 @@ class MessageController extends Controller
     /**
      * @return array<string, bool>
      */
-    public function destroy(Message $message): array
+    public function destroy(Conversation $conversation, Message $message): array
     {
         if ($message->delete()) {
-            Broadcast::private("conversation.{$message->conversation_id}")
+            Broadcast::private("conversation.{$conversation->id}")
                 ->as('MessageDeleted')
                 ->with([
                     'event' => 'MessageDeleted',

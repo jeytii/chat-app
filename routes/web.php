@@ -12,8 +12,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('conversations', ConversationController::class)
         ->only(['index', 'show']);
 
-    Route::apiResource('messages', MessageController::class)
-        ->except('show');
+    Route::apiResource('conversations.messages', MessageController::class)
+        ->except('show')
+        ->scoped();
 
     Route::get('image/{path}', ImageController::class)->name('image');
 

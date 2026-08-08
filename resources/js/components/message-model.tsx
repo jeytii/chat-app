@@ -36,7 +36,7 @@ export default function MessageModel({ conversationId, message, firstInAMinute }
     const socketId = useSocketId()
 
     const { mutate } = useMutation<AxiosResponse, Error, { deleted: MessageType }>({
-        mutationFn: () => axios.delete(`/messages/${message.id}`, {
+        mutationFn: () => axios.delete(`/conversations/${conversationId}/messages/${message.id}`, {
             headers: {
                 'X-Socket-ID': socketId,
             },

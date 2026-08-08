@@ -58,7 +58,7 @@ export default function MessageBox() {
         Error,
         { id: number; content: string; }
     >({
-        mutationFn: ({ id, content }) => axios.put(`/messages/${id}`, { content }, {
+        mutationFn: ({ id, content }) => axios.put(`/conversations/${conversationId}/messages/${id}`, { content }, {
             headers: {
                 'X-Socket-ID': socketId,
             },
@@ -91,7 +91,7 @@ export default function MessageBox() {
         { conversation_id: number; content: string; file: File | string | null; },
         { id: number }
     >({
-        mutationFn: data => axios.post('/messages', data, {
+        mutationFn: data => axios.post(`/conversations/${conversationId}/messages`, data, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 'X-Socket-ID': socketId,

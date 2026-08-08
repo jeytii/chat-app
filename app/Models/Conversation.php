@@ -35,6 +35,6 @@ class Conversation extends Pivot
      */
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class);
+        return $this->hasMany(Message::class, 'conversation_id');
     }
 }
