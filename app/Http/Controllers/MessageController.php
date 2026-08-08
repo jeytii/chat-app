@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\MessageSent;
 use App\Http\Resources\MessageResource;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Validation\Rule;
 
 class MessageController extends Controller
@@ -68,7 +68,11 @@ class MessageController extends Controller
             )
             ->toResource();
 
-        broadcast(new MessageSent($conversationId, $message->toArray($request)))->toOthers();
+        Broadcast::private("conversation.{$conversationId}")
+            ->as('MessageSent')
+            ->with($message->toArray($request))
+            ->toOthers()
+            ->send();
 
         return $message;
     }
