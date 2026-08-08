@@ -130,6 +130,8 @@ export default function MessageBox() {
                 ...data,
                 date_diff: getDateDiff(data.date),
                 time_diff: getTimeDiff(data.date),
+                is_fake: undefined,
+                has_image: undefined,
             })
         },
         onSettled(data, error, payload, context, { client }) {

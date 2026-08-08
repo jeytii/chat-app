@@ -57,7 +57,7 @@ export default function Messages() {
     const { insert } = useMessage()
     const { start, end } = useMessageScrollerScrollable()
 
-    const { stopListening } = useEcho<Message>(`conversation.${conversationId}`, 'MessageSent', async message => {
+    const { stopListening } = useEcho<Message>(`conversation.${conversationId}`, '.MessageSent', async message => {
         insert(conversationId, message, true)
 
         await queryClient.invalidateQueries({
@@ -110,8 +110,10 @@ export default function Messages() {
                         firstInAMinute={
                             (
                                 index !== 0 // is not the very first message
-                                && differenceInMinutes(message.date, messages[index - 1].date) >= 1 // difference in minutes between current previous at least 1
-                                && message.from_self === messages[index - 1].from_self // both current and previous messages have the same sender
+                                && (
+                                    message.from_self !== messages[index - 1].from_self // both current and previous messages have the same sender
+                                    || differenceInMinutes(message.date, messages[index - 1].date) >= 1 // difference in minutes between current previous at least 1
+                                )
                             )
                             || (!index && !hasPreviousPage) // is the very first message
                         }
