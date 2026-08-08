@@ -19,17 +19,18 @@ class Message extends Model
             $model->updated_at = null;
         });
 
-        static::deleting(function (self $model): void {
-            $model->reference_id = null;
-            $model->content = null;
-            $model->gif = null;
-        });
+        static::softDeleted(function (self $model): void {
+            $image = $model->image;
 
-        static::deleted(function (self $model): void {
-            if ($image = $model->image) {
+            $model->update([
+                'reference_id' => null,
+                'content' => null,
+                'image' => null,
+                'gif' => null,
+            ]);
+
+            if ($image) {
                 Storage::delete($image);
-
-                $model->image = null;
             }
         });
     }
