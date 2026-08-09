@@ -11,7 +11,9 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MessageController extends Controller
 {
@@ -120,5 +122,16 @@ class MessageController extends Controller
         }
 
         return ['success' => true];
+    }
+
+    #[Authorize('viewImage', ['message', 'conversation'])]
+    public function viewImage(Conversation $conversation, Message $message): StreamedResponse
+    {
+        return Storage::response(
+            $message->image,
+            headers: [
+                'Cache-Control' => 'private, max-age=86400, immutable',
+            ],
+        );
     }
 }

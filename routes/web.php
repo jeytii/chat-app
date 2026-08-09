@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\ConversationController;
-use App\Http\Controllers\ImageController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -12,11 +11,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('conversations', ConversationController::class)
         ->only(['index', 'show']);
 
+    Route::get('conversations/{conversation}/image/{message:image}', [MessageController::class, 'viewImage'])
+        ->scopeBindings()
+        ->name('conversations.messages.image');
     Route::apiResource('conversations.messages', MessageController::class)
         ->except('show')
         ->scoped();
-
-    Route::get('image/{path}', ImageController::class)->name('image');
 
     Route::controller(SettingsController::class)->name('settings.')->group(function () {
         Route::inertia('settings', 'settings')

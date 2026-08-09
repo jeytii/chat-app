@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +11,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @property int $id
+ * @property int $conversation_id
+ * @property int $sender_id
+ * @property ?string $content
+ * @property ?string $gif
+ * @property ?string $image
+ * @property CarbonImmutable $created_at
+ * @property CarbonImmutable|null $updated_at
+ * @property CarbonImmutable|null $deleted_at
+ */
 class Message extends Model
 {
     use SoftDeletes;
@@ -33,6 +46,15 @@ class Message extends Model
                 Storage::delete($image);
             }
         });
+    }
+
+    public function resolveRouteBindingQuery($query, $value, $field = null)
+    {
+        return $query->when(
+            $field === 'image',
+            fn (Builder $query) => $query->where($field, 'like', "%{$value}%"),
+            fn (Builder $query) => $query->where($field ?? $this->getRouteKeyName(), $value),
+        );
     }
 
     /**

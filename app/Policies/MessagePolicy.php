@@ -17,6 +17,14 @@ class MessagePolicy
     }
 
     /**
+     * Determine whether the user can view the attached image of the model.
+     */
+    public function viewImage(User $user, Message $message, Conversation $conversation): bool
+    {
+        return $conversation->requestor_id === $user->id || $conversation->accepter_id === $user->id;
+    }
+
+    /**
      * Determine whether the user can create models.
      */
     public function create(User $user, Conversation $conversation): bool
