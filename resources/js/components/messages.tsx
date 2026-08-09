@@ -14,6 +14,14 @@ import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import useMessage from '@/hooks/use-message'
 import type { Message, MessageResponse } from '@/types/models'
 
+type BroadcastEvent = {
+    event: 'MessageSent';
+    message: Omit<Message, 'from_self'> & { sender_id: number };
+} | {
+    event: 'MessageEdited' | 'MessageDeleted';
+    message: Message;
+}
+
 async function getMessages(pageParam: string | null, conversationId: number, signal: AbortSignal) {
     const { data } = await axios<MessageResponse>(`/conversations/${conversationId}/messages`, {
         params: { cursor: pageParam },
@@ -24,7 +32,7 @@ async function getMessages(pageParam: string | null, conversationId: number, sig
 }
 
 export default function Messages() {
-    const conversationId = usePage<{ conversation_id: number }>().props.conversation_id
+    const { auth, conversation_id: conversationId } = usePage<{ conversation_id: number }>().props
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
@@ -54,12 +62,15 @@ export default function Messages() {
     const { insert, alter, remove } = useMessage()
     const { start, end } = useMessageScrollerScrollable()
 
-    const { stopListening } = useEcho<{ event: string; message: Message; }>(
+    const { stopListening } = useEcho<BroadcastEvent>(
         `conversation.${conversationId}`,
         ['.MessageSent', '.MessageEdited', '.MessageDeleted'],
         ({ event, message }) => {
             if (event === 'MessageSent') {
-                insert(conversationId, message, true)
+                insert(conversationId, {
+                    ...message,
+                    from_self: message.sender_id === auth.user.id,
+                })
             } else if (event === 'MessageEdited') {
                 alter(conversationId, message.id, message)
             } else {

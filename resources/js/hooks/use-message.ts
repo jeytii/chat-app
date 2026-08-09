@@ -5,7 +5,7 @@ import type { Message, MessageResponse } from '@/types/models'
 export default function useMessage() {
     const queryClient = useQueryClient()
 
-    const insert = (conversationId: number, message: Message, notFromSelf: boolean = false) => {
+    const insert = (conversationId: number, message: Message) => {
         queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', conversationId], current => {
             if (!current) {
                 return current
@@ -21,7 +21,7 @@ export default function useMessage() {
                     pages: [
                         ...current.pages,
                         {
-                            items: [notFromSelf ? { ...message, from_self: false } : message],
+                            items: [message],
                             next_cursor: null,
                         },
                     ],
@@ -35,10 +35,7 @@ export default function useMessage() {
                     if (index === pages.length - 1) {
                         return {
                             ...page,
-                            items: [
-                                ...page.items,
-                                notFromSelf ? { ...message, from_self: false } : message,
-                            ],
+                            items: [...page.items, message],
                         }
                     }
 

@@ -43,12 +43,13 @@ class MessageResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'sender_id' => $this->when($request->boolean('has_sender_id'), $this->sender_id),
             'reference' => $this->whenLoaded('reference'),
             'raw_content' => $this->content,
             'content' => $content,
             'gif' => $this->gif,
             'image_url' => $this->getImageUrl($this->image),
-            'from_self' => $this->sender_id === auth()->id(),
+            'from_self' => $this->unless($request->boolean('has_sender_id'), $this->sender_id === auth()->id()),
             'date' => $this->created_at,
             'edited' => (bool) $this->updated_at,
             'deleted' => (bool) $this->deleted_at,

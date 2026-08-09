@@ -72,7 +72,7 @@ class MessageController extends Controller
             ->as('MessageSent')
             ->with([
                 'event' => 'MessageSent',
-                'message' => $message->toArray($request),
+                'message' => $message->toArray($request->merge(['has_sender_id' => true])),
             ])
             ->toOthers()
             ->send();

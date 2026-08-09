@@ -1,4 +1,5 @@
 export type User = {
+    id: number;
     name: string;
     username: string;
     image_url: string | null;
