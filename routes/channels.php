@@ -1,15 +1,15 @@
 <?php
 
-use App\Models\Conversation;
+use App\Models\Chat;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('conversation.{id}', function (User $user, int $id): bool {
-    $conversation = Conversation::query()->find($id);
+Broadcast::channel('chat.{id}', function (User $user, int $id): bool {
+    $chat = Chat::query()->find($id);
 
-    if (! $conversation) {
+    if (! $chat) {
         return false;
     }
 
-    return $conversation->accepter_id === $user->id || $conversation->requestor_id === $user->id;
+    return $chat->accepter_id === $user->id || $chat->requestor_id === $user->id;
 });

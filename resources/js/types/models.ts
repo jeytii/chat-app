@@ -5,7 +5,7 @@ export type User = {
     image_url: string | null;
 }
 
-export type Conversation = {
+export type Chat = {
     id: number;
     user: User & {
         is_online: boolean;

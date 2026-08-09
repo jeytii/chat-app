@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('/', 'home')->name('home');
 
-    Route::apiResource('conversations', ConversationController::class)
+    Route::apiResource('chats', ChatController::class)
         ->only(['index', 'show']);
 
-    Route::get('conversations/{conversation}/image/{message:image}', [MessageController::class, 'viewImage'])
+    Route::get('chats/{chat}/image/{message:image}', [MessageController::class, 'viewImage'])
         ->scopeBindings()
-        ->name('conversations.messages.image');
-    Route::apiResource('conversations.messages', MessageController::class)
+        ->name('chats.messages.image');
+    Route::apiResource('chats.messages', MessageController::class)
         ->except('show')
         ->scoped();
 

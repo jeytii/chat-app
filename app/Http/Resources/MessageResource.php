@@ -10,7 +10,7 @@ use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
 
 /**
  * @property int $id
- * @property int $conversation_id
+ * @property int $chat_id
  * @property int $sender_id
  * @property ?string $content
  * @property ?string $gif
@@ -64,8 +64,8 @@ class MessageResource extends JsonResource
 
         $path = explode('/', $file);
 
-        return route('conversations.messages.image', [
-            'conversation' => $this->conversation_id,
+        return route('chats.messages.image', [
+            'chat' => $this->chat_id,
             'message' => end($path),
         ]);
     }

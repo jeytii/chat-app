@@ -3,16 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * @property int $accepter_id
  * @property int $requestor_id
  */
-#[Table(name: 'conversations', incrementing: true)]
-class Conversation extends Pivot
+#[Table(name: 'chats', incrementing: true)]
+class Chat extends Model
 {
     /**
      * @return BelongsTo<User, $this>
@@ -35,6 +35,6 @@ class Conversation extends Pivot
      */
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class, 'conversation_id');
+        return $this->hasMany(Message::class, 'chat_id');
     }
 }

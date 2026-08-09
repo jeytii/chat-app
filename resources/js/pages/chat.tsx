@@ -9,13 +9,13 @@ import PresenceIndicator from '@/components/presence-indicator'
 import { MessageScroller, MessageScrollerButton, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { Conversation as ConversationModel } from '@/types/models'
+import type { Chat as ChatModel } from '@/types/models'
 
-export default function Conversation() {
-    const id = usePage<{ conversation_id: number }>().props.conversation_id
-    const { data, isLoading } = useQuery<ConversationModel[]>({
-        queryKey: ['conversations'],
-        queryFn: async () => (await fetch('/conversations')).json(),
+export default function Chat() {
+    const id = usePage<{ chat_id: number }>().props.chat_id
+    const { data, isLoading } = useQuery<ChatModel[]>({
+        queryKey: ['chats'],
+        queryFn: async () => (await fetch('/chats')).json(),
     })
 
     const user = data?.find(user => user.id === id)?.user
@@ -47,7 +47,7 @@ export default function Conversation() {
                         <Photo src={user.image_url as string} />
                         <div>
                             <h1>{user.name}</h1>
-                            <PresenceIndicator conversationId={id} isOnline={user.is_online} />
+                            <PresenceIndicator chatId={id} isOnline={user.is_online} />
                         </div>
                     </div>
                 </div>

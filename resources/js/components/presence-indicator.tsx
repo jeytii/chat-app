@@ -14,11 +14,11 @@ const echo = new Echo({
     enabledTransports: ['ws', 'wss'],
 })
 
-export default function PresenceIndicator({ conversationId, isOnline }: { conversationId: number; isOnline: boolean; }) {
+export default function PresenceIndicator({ chatId, isOnline }: { chatId: number; isOnline: boolean; }) {
     const { username } = usePage().props.auth.user
     const [isTyping, setIsTyping] = useState<boolean>(false)
     const { debounce } = useDebounce(1000)
-    const channel = echo.private(`conversation.${conversationId}`)
+    const channel = echo.private(`chat.${chatId}`)
 
     useEffect(() => {
         channel.listenForWhisper('typing', data => {
@@ -36,7 +36,7 @@ export default function PresenceIndicator({ conversationId, isOnline }: { conver
 
             setIsTyping(false)
         }
-    }, [conversationId, username, channel, debounce])
+    }, [chatId, username, channel, debounce])
 
     if (isTyping) {
         return (

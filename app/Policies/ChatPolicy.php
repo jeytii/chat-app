@@ -2,10 +2,10 @@
 
 namespace App\Policies;
 
-use App\Models\Conversation;
+use App\Models\Chat;
 use App\Models\User;
 
-class ConversationPolicy
+class ChatPolicy
 {
     /**
      * Determine whether the user can view any models.
@@ -18,9 +18,9 @@ class ConversationPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Conversation $conversation): bool
+    public function view(User $user, Chat $model): bool
     {
-        return $conversation->requestor_id === $user->id || $conversation->accepter_id === $user->id;
+        return $model->requestor_id === $user->id || $model->accepter_id === $user->id;
     }
 
     /**
@@ -34,7 +34,7 @@ class ConversationPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Conversation $conversation): bool
+    public function update(User $user, Chat $model): bool
     {
         return false;
     }
@@ -42,7 +42,7 @@ class ConversationPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Conversation $conversation): bool
+    public function delete(User $user, Chat $model): bool
     {
         return false;
     }
@@ -50,7 +50,7 @@ class ConversationPolicy
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Conversation $conversation): bool
+    public function restore(User $user, Chat $model): bool
     {
         return false;
     }
@@ -58,7 +58,7 @@ class ConversationPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Conversation $conversation): bool
+    public function forceDelete(User $user, Chat $model): bool
     {
         return false;
     }

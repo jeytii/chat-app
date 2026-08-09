@@ -11,14 +11,14 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { Conversation } from '@/types/models'
+import type { Chat } from '@/types/models'
 
 export function NavMain() {
-    const conversationId = usePage<{ conversation_id?: number; }>().props.conversation_id
+    const chatId = usePage<{ chat_id?: number; }>().props.chat_id
 
-    const { data, isLoading } = useQuery<Conversation[]>({
-        queryKey: ['conversations'],
-        queryFn: async () => (await fetch('/conversations')).json(),
+    const { data, isLoading } = useQuery<Chat[]>({
+        queryKey: ['chats'],
+        queryFn: async () => (await fetch('/chats')).json(),
     })
 
     return (
@@ -67,29 +67,29 @@ export function NavMain() {
 
             {!!data && (
                 <SidebarMenu className='gap-2'>
-                    {data.map(conversation => (
-                        <SidebarMenuItem key={conversation.id}>
+                    {data.map(chat => (
+                        <SidebarMenuItem key={chat.id}>
                             <SidebarMenuButton
                                 asChild
                                 size='lg'
-                                isActive={conversationId === conversation.id}
+                                isActive={chatId === chat.id}
                                 className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
                             >
-                                <Link href={`/conversations/${conversation.id}`} replace>
+                                <Link href={`/chats/${chat.id}`} replace>
                                     <div className='relative'>
-                                        <Photo src={conversation.user.image_url as string} />
+                                        <Photo src={chat.user.image_url as string} />
 
-                                        {conversation.user.is_online && (
+                                        {chat.user.is_online && (
                                             <span className='absolute right-px bottom-px size-2.5 rounded-full border border-primary bg-green-700' />
                                         )}
                                     </div>
                                     <div className='overflow-hidden'>
-                                        <h5 className='truncate'>{conversation.user.name}</h5>
-                                        <p className='truncate text-xs text-muted-foreground'>{conversation.user.username}</p>
+                                        <h5 className='truncate'>{chat.user.name}</h5>
+                                        <p className='truncate text-xs text-muted-foreground'>{chat.user.username}</p>
                                     </div>
                                 </Link>
                             </SidebarMenuButton>
-                            {conversation.has_new_message && (
+                            {chat.has_new_message && (
                                 <SidebarMenuAction className='top-1/2! w-auto -translate-y-1/2'>
                                     <div className='size-2 rounded-full bg-primary' />
                                 </SidebarMenuAction>

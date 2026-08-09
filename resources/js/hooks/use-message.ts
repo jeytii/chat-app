@@ -5,8 +5,8 @@ import type { Message, MessageResponse } from '@/types/models'
 export default function useMessage() {
     const queryClient = useQueryClient()
 
-    const insert = (conversationId: number, message: Message) => {
-        queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', conversationId], current => {
+    const insert = (chatId: number, message: Message) => {
+        queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => {
             if (!current) {
                 return current
             }
@@ -45,8 +45,8 @@ export default function useMessage() {
         })
     }
 
-    const alter = (conversationId: number, id: number, newData: Partial<Message>) => {
-        queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', conversationId], current => (
+    const alter = (chatId: number, id: number, newData: Partial<Message>) => {
+        queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
             !current ? current : {
                 ...current,
                 pages: current.pages.map(page => ({
@@ -61,8 +61,8 @@ export default function useMessage() {
         ))
     }
 
-    const remove = (conversationId: number, id: number) => {
-        queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', conversationId], current => (
+    const remove = (chatId: number, id: number) => {
+        queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
             !current ? current : {
                 ...current,
                 pages: current.pages.map(page => ({

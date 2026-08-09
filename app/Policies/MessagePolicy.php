@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\Conversation;
+use App\Models\Chat;
 use App\Models\Message;
 use App\Models\User;
 
@@ -11,25 +11,25 @@ class MessagePolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user, Conversation $conversation): bool
+    public function viewAny(User $user, Chat $chat): bool
     {
-        return $conversation->requestor_id === $user->id || $conversation->accepter_id === $user->id;
+        return $chat->requestor_id === $user->id || $chat->accepter_id === $user->id;
     }
 
     /**
      * Determine whether the user can view the attached image of the model.
      */
-    public function viewImage(User $user, Message $message, Conversation $conversation): bool
+    public function viewImage(User $user, Message $message, Chat $chat): bool
     {
-        return $conversation->requestor_id === $user->id || $conversation->accepter_id === $user->id;
+        return $chat->requestor_id === $user->id || $chat->accepter_id === $user->id;
     }
 
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user, Conversation $conversation): bool
+    public function create(User $user, Chat $chat): bool
     {
-        return $conversation->requestor_id === $user->id || $conversation->accepter_id === $user->id;
+        return $chat->requestor_id === $user->id || $chat->accepter_id === $user->id;
     }
 
     /**

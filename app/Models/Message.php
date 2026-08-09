@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
- * @property int $conversation_id
+ * @property int $chat_id
  * @property int $sender_id
  * @property ?string $content
  * @property ?string $gif
@@ -66,11 +66,11 @@ class Message extends Model
     }
 
     /**
-     * @return BelongsTo<Conversation, $this>
+     * @return BelongsTo<Chat, $this>
      */
-    public function conversation(): BelongsTo
+    public function chat(): BelongsTo
     {
-        return $this->belongsTo(Conversation::class);
+        return $this->belongsTo(Chat::class);
     }
 
     /**

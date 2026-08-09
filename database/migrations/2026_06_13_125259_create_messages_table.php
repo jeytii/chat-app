@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('sender_id')->constrained('users');
-            $table->foreignId('conversation_id')->constrained();
+            $table->foreignId('chat_id')->constrained();
             $table->foreignId('reference_id')->nullable()->constrained('messages')->nullOnDelete();
             $table->longText('content')->nullable();
             $table->string('gif')->nullable();

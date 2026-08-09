@@ -22,7 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
         <QueryClientProvider client={queryClient}>
             <SidebarProvider>
                 <AppSidebar />
-                <SidebarInset className={currentUrl.startsWith('/conversations') ? 'h-svh md:h-[calc(100svh-16px)]' : 'min-h-svh'}>
+                <SidebarInset className={currentUrl.startsWith('/chats') ? 'h-svh md:h-[calc(100svh-16px)]' : 'min-h-svh'}>
                     {currentUrl === '/settings'
                         ? (
                             <section className='max-w-2xl space-y-4 p-4'>

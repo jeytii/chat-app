@@ -20,12 +20,12 @@ import { cn } from '@/lib/utils'
 import type { Message as MessageType } from '@/types/models'
 
 type Props = {
-    conversationId: number;
+    chatId: number;
     message: MessageType;
     firstInAMinute: boolean;
 }
 
-export default function MessageModel({ conversationId, message, firstInAMinute }: Props) {
+export default function MessageModel({ chatId, message, firstInAMinute }: Props) {
     const queryClient = useQueryClient()
     const deletedMessage = useRef<MessageType>(null)
     const [date, setDate] = useState(getTimeDiff(message.date))
@@ -36,17 +36,17 @@ export default function MessageModel({ conversationId, message, firstInAMinute }
     const socketId = useSocketId()
 
     const { mutate } = useMutation<AxiosResponse, Error, { deleted: MessageType }>({
-        mutationFn: () => axios.delete(`/conversations/${conversationId}/messages/${message.id}`, {
+        mutationFn: () => axios.delete(`/chats/${chatId}/messages/${message.id}`, {
             headers: {
                 'X-Socket-ID': socketId,
             },
         }),
         onError(error, { deleted }) {
-            alter(conversationId, deleted.id, deleted)
+            alter(chatId, deleted.id, deleted)
         },
         async onSettled(data, error, payload, context, { client }) {
             await client.invalidateQueries({
-                queryKey: ['messages', conversationId],
+                queryKey: ['messages', chatId],
                 refetchType: 'none',
             })
 
@@ -68,11 +68,11 @@ export default function MessageModel({ conversationId, message, firstInAMinute }
             return
         }
 
-        await queryClient.cancelQueries({ queryKey: ['messages', conversationId] })
+        await queryClient.cancelQueries({ queryKey: ['messages', chatId] })
 
         deletedMessage.current = message
 
-        remove(conversationId, message.id)
+        remove(chatId, message.id)
 
         debounce(() => {
             mutate({ deleted: deletedMessage.current as MessageType })
@@ -85,7 +85,7 @@ export default function MessageModel({ conversationId, message, firstInAMinute }
         }
 
         alter(
-            conversationId,
+            chatId,
             message.id,
             deletedMessage.current as MessageType,
         )

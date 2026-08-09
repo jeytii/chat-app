@@ -31,7 +31,7 @@ const echo = new Echo({
 })
 
 export default function MessageBox() {
-    const { conversation_id: conversationId, auth } = usePage<{ conversation_id: number }>().props
+    const { chat_id: chatId, auth } = usePage<{ chat_id: number }>().props
     const { message, editId, setMessage, setEditId } = useContext(MessageContentContext)
     const [image, setImage] = useState<File | string | null>(null)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
@@ -41,8 +41,8 @@ export default function MessageBox() {
     const previewImage = useRef<string | null>(null)
     const throttle = useThrottle(1000)
     const socketId = useSocketId()
-    const channel = echo.private(`conversation.${conversationId}`)
-    const queryKey = ['messages', conversationId]
+    const channel = echo.private(`chat.${chatId}`)
+    const queryKey = ['messages', chatId]
 
     useEffect(() => {
         return () => {
@@ -58,7 +58,7 @@ export default function MessageBox() {
         Error,
         { id: number; content: string; }
     >({
-        mutationFn: ({ id, content }) => axios.put(`/conversations/${conversationId}/messages/${id}`, { content }, {
+        mutationFn: ({ id, content }) => axios.put(`/chats/${chatId}/messages/${id}`, { content }, {
             headers: {
                 'X-Socket-ID': socketId,
             },
@@ -66,14 +66,14 @@ export default function MessageBox() {
         async onMutate({ id, content }, { client }) {
             await client.cancelQueries({ queryKey })
 
-            alter(conversationId, id, {
+            alter(chatId, id, {
                 content: new Remarkable({ html: false, breaks: true }).render(content),
             })
 
             setMessage('')
         },
         onSuccess({ data }, { id }) {
-            alter(conversationId, id, data)
+            alter(chatId, id, data)
         },
         async onSettled(data, error, payload, context, { client }) {
             await client.invalidateQueries({
@@ -88,10 +88,10 @@ export default function MessageBox() {
     const { mutate: add } = useMutation<
         AxiosResponse<Message>,
         Error,
-        { conversation_id: number; content: string; file: File | string | null; },
+        { content: string; file: File | string | null; },
         { id: number }
     >({
-        mutationFn: data => axios.post(`/conversations/${conversationId}/messages`, data, {
+        mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 'X-Socket-ID': socketId,
@@ -102,7 +102,7 @@ export default function MessageBox() {
 
             const itemId = Math.floor(Math.random() * 1000000000)
 
-            insert(conversationId, {
+            insert(chatId, {
                 id: itemId,
                 content: new Remarkable({ html: false, breaks: true }).render(content),
                 gif: null,
@@ -126,7 +126,7 @@ export default function MessageBox() {
             return { id: itemId }
         },
         onSuccess({ data }, payload, context) {
-            alter(conversationId, context.id, {
+            alter(chatId, context.id, {
                 ...data,
                 date_diff: getDateDiff(data.date),
                 time_diff: getTimeDiff(data.date),
@@ -224,7 +224,6 @@ export default function MessageBox() {
             })
         } else {
             add({
-                conversation_id: conversationId,
                 content: value,
                 file: image,
             })

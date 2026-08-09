@@ -22,8 +22,8 @@ type BroadcastEvent = {
     message: Message;
 }
 
-async function getMessages(pageParam: string | null, conversationId: number, signal: AbortSignal) {
-    const { data } = await axios<MessageResponse>(`/conversations/${conversationId}/messages`, {
+async function getMessages(pageParam: string | null, chatId: number, signal: AbortSignal) {
+    const { data } = await axios<MessageResponse>(`/chats/${chatId}/messages`, {
         params: { cursor: pageParam },
         signal,
     })
@@ -32,7 +32,7 @@ async function getMessages(pageParam: string | null, conversationId: number, sig
 }
 
 export default function Messages() {
-    const { auth, conversation_id: conversationId } = usePage<{ conversation_id: number }>().props
+    const { auth, chat_id: chatId } = usePage<{ chat_id: number }>().props
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
@@ -41,8 +41,8 @@ export default function Messages() {
         readonly unknown[],
         string | null
     >({
-        queryKey: ['messages', conversationId],
-        queryFn: ({ pageParam, signal }) => getMessages(pageParam, conversationId, signal),
+        queryKey: ['messages', chatId],
+        queryFn: ({ pageParam, signal }) => getMessages(pageParam, chatId, signal),
         initialPageParam: null,
         getPreviousPageParam: lastPage => lastPage.next_cursor,
         getNextPageParam: () => null,
@@ -63,22 +63,22 @@ export default function Messages() {
     const { start, end } = useMessageScrollerScrollable()
 
     const { stopListening } = useEcho<BroadcastEvent>(
-        `conversation.${conversationId}`,
+        `chat.${chatId}`,
         ['.MessageSent', '.MessageEdited', '.MessageDeleted'],
         ({ event, message }) => {
             if (event === 'MessageSent') {
-                insert(conversationId, {
+                insert(chatId, {
                     ...message,
                     from_self: message.sender_id === auth.user.id,
                 })
             } else if (event === 'MessageEdited') {
-                alter(conversationId, message.id, message)
+                alter(chatId, message.id, message)
             } else {
-                remove(conversationId, message.id)
+                remove(chatId, message.id)
             }
 
             queryClient.invalidateQueries({
-                queryKey: ['messages', conversationId],
+                queryKey: ['messages', chatId],
                 refetchType: 'none',
             })
         },
@@ -123,7 +123,7 @@ export default function Messages() {
                     )}
 
                     <MessageModel
-                        conversationId={conversationId}
+                        chatId={chatId}
                         message={message}
                         firstInAMinute={
                             (
