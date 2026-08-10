@@ -12,6 +12,7 @@ use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -84,10 +85,56 @@ class MessageController extends Controller
     public function update(Request $request, Chat $chat, Message $message): JsonResource
     {
         $data = $request->validate([
-            'content' => ['required', 'string'],
+            'content' => [
+                'nullable',
+                'required_without_all:image,gif',
+                'string',
+            ],
+            'image' => [
+                'nullable',
+                'required_without_all:content,gif',
+                Rule::anyOf([
+                    ['image', 'mimes:jpg,png,webp'],
+                    ['string'],
+                ]),
+            ],
+            'gif' => [
+                'nullable',
+                'required_without_all:content,image',
+                'string',
+                'starts_with:https://',
+                'ends_with:.gif',
+            ],
         ]);
 
-        if ($message->update(['content' => $data['content']])) {
+        $payload = Arr::only($data, ['content', 'gif']);
+        $image = data_get($data, 'image');
+
+        if ($message->content === $payload['content'] && $message->image === $image) {
+            return $message->toResource();
+        }
+
+        if ($image instanceof UploadedFile) {
+            $dir = "chats/{$chat->id}";
+            $filename = Str::random(40) . '.' . $image->extension();
+
+            $payload['image'] = "{$dir}/{$filename}";
+        } else {
+            $payload['image'] = $image;
+        }
+
+        $updated = $message->update($payload);
+
+        if ($updated) {
+            if ($image instanceof UploadedFile) {
+                $paths = explode('/', $message->refresh()->image);
+
+                $image->storeAs(
+                    implode('/', \array_slice($paths, 0, -1)),
+                    end($paths),
+                );
+            }
+
             Broadcast::private("chat.{$chat->id}")
                 ->as('MessageEdited')
                 ->with([
