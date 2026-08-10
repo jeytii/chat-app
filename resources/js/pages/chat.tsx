@@ -43,7 +43,7 @@ export default function Chat() {
                     <SidebarTrigger className='-ml-1' />
 
                     <div className='flex items-center gap-2'>
-                        <Photo src={user.image_url as string} />
+                        <Photo src={user.image_url as string} alt={user.name} />
                         <div>
                             <h1>{user.name}</h1>
                             <PresenceIndicator chatId={id} isOnline={user.is_online} />

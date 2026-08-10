@@ -5,6 +5,7 @@ import { Edit, EllipsisVertical, Trash2 } from 'lucide-react'
 import { MouseEventHandler, useEffect, useRef, useState } from 'react'
 
 import MessageEditor from '@/components/message-editor'
+import Photo from '@/components/photo'
 import { Attachment } from '@/components/ui/attachment'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Button } from '@/components/ui/button'
@@ -202,7 +203,7 @@ function Media({ message, edit, destroy }: { message: Message; edit: MouseEventH
         return (
             <img
                 src={(message.image_url || message.gif) as string}
-                className='block max-h-60 w-full max-w-[70vw] rounded-md object-cover opacity-60 md:max-w-[50vw] lg:max-h-120 lg:max-w-120'
+                className='block max-h-60 w-full max-w-[70vw] rounded-md object-cover blur-xs md:max-w-[50vw] lg:max-h-120 lg:max-w-120'
             />
         )
     }
@@ -236,14 +237,22 @@ function Media({ message, edit, destroy }: { message: Message; edit: MouseEventH
             {message.gif ? (
                 <Attachment orientation='vertical' className='w-[20vw] cursor-pointer'>
                     <div className='p-2'>
-                        <img src={message.gif} className='block w-full rounded-md object-cover' />
+                        <Photo
+                            src={message.gif}
+                            className='block h-auto! w-full! rounded-md! object-cover'
+                            skeletonClassName='size-25 rounded-md! lg:size-50'
+                        />
                     </div>
                 </Attachment>
             ) : (
                 <Dialog>
                     <DialogTrigger>
                         <Attachment orientation='vertical' className='w-full max-w-[70vw] cursor-pointer md:max-w-[50vw] lg:max-w-120'>
-                            <img src={message.image_url as string} className='block max-h-60 w-full rounded-md object-cover lg:max-h-120' />
+                            <Photo
+                                src={message.image_url as string}
+                                className='block h-auto! max-h-60 w-full! rounded-md! object-cover lg:max-h-120'
+                                skeletonClassName='size-25 rounded-md! lg:size-50'
+                            />
                         </Attachment>
                     </DialogTrigger>
                     <DialogContent className='w-auto! max-w-full! p-0 sm:max-w-full! [&>button]:top-2 [&>button]:right-2 [&>button]:rounded-full [&>button]:bg-background [&>button]:p-1'>

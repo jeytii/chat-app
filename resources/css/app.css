@@ -176,7 +176,11 @@
 
 @layer base {
     * {
-        @apply border-border ring-0! ring-offset-0! focus:ring-0! focus:ring-offset-0! outline-none!;
+        @apply border-border;
+    }
+
+    *:not([class^="reactEasyCrop_"]) {
+        @apply ring-0! ring-offset-0! focus:ring-0! focus:ring-offset-0! outline-none!;
     }
 
     body {

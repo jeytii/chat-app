@@ -85,7 +85,7 @@ export function ImageUploader({ src }: { src: string }) {
         <>
             <div className='flex items-center gap-2'>
                 <div className='relative inline-block min-h-30 min-w-30'>
-                    <Photo src={src} size={120} className='size-30' />
+                    <Photo src={src} className='size-30' skeletonClassName='size-30' />
 
                     <Button type='button' size='icon-sm' className='absolute right-0 bottom-0 px-0'>
                         <label className='flex size-full items-center justify-center rounded-full'>

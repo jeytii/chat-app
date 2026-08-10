@@ -5,37 +5,34 @@ import { cn } from '@/lib/utils'
 
 interface Props extends ImgHTMLAttributes<HTMLImageElement> {
     size?: number;
+    skeletonClassName?: string;
 }
 
-export default function Photo({ size = 40, className, ...props }: Props) {
-    const [status, setStatus] = useState<'loading' | 'broken' | 'loaded'>('loading')
+const protocol = import.meta.env.PROD ? 'https://' : 'http://'
+
+export default function Photo({ size, className, skeletonClassName, ...props }: Props) {
+    const [status, setStatus] = useState<'loading' | 'broken' | 'loaded'>(
+        props.src?.startsWith(protocol) ? 'loading' : 'loaded',
+    )
 
     useEffect(() => {
-        if (!props.src) {
-            return
-        }
+        if (props.src?.startsWith(protocol)) {
+            const image = new Image(size, size)
 
-        if (!props.src.startsWith('https://')) {
-            setStatus.call(null, 'loaded')
+            image.src = props.src
 
-            return
-        }
+            image.onload = () => {
+                setStatus('loaded')
+            }
 
-        const image = new Image(size, size)
+            image.onerror = () => {
+                setStatus('broken')
+            }
 
-        image.src = props.src
-
-        image.onload = () => {
-            setStatus('loaded')
-        }
-
-        image.onerror = () => {
-            setStatus('broken')
-        }
-
-        return () => {
-            image.onload = null
-            image.onerror = null
+            return () => {
+                image.onload = null
+                image.onerror = null
+            }
         }
     }, [props.src, size])
 
@@ -44,8 +41,6 @@ export default function Photo({ size = 40, className, ...props }: Props) {
             <div className={cn('size-10 rounded-full', className)}>
                 <svg
                     viewBox='0 0 512 512'
-                    width={size}
-                    height={size}
                     role='image'
                     aria-label='Default photo'
                     className={cn('size-10 rounded-full fill-secondary', className)}
@@ -57,13 +52,8 @@ export default function Photo({ size = 40, className, ...props }: Props) {
     }
 
     if (status === 'loading') {
-        return <Skeleton className={cn('size-10 rounded-full', className)} {...props} />
+        return <Skeleton className={cn('size-10 rounded-full', skeletonClassName)} {...props} />
     }
 
-    return <img
-        width={size}
-        height={size}
-        className={cn('size-10 rounded-full', className)}
-        {...props}
-    />
+    return <img className={cn('size-10 rounded-full', className)} {...props} />
 }

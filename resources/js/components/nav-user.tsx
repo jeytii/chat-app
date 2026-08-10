@@ -35,7 +35,12 @@ export function NavUser() {
                             className='group data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
                             data-test='sidebar-menu-button'
                         >
-                            <Photo src={user.image_url as string} size={32} className='size-8' />
+                            <Photo
+                                src={user.image_url as string}
+                                alt={user.name}
+                                className='size-8'
+                                skeletonClassName='size-8'
+                            />
                             <div className='grid flex-1 text-left text-sm leading-tight'>
                                 <span className='truncate font-medium'>{user.name}</span>
                                 <span className='truncate text-xs text-muted-foreground'>
