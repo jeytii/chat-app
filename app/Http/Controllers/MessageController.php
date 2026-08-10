@@ -116,7 +116,7 @@ class MessageController extends Controller
 
         if ($image instanceof UploadedFile) {
             $dir = "chats/{$chat->id}";
-            $filename = Str::random(40) . '.' . $image->extension();
+            $filename = Str::random(40).'.'.$image->extension();
 
             $payload['image'] = "{$dir}/{$filename}";
         } else {

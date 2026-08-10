@@ -8,18 +8,19 @@ import { Fragment, useEffect } from 'react'
 
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent } from '@/components/ui/marker'
+import { Message } from '@/components/ui/message'
 import { MessageScrollerContent, MessageScrollerItem, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import useMessage from '@/hooks/use-message'
-import type { Message, MessageResponse } from '@/types/models'
+import type { Message as MessageType, MessageResponse } from '@/types/models'
 
 type BroadcastEvent = {
     event: 'MessageSent';
-    message: Omit<Message, 'from_self'> & { sender_id: number };
+    message: Omit<MessageType, 'from_self'> & { sender_id: number };
 } | {
     event: 'MessageEdited' | 'MessageDeleted';
-    message: Message;
+    message: MessageType;
 }
 
 async function getMessages(pageParam: string | null, chatId: number, signal: AbortSignal) {
@@ -37,7 +38,7 @@ export default function Messages() {
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
         Error,
-        InfiniteData<Message>,
+        InfiniteData<MessageType>,
         readonly unknown[],
         string | null
     >({
@@ -122,20 +123,24 @@ export default function Messages() {
                         </MessageScrollerItem>
                     )}
 
-                    <MessageModel
-                        chatId={chatId}
-                        message={message}
-                        firstInAMinute={
-                            (
-                                index !== 0 // is not the very first message
-                                && (
-                                    message.from_self !== messages[index - 1].from_self // both current and previous messages have the same sender
-                                    || differenceInMinutes(message.date, messages[index - 1].date) >= 1 // difference in minutes between current previous at least 1
-                                )
-                            )
-                            || (!index && !hasPreviousPage) // is the very first message
-                        }
-                    />
+                    <MessageScrollerItem>
+                        <Message align={message.from_self ? 'end' : 'start'}>
+                            <MessageModel
+                                chatId={chatId}
+                                message={message}
+                                firstInAMinute={
+                                    (
+                                        index !== 0 // is not the very first message
+                                        && (
+                                            message.from_self !== messages[index - 1].from_self // both current and previous messages have the same sender
+                                            || differenceInMinutes(message.date, messages[index - 1].date) >= 1 // difference in minutes between current previous at least 1
+                                        )
+                                    )
+                                    || (!index && !hasPreviousPage) // is the very first message
+                                }
+                            />
+                        </Message>
+                    </MessageScrollerItem>
                 </Fragment>
             ))}
         </MessageScrollerContent>

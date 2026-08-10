@@ -33,7 +33,6 @@ export type Message = {
     edited?: boolean;
     deleted?: boolean;
     is_fake?: boolean;
-    has_image?: boolean;
 }
 
 export type MessageResponse = {

@@ -2,7 +2,6 @@ import { usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
 
 import MessageBox from '@/components/message-box'
-import { MessageContentProvider } from '@/components/message-content-provider'
 import Messages, { Placeholder as MessagesPlaceholder } from '@/components/messages'
 import Photo from '@/components/photo'
 import PresenceIndicator from '@/components/presence-indicator'
@@ -53,18 +52,16 @@ export default function Chat() {
                 </div>
             </header>
 
-            <MessageContentProvider>
-                {/* ===== MESSAGES ===== */}
-                <MessageScroller>
-                    <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
-                        <Messages />
-                    </MessageScrollerViewport>
-                    <MessageScrollerButton />
-                </MessageScroller>
+            {/* ===== MESSAGES ===== */}
+            <MessageScroller>
+                <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
+                    <Messages />
+                </MessageScrollerViewport>
+                <MessageScrollerButton />
+            </MessageScroller>
 
-                {/* ===== MESSAGE BOX ===== */}
-                <MessageBox />
-            </MessageContentProvider>
+            {/* ===== MESSAGE BOX ===== */}
+            <MessageBox />
         </MessageScrollerProvider>
     )
 }
