@@ -15,6 +15,7 @@ use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
  * @property ?string $content
  * @property ?string $gif
  * @property ?string $image
+ * @property CarbonImmutable|null $seen_at
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable|null $updated_at
  * @property CarbonImmutable|null $deleted_at
@@ -51,6 +52,7 @@ class MessageResource extends JsonResource
             'image_url' => $this->getImageUrl($this->image),
             'from_self' => $this->unless($request->boolean('has_sender_id'), $this->sender_id === auth()->id()),
             'date' => $this->created_at,
+            'seen' => $request->boolean('seen', (bool) $this->seen_at),
             'edited' => (bool) $this->updated_at,
             'deleted' => (bool) $this->deleted_at,
         ];

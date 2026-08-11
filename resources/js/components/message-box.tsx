@@ -1,15 +1,14 @@
 import { usePage } from '@inertiajs/react'
-import { useSocketId } from '@laravel/echo-react'
 import { useMutation } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import type { EmojiClickData } from 'emoji-picker-react'
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
-import Echo from 'laravel-echo'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { Remarkable } from 'remarkable'
 
+import { PresenceContext } from '@/components/presence-provider'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -20,26 +19,16 @@ import { useThrottle } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
 import type { Message } from '@/types/models'
 
-const echo = new Echo({
-    broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
-    enabledTransports: ['ws', 'wss'],
-})
-
 export default function MessageBox() {
     const { chat_id: chatId, auth } = usePage<{ chat_id: number }>().props
     const { image, gif, previewImage, setImage, revokePreviewImage } = useAttachment(null)
+    const { onlineIds } = useContext(PresenceContext)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
     const { insert, alter } = useMessage()
     const textarea = useRef<HTMLTextAreaElement>(null)
     const { appearance } = useAppearance()
     const throttle = useThrottle(1000)
-    const socketId = useSocketId()
-    const channel = echo.private(`chat.${chatId}`)
+    const channel = window.Echo.join(`chat.${chatId}`)
 
     useEffect(() => {
         return () => {
@@ -50,13 +39,13 @@ export default function MessageBox() {
     const { mutate, isPending } = useMutation<
         AxiosResponse<Message>,
         Error,
-        { content: string; file: File | string | null; },
+        { content: string; file: File | string | null; seen: boolean },
         { id: number }
     >({
         mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                'X-Socket-ID': socketId,
+                'X-Socket-ID': window.Echo.socketId(),
             },
         }),
         async onMutate({ content }, { client }) {
@@ -87,6 +76,7 @@ export default function MessageBox() {
                 ...data,
                 date_diff: getDateDiff(data.date),
                 time_diff: getTimeDiff(data.date),
+                seen: undefined,
                 is_fake: undefined,
             })
 
@@ -104,7 +94,7 @@ export default function MessageBox() {
     function handleMessage() {
         throttle(() => {
             channel.whisper('typing', {
-                username: auth.user.username,
+                id: auth.user.id,
             })
         })
     }
@@ -166,6 +156,7 @@ export default function MessageBox() {
         mutate({
             content: value,
             file: image,
+            seen: onlineIds.length >= 2,
         })
     }
 

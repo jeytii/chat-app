@@ -29,6 +29,10 @@ class ChatController extends Controller
     #[Authorize('view', 'chat')]
     public function show(Chat $chat): Response
     {
+        $chat->messages()->whereNull('seen_at')->update([
+            'seen_at' => now(),
+        ]);
+
         return inertia('chat', [
             'chat_id' => $chat->id,
         ]);

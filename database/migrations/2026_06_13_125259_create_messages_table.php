@@ -19,6 +19,7 @@ return new class extends Migration
             $table->longText('content')->nullable();
             $table->string('gif')->nullable();
             $table->string('image')->nullable();
+            $table->timestamp('seen_at')->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();

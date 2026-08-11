@@ -53,28 +53,20 @@ class MessageController extends Controller
 
         $file = data_get($data, 'file');
 
-        if ($file instanceof UploadedFile) {
-            $data['image'] = $file->store("chats/{$chat->id}");
-        }
-
-        if (\is_string($file)) {
-            $data['gif'] = $file;
-        }
-
         $message = auth()->user()
             ->messages()
             ->create([
-                ...Arr::only($data, ['content', 'image', 'gif']),
                 'chat_id' => $chat->id,
+                'content' => $data['content'],
+                'image' => $file instanceof UploadedFile ? $file->store("chats/{$chat->id}") : null,
+                'gif' => \is_string($file) ? $file : null,
+                'seen_at' => $request->boolean('seen') ? now() : null,
             ])
             ->toResource();
 
         Broadcast::private("chat.{$chat->id}")
             ->as('MessageSent')
-            ->with([
-                'event' => 'MessageSent',
-                'message' => $message->toArray($request->merge(['has_sender_id' => true])),
-            ])
+            ->with($message->toArray($request->merge(['has_sender_id' => true])))
             ->toOthers()
             ->send();
 
@@ -137,13 +129,12 @@ class MessageController extends Controller
 
             Broadcast::private("chat.{$chat->id}")
                 ->as('MessageEdited')
-                ->with([
-                    'event' => 'MessageEdited',
-                    'message' => Arr::only(
+                ->with(
+                    Arr::only(
                         $message->toResource()->toArray($request),
                         ['id', 'raw_content', 'content', 'edited'],
-                    ),
-                ])
+                    )
+                )
                 ->toOthers()
                 ->send();
         }
@@ -160,10 +151,7 @@ class MessageController extends Controller
         if ($message->delete()) {
             Broadcast::private("chat.{$chat->id}")
                 ->as('MessageDeleted')
-                ->with([
-                    'event' => 'MessageDeleted',
-                    'message' => $message->only('id'),
-                ])
+                ->with($message->only('id'))
                 ->toOthers()
                 ->send();
         }
