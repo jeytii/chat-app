@@ -16,7 +16,6 @@ import { Message } from '@/types/models'
 type Props = {
     message: Message;
     chatId: number;
-    socketId?: string;
     cancel: CallableFunction;
 }
 
@@ -27,7 +26,7 @@ type Payload = {
     gif: string | null;
 }
 
-export default function MessageEditor({ message, chatId, socketId, cancel }: Props) {
+export default function MessageEditor({ message, chatId, cancel }: Props) {
     const {
         image,
         gif,
@@ -46,7 +45,7 @@ export default function MessageEditor({ message, chatId, socketId, cancel }: Pro
             {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    'X-Socket-ID': socketId,
+                    'X-Socket-ID': window.Echo.socketId(),
                 },
             },
         ),

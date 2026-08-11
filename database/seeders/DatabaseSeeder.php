@@ -21,5 +21,7 @@ class DatabaseSeeder extends Seeder
         User::factory(10)->create();
 
         $user->belongsToMany(User::class, 'chats', 'requestor_id', 'accepter_id')->attach([2, 3]);
+
+        $this->command->info("Username is: {$user->username}");
     }
 }

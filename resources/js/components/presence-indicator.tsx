@@ -1,28 +1,17 @@
 import { usePage } from '@inertiajs/react'
-import Echo from 'laravel-echo'
 import { useEffect, useState } from 'react'
 
 import { useDebounce } from '@/hooks/use-limit'
 
-const echo = new Echo({
-    broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
-    enabledTransports: ['ws', 'wss'],
-})
-
 export default function PresenceIndicator({ chatId, isOnline }: { chatId: number; isOnline: boolean; }) {
-    const { username } = usePage().props.auth.user
+    const { id } = usePage().props.auth.user
     const [isTyping, setIsTyping] = useState<boolean>(false)
     const { debounce } = useDebounce(1000)
-    const channel = echo.private(`chat.${chatId}`)
+    const channel = window.Echo.join(`chat.${chatId}`)
 
     useEffect(() => {
         channel.listenForWhisper('typing', data => {
-            if (data.username !== username) {
+            if (data.id !== id) {
                 setIsTyping(true)
 
                 debounce(() => {
@@ -36,7 +25,7 @@ export default function PresenceIndicator({ chatId, isOnline }: { chatId: number
 
             setIsTyping(false)
         }
-    }, [chatId, username, channel, debounce])
+    }, [chatId, id, channel, debounce])
 
     if (isTyping) {
         return (

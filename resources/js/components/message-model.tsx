@@ -1,4 +1,3 @@
-import { useSocketId } from '@laravel/echo-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import { Edit, EllipsisVertical, Trash2 } from 'lucide-react'
@@ -31,12 +30,11 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
-    const socketId = useSocketId()
 
     const { mutate } = useMutation<AxiosResponse, Error, { deletedMessage: Message }>({
         mutationFn: () => axios.delete(`/chats/${chatId}/messages/${message.id}`, {
             headers: {
-                'X-Socket-ID': socketId,
+                'X-Socket-ID': window.Echo.socketId(),
             },
         }),
         onError(error, { deletedMessage }) {
@@ -53,7 +51,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     })
 
     function edit() {
-        if (!message.from_self) {
+        if (!message.from_self && !message.is_fake) {
             return
         }
 
@@ -61,7 +59,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     async function destroy() {
-        if (!message.from_self) {
+        if (!message.from_self && !message.is_fake) {
             return
         }
 
@@ -147,7 +145,8 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
             {(message.from_self && editMode) ? (
                 <MessageEditor
                     cancel={setEditMode.bind(null, false)}
-                    {...{ message, chatId, socketId }}
+                    chatId={chatId}
+                    message={message}
                 />
             ) : (
                 <Bubble
@@ -157,7 +156,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 >
                     {!!message.content && (
                         <div className='flex w-fit max-w-full min-w-0 items-center gap-2 overflow-hidden group-data-[align=end]/bubble:self-end'>
-                            {message.from_self && (
+                            {(message.from_self && !message.is_fake) && (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild className='data-[state=closed]:invisible data-[state=closed]:group-hover/bubble:visible'>
                                         <Button variant='ghost' size='icon-sm'>
@@ -183,7 +182,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
 
                             <BubbleContent
                                 dangerouslySetInnerHTML={{ __html: message.content }}
-                                className='max-w-auto! w-auto! min-w-auto! space-y-2'
+                                className='max-w-auto! w-auto! min-w-auto! space-y-2 overflow-auto!'
                             />
                         </div>
                     )}
@@ -210,7 +209,7 @@ function Media({ message, edit, destroy }: { message: Message; edit: MouseEventH
 
     return (
         <div className='flex gap-2'>
-            {(message.from_self && !message.content) && (
+            {(message.from_self && !message.content && !message.is_fake) && (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild className='data-[state=closed]:invisible data-[state=closed]:group-hover/bubble:visible'>
                         <Button variant='ghost' size='icon-sm'>
