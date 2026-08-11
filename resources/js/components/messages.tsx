@@ -88,9 +88,7 @@ export default function Messages() {
 
                 if (seen) {
                     debounce(() => {
-                        presenceChannel.whisper('new_message_sent', {
-                            id: auth.user.id,
-                        })
+                        presenceChannel.whisper('new_message_sent', {})
                     })
                 }
             })
@@ -113,21 +111,19 @@ export default function Messages() {
             .leaving((id: number) => {
                 setOnlineIds(current => current.filter(onlineId => onlineId !== id))
             })
-            .listenForWhisper('new_message_sent', ({ id }: { id: number }) => {
-                if (auth.user.id !== id) {
-                    queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
-                        !current ? current : {
-                            ...current,
-                            pages: current.pages.map(page => ({
-                                ...page,
-                                items: page.items.map(item => ({
-                                    ...item,
-                                    seen: true,
-                                })),
+            .listenForWhisper('new_message_sent', () => {
+                queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
+                    !current ? current : {
+                        ...current,
+                        pages: current.pages.map(page => ({
+                            ...page,
+                            items: page.items.map(item => ({
+                                ...item,
+                                seen: true,
                             })),
-                        }
-                    ))
-                }
+                        })),
+                    }
+                ))
             })
 
         return () => {

@@ -70,6 +70,12 @@ class MessageController extends Controller
             ->toOthers()
             ->send();
 
+        Broadcast::private("chat.{$chat->id}")
+            ->as('BackgroundMessageSent')
+            ->with($message->toArray($request->merge(['has_sender_id' => true])))
+            ->toOthers()
+            ->send();
+
         return $message;
     }
 
@@ -137,6 +143,17 @@ class MessageController extends Controller
                 )
                 ->toOthers()
                 ->send();
+
+            Broadcast::private("chat.{$chat->id}")
+                ->as('BackgroundMessageEdited')
+                ->with(
+                    Arr::only(
+                        $message->toResource()->toArray($request),
+                        ['id', 'raw_content', 'content', 'edited'],
+                    )
+                )
+                ->toOthers()
+                ->send();
         }
 
         return $message->toResource();
@@ -151,6 +168,12 @@ class MessageController extends Controller
         if ($message->delete()) {
             Broadcast::private("chat.{$chat->id}")
                 ->as('MessageDeleted')
+                ->with($message->only('id'))
+                ->toOthers()
+                ->send();
+
+            Broadcast::private("chat.{$chat->id}")
+                ->as('BackgroundMessageDeleted')
                 ->with($message->only('id'))
                 ->toOthers()
                 ->send();

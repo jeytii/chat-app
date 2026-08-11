@@ -28,7 +28,7 @@ export default function MessageBox() {
     const textarea = useRef<HTMLTextAreaElement>(null)
     const { appearance } = useAppearance()
     const throttle = useThrottle(1000)
-    const channel = window.Echo.join(`chat.${chatId}`)
+    const channel = window.Echo.join(`room.${chatId}`)
 
     useEffect(() => {
         return () => {
@@ -93,9 +93,7 @@ export default function MessageBox() {
 
     function handleMessage() {
         throttle(() => {
-            channel.whisper('typing', {
-                id: auth.user.id,
-            })
+            channel.whisper('typing', {})
         })
     }
 

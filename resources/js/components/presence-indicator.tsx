@@ -7,17 +7,16 @@ export default function PresenceIndicator({ chatId, isOnline }: { chatId: number
     const { id } = usePage().props.auth.user
     const [isTyping, setIsTyping] = useState<boolean>(false)
     const { debounce } = useDebounce(1000)
-    const channel = window.Echo.join(`chat.${chatId}`)
 
     useEffect(() => {
-        channel.listenForWhisper('typing', data => {
-            if (data.id !== id) {
-                setIsTyping(true)
+        const channel = window.Echo.join(`room.${chatId}`)
 
-                debounce(() => {
-                    setIsTyping(false)
-                })
-            }
+        channel.listenForWhisper('typing', () => {
+            setIsTyping(true)
+
+            debounce(() => {
+                setIsTyping(false)
+            })
         })
 
         return () => {
@@ -25,7 +24,7 @@ export default function PresenceIndicator({ chatId, isOnline }: { chatId: number
 
             setIsTyping(false)
         }
-    }, [chatId, id, channel, debounce])
+    }, [chatId, id, debounce])
 
     if (isTyping) {
         return (
