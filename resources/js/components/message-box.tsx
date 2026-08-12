@@ -20,7 +20,7 @@ import useMessage from '@/hooks/use-message'
 import type { Message } from '@/types/models'
 
 export default function MessageBox() {
-    const { chat_id: chatId, auth } = usePage<{ chat_id: number }>().props
+    const { chat_id: chatId } = usePage<{ chat_id: number }>().props
     const { image, gif, previewImage, setImage, revokePreviewImage } = useAttachment(null)
     const { onlineIds } = useContext(PresenceContext)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
