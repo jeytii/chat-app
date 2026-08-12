@@ -70,16 +70,25 @@ export default function Messages() {
         .every(message => !!message.seen)
 
     useEffect(() => {
-        const privateChannel = window.Echo.private(`chat.${chatId}`)
         const presenceChannel = window.Echo.join(`room.${chatId}`)
 
         setTimeout(() => {
-            presenceChannel.whisper('new_message_sent', {
-                id: auth.user.id,
-            })
+            presenceChannel.whisper('new_message_sent', {})
         }, 500)
 
-        privateChannel
+        presenceChannel
+            .whisper('new_message_sent', {})
+            .here((ids: number[]) => {
+                setOnlineIds(ids)
+            })
+            .joining((id: number) => {
+                setOnlineIds(current => ([
+                    ...new Set([...current, id]),
+                ]))
+            })
+            .leaving((id: number) => {
+                setOnlineIds(current => current.filter(onlineId => onlineId !== id))
+            })
             .listen('.MessageSent', ({ sender_id: senderId, seen, ...message }: MessageSentData) => {
                 insert(chatId, {
                     ...message,
@@ -98,19 +107,6 @@ export default function Messages() {
             .listen('.MessageDeleted', (message: Pick<MessageType, 'id'>) => {
                 remove(chatId, message.id)
             })
-
-        presenceChannel
-            .here((ids: number[]) => {
-                setOnlineIds(ids)
-            })
-            .joining((id: number) => {
-                setOnlineIds(current => ([
-                    ...new Set([...current, id]),
-                ]))
-            })
-            .leaving((id: number) => {
-                setOnlineIds(current => current.filter(onlineId => onlineId !== id))
-            })
             .listenForWhisper('new_message_sent', () => {
                 queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
                     !current ? current : {
@@ -127,10 +123,6 @@ export default function Messages() {
             })
 
         return () => {
-            privateChannel.stopListening('.MessageSent')
-            privateChannel.stopListening('.MessageEdited')
-            privateChannel.stopListening('.MessageDeleted')
-
             window.Echo.leave(`room.${chatId}`)
         }
     }, [chatId, auth.user.id, insert, alter, remove, setOnlineIds, queryClient, debounce])

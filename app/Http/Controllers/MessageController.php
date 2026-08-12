@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageEvent;
 use App\Http\Resources\MessageResource;
 use App\Models\Chat;
 use App\Models\Message;
@@ -10,7 +11,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -64,17 +64,11 @@ class MessageController extends Controller
             ])
             ->toResource();
 
-        Broadcast::private("chat.{$chat->id}")
-            ->as('MessageSent')
-            ->with($message->toArray($request->merge(['has_sender_id' => true])))
-            ->toOthers()
-            ->send();
-
-        Broadcast::private("chat.{$chat->id}")
-            ->as('BackgroundMessageSent')
-            ->with($message->toArray($request->merge(['has_sender_id' => true])))
-            ->toOthers()
-            ->send();
+        broadcast(new MessageEvent(
+            'MessageSent',
+            $chat->id,
+            $message->toArray($request->merge(['has_sender_id' => true])),
+        ))->toOthers();
 
         return $message;
     }
@@ -125,7 +119,7 @@ class MessageController extends Controller
 
         if ($updated) {
             if ($image instanceof UploadedFile) {
-                $paths = explode('/', $message->refresh()->image);
+                $paths = explode('/', $message->image);
 
                 $image->storeAs(
                     implode('/', \array_slice($paths, 0, -1)),
@@ -133,27 +127,14 @@ class MessageController extends Controller
                 );
             }
 
-            Broadcast::private("chat.{$chat->id}")
-                ->as('MessageEdited')
-                ->with(
-                    Arr::only(
-                        $message->toResource()->toArray($request),
-                        ['id', 'raw_content', 'content', 'edited'],
-                    )
-                )
-                ->toOthers()
-                ->send();
-
-            Broadcast::private("chat.{$chat->id}")
-                ->as('BackgroundMessageEdited')
-                ->with(
-                    Arr::only(
-                        $message->toResource()->toArray($request),
-                        ['id', 'raw_content', 'content', 'edited'],
-                    )
-                )
-                ->toOthers()
-                ->send();
+            broadcast(new MessageEvent(
+                'MessageEdited',
+                $chat->id,
+                Arr::only(
+                    $message->toResource()->toArray($request),
+                    ['id', 'raw_content', 'content', 'edited'],
+                ),
+            ))->toOthers();
         }
 
         return $message->toResource();
@@ -166,17 +147,11 @@ class MessageController extends Controller
     public function destroy(Chat $chat, Message $message): array
     {
         if ($message->delete()) {
-            Broadcast::private("chat.{$chat->id}")
-                ->as('MessageDeleted')
-                ->with($message->only('id'))
-                ->toOthers()
-                ->send();
-
-            Broadcast::private("chat.{$chat->id}")
-                ->as('BackgroundMessageDeleted')
-                ->with($message->only('id'))
-                ->toOthers()
-                ->send();
+            broadcast(new MessageEvent(
+                'MessageDeleted',
+                $chat->id,
+                $message->only('id'),
+            ))->toOthers();
         }
 
         return ['success' => true];

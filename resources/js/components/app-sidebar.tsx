@@ -17,42 +17,41 @@ import useMessage from '@/hooks/use-message'
 import { Message } from '@/types/models'
 
 type MessageSentData = Omit<Message, 'from_self'> & {
+    chat_id: number;
     sender_id: number;
 }
+
+type MessageEditedData = Message & { chat_id: number }
 
 export function AppSidebar() {
     const { auth, chat_id: chatId } = usePage<{ chat_id: number }>().props
     const { insert, alter, remove } = useMessage()
 
     useEffect(() => {
-        const channel = window.Echo.private(`chat.${chatId}`)
-        const events = window.Echo.connector.channel(`private-chat.${chatId}`).subscription.callbacks._callbacks
+        if (chatId) {
+            const { channels } = window.Echo.connector
 
-        if (!events['_BackgroundMessageSent']) {
-            channel.listen('.BackgroundMessageSent', ({ sender_id: senderId, ...message }: MessageSentData) => {
-                if (!events['_MessageSent']) {
-                    insert(chatId, {
-                        ...message,
-                        from_self: senderId === auth.user.id,
+            if (!channels[`private-chat.${chatId}`]) {
+                window.Echo.private(`chat.${chatId}`)
+                    .listen('.MessageSent', ({ chat_id: privateChatId, sender_id: senderId, ...message }: MessageSentData) => {
+                        if (!channels[`presence-room.${privateChatId}`]) {
+                            insert(chatId, {
+                                ...message,
+                                from_self: senderId === auth.user.id,
+                            })
+                        }
                     })
-                }
-            })
-        }
-
-        if (!events['_BackgroundMessageEdited']) {
-            channel.listen('.BackgroundMessageEdited', (message: Message) => {
-                if (!events['_MessageEdited']) {
-                    alter(chatId, message.id, message)
-                }
-            })
-        }
-
-        if (!events['_BackgroundMessageDeleted']) {
-            channel.listen('.BackgroundMessageDeleted', (message: Pick<Message, 'id'>) => {
-                if (!events['_MessageDeleted']) {
-                    remove(chatId, message.id)
-                }
-            })
+                    .listen('.MessageEdited', ({ chat_id: privateChatId, ...message }: MessageEditedData) => {
+                        if (!channels[`presence-room.${privateChatId}`]) {
+                            alter(chatId, message.id, message)
+                        }
+                    })
+                    .listen('.MessageDeleted', (message: { chat_id: number; id: number }) => {
+                        if (!channels[`presence-room.${message.chat_id}`]) {
+                            remove(chatId, message.id)
+                        }
+                    })
+            }
         }
     }, [auth.user.id, chatId, insert, alter, remove])
 
