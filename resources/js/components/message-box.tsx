@@ -8,7 +8,6 @@ import type { ChangeEvent, KeyboardEvent } from 'react'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { Remarkable } from 'remarkable'
 
-import { PresenceContext } from '@/components/presence-provider'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -17,6 +16,7 @@ import useAttachment from '@/hooks/use-attachment'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useThrottle } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
+import { PresenceContext } from '@/pages/chat'
 import type { Message } from '@/types/models'
 
 export default function MessageBox() {
