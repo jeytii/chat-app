@@ -13,15 +13,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::factory()->create([
+        $first = User::factory()->create([
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'username' => 'testuser',
         ]);
 
-        User::factory(10)->create();
+        User::factory()->create([
+            'name' => 'Dummy User',
+            'username' => 'dummyuser',
+        ]);
 
-        $user->belongsToMany(User::class, 'chats', 'requestor_id', 'accepter_id')->attach([2, 3]);
+        User::factory(8)->create();
 
-        $this->command->info("Username is: {$user->username}");
+        $first->belongsToMany(User::class, 'chats', 'requestor_id', 'accepter_id')->attach([2, 3]);
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Support\Facades\DB;
 use Inertia\Response;
 
 class ChatController extends Controller
@@ -35,9 +36,11 @@ class ChatController extends Controller
     #[Authorize('view', 'chat')]
     public function show(Chat $chat): Response
     {
-        $chat->messages()->whereNull('seen_at')->update([
-            'seen_at' => now(),
-        ]);
+        DB::table('messages')
+            ->where('chat_id', $chat->id)
+            ->whereNot('sender_id', auth()->id())
+            ->whereNull('seen_at')
+            ->update(['seen_at' => now()]);
 
         return inertia('chat', [
             'chat_id' => $chat->id,

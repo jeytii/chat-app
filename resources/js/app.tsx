@@ -17,7 +17,7 @@ declare global {
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel'
 
 createInertiaApp({
-    title: title => (title ? `${title} - ${appName}` : appName),
+    title: title => title || appName,
     layout: name => name.startsWith('auth/') ? AuthLayout : AppLayout,
     strictMode: false,
     withApp(app) {
