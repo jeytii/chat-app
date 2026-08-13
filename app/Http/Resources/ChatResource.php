@@ -19,7 +19,7 @@ class ChatResource extends JsonResource
             'user' => $this->requestor_id !== $request->user()->id
                 ? new UserResource($this->whenLoaded('requestor'))
                 : new UserResource($this->whenLoaded('accepter')),
-            'has_new_message' => false,
+            'has_new_message' => $this->whenCounted('unseen_messages_count') >= 1,
         ];
     }
 }

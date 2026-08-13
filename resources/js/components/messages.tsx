@@ -4,7 +4,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { differenceInMinutes, isSameDay } from 'date-fns'
 import { CheckCheck } from 'lucide-react'
-import { Fragment, useContext, useEffect } from 'react'
+import { Fragment, useContext, useEffect, useRef } from 'react'
 
 import MessageModel from '@/components/message-model'
 import { PresenceContext } from '@/components/presence-provider'
@@ -15,9 +15,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
-import type { Message as MessageType, MessageResponse } from '@/types/models'
+import type { Chat, Message as MessageType, MessageResponse } from '@/types/models'
 
 type MessageSentData = Omit<MessageType, 'from_self'> & {
+    chat_id: number;
     sender_id: number;
     seen: boolean;
 }
@@ -33,7 +34,7 @@ async function getMessages(pageParam: string | null, chatId: number, signal: Abo
 
 export default function Messages() {
     const { auth, chat_id: chatId } = usePage<{ chat_id: number }>().props
-    const { setOnlineIds } = useContext(PresenceContext)
+    const { isViewing, setOnlineIds } = useContext(PresenceContext)
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
@@ -64,20 +65,31 @@ export default function Messages() {
     const { start, end } = useMessageScrollerScrollable()
     const { debounce } = useDebounce(1000)
 
+    const insertRef = useRef<(chatId: number, message: MessageType) => void>(insert)
+    const alterRef = useRef<(chatId: number, id: number, newData: Partial<MessageType>) => void>(alter)
+    const removeRef = useRef<(chatId: number, id: number) => void>(remove)
+    const isViewingRef = useRef<boolean>(isViewing)
+
     const lastItemIsFromSelf = data?.pages[data.pages.length - 1]?.from_self
     const allMessagesAreSeen = data?.pages
         .filter(message => message.from_self)
         .every(message => !!message.seen)
 
     useEffect(() => {
+        insertRef.current = insert
+        alterRef.current = alter
+        removeRef.current = remove
+        isViewingRef.current = isViewing
+    })
+
+    useEffect(() => {
         const presenceChannel = window.Echo.join(`room.${chatId}`)
 
         setTimeout(() => {
-            presenceChannel.whisper('new_message_sent', {})
+            presenceChannel.whisper('seen', {})
         }, 500)
 
         presenceChannel
-            .whisper('new_message_sent', {})
             .here((ids: number[]) => {
                 setOnlineIds(ids)
             })
@@ -89,25 +101,37 @@ export default function Messages() {
             .leaving((id: number) => {
                 setOnlineIds(current => current.filter(onlineId => onlineId !== id))
             })
-            .listen('.MessageSent', ({ sender_id: senderId, seen, ...message }: MessageSentData) => {
-                insert(chatId, {
+            .listen('.MessageSent', ({ sender_id: senderId, chat_id: contactId, seen, ...message }: MessageSentData) => {
+                insertRef.current(chatId, {
                     ...message,
                     from_self: senderId === auth.user.id,
+                    seen,
                 })
+
+                if (!isViewingRef.current) {
+                    queryClient.setQueryData<Chat[]>(['chats'], current => (
+                        !current ? current : current.map(chat => ({
+                            ...chat,
+                            has_new_message: chat.id === chatId ? true : chat.has_new_message,
+                        }))
+                    ))
+                }
 
                 if (seen) {
                     debounce(() => {
-                        presenceChannel.whisper('new_message_sent', {})
+                        presenceChannel.whisper('seen', {
+                            chat_id: contactId,
+                        })
                     })
                 }
             })
             .listen('.MessageEdited', (message: MessageType) => {
-                alter(chatId, message.id, message)
+                alterRef.current(chatId, message.id, message)
             })
             .listen('.MessageDeleted', (message: Pick<MessageType, 'id'>) => {
-                remove(chatId, message.id)
+                removeRef.current(chatId, message.id)
             })
-            .listenForWhisper('new_message_sent', () => {
+            .listenForWhisper('seen', () => {
                 queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
                     !current ? current : {
                         ...current,
@@ -115,7 +139,7 @@ export default function Messages() {
                             ...page,
                             items: page.items.map(item => ({
                                 ...item,
-                                seen: true,
+                                seen: item.from_self ? true : item.seen,
                             })),
                         })),
                     }
@@ -125,7 +149,7 @@ export default function Messages() {
         return () => {
             window.Echo.leave(`room.${chatId}`)
         }
-    }, [chatId, auth.user.id, insert, alter, remove, setOnlineIds, queryClient, debounce])
+    }, [chatId, auth.user.id, setOnlineIds, queryClient, debounce])
 
     useEffect(() => {
         if (end && !start && hasPreviousPage && !isFetchingPreviousPage) {

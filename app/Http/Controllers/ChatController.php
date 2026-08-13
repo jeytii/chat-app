@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ChatResource;
 use App\Models\Chat;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
@@ -21,6 +22,11 @@ class ChatController extends Controller
             ->orWhere('requestor_id', $authId)
             ->latest()
             ->with(['requestor', 'accepter'])
+            ->withCount([
+                'messages as unseen_messages_count' => fn (Builder $query) => (
+                    $query->whereNot('sender_id', $authId)->whereNull('seen_at')
+                ),
+            ])
             ->get();
 
         return ChatResource::collection($chats);
