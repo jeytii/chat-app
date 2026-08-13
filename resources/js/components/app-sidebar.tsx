@@ -1,59 +1,28 @@
-import { Link, usePage } from '@inertiajs/react'
-import { useEffect } from 'react'
+import { Link } from '@inertiajs/react'
+import { useQuery } from '@tanstack/react-query'
 
 import AppLogo from '@/components/app-logo'
-import { NavMain } from '@/components/nav-main'
+import Contact from '@/components/contact'
 import { NavUser } from '@/components/nav-user'
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroup,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import useMessage from '@/hooks/use-message'
-import { Message } from '@/types/models'
+import { Skeleton } from '@/components/ui/skeleton'
+import type { Chat } from '@/types/models'
 
-type MessageSentData = Omit<Message, 'from_self'> & {
-    chat_id: number;
-    sender_id: number;
-}
-
-type MessageEditedData = Message & { chat_id: number }
-
-export function AppSidebar() {
-    const { auth, chat_id: chatId } = usePage<{ chat_id: number }>().props
-    const { insert, alter, remove } = useMessage()
-
-    useEffect(() => {
-        if (chatId) {
-            const { channels } = window.Echo.connector
-
-            if (!channels[`private-chat.${chatId}`]) {
-                window.Echo.private(`chat.${chatId}`)
-                    .listen('.MessageSent', ({ chat_id: privateChatId, sender_id: senderId, ...message }: MessageSentData) => {
-                        if (!channels[`presence-room.${privateChatId}`]) {
-                            insert(chatId, {
-                                ...message,
-                                from_self: senderId === auth.user.id,
-                            })
-                        }
-                    })
-                    .listen('.MessageEdited', ({ chat_id: privateChatId, ...message }: MessageEditedData) => {
-                        if (!channels[`presence-room.${privateChatId}`]) {
-                            alter(chatId, message.id, message)
-                        }
-                    })
-                    .listen('.MessageDeleted', (message: { chat_id: number; id: number }) => {
-                        if (!channels[`presence-room.${message.chat_id}`]) {
-                            remove(chatId, message.id)
-                        }
-                    })
-            }
-        }
-    }, [auth.user.id, chatId, insert, alter, remove])
+export default function AppSidebar() {
+    const { data, isLoading } = useQuery<Chat[]>({
+        queryKey: ['chats'],
+        queryFn: async () => (await fetch('/chats')).json(),
+    })
 
     return (
         <Sidebar collapsible='icon' variant='inset' className='px-0!'>
@@ -70,12 +39,64 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain />
+                <SidebarGroup className='px-2 py-0'>
+                    <SidebarGroupLabel>Contacts</SidebarGroupLabel>
+
+                    {(isLoading || !data) ? (
+                        <Placeholder />
+                    ) : (
+                        <SidebarMenu className='gap-2'>
+                            {data.map(contact => <Contact key={contact.id} chat={contact} />)}
+                        </SidebarMenu>
+                    )}
+                </SidebarGroup>
             </SidebarContent>
 
             <SidebarFooter>
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
+    )
+}
+
+function Placeholder() {
+    return (
+        <div className='space-y-4 px-2'>
+            <div className='flex items-center gap-2'>
+                <Skeleton className='size-10 rounded-full' />
+                <div className='flex-1 space-y-1'>
+                    <Skeleton className='h-4 w-full' />
+                    <Skeleton className='h-3 w-1/2' />
+                </div>
+            </div>
+            <div className='flex items-center gap-2'>
+                <Skeleton className='size-10 rounded-full' />
+                <div className='flex-1 space-y-1'>
+                    <Skeleton className='h-4 w-full' />
+                    <Skeleton className='h-3 w-1/2' />
+                </div>
+            </div>
+            <div className='flex items-center gap-2'>
+                <Skeleton className='size-10 rounded-full' />
+                <div className='flex-1 space-y-1'>
+                    <Skeleton className='h-4 w-full' />
+                    <Skeleton className='h-3 w-1/2' />
+                </div>
+            </div>
+            <div className='flex items-center gap-2'>
+                <Skeleton className='size-10 rounded-full' />
+                <div className='flex-1 space-y-1'>
+                    <Skeleton className='h-4 w-full' />
+                    <Skeleton className='h-3 w-1/2' />
+                </div>
+            </div>
+            <div className='flex items-center gap-2'>
+                <Skeleton className='size-10 rounded-full' />
+                <div className='flex-1 space-y-1'>
+                    <Skeleton className='h-4 w-full' />
+                    <Skeleton className='h-3 w-1/2' />
+                </div>
+            </div>
+        </div>
     )
 }
