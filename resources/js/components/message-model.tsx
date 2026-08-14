@@ -1,13 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
-import { Edit, EllipsisVertical, Trash2 } from 'lucide-react'
-import { MouseEventHandler, useEffect, useRef, useState } from 'react'
+import { Edit, EllipsisVertical, Reply, Trash2 } from 'lucide-react'
+import { type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react'
 
+import { ChatContext } from '@/components/chat-provider'
 import MessageEditor from '@/components/message-editor'
 import Photo from '@/components/photo'
 import { Attachment } from '@/components/ui/attachment'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { MessageContent } from '@/components/ui/message'
@@ -15,7 +17,7 @@ import { getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
 import { cn } from '@/lib/utils'
-import type { Message as Message } from '@/types/models'
+import type { Message } from '@/types/models'
 
 type Props = {
     chatId: number;
@@ -27,6 +29,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     const queryClient = useQueryClient()
     const messageToDelete = useRef<Message>(null)
     const [editMode, setEditMode] = useState<boolean>(false)
+    const { replyTo, setReplyTo } = useContext(ChatContext)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
@@ -51,7 +54,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     })
 
     function edit() {
-        if (!message.from_self && !message.is_fake) {
+        if ((!message.from_self && !message.is_fake) || replyTo) {
             return
         }
 
@@ -59,7 +62,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     async function destroy() {
-        if (!message.from_self && !message.is_fake) {
+        if ((!message.from_self && !message.is_fake) || replyTo) {
             return
         }
 
@@ -86,6 +89,14 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         )
 
         stopDebounce()
+    }
+
+    function reply() {
+        if (message.is_fake || replyTo) {
+            return
+        }
+
+        setReplyTo(message.id)
     }
 
     useEffect(() => {
@@ -154,16 +165,45 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     variant={message.from_self ? 'default' : 'muted'}
                     className={cn({ 'opacity-60': message.is_fake })}
                 >
+                    {!!message.reference && (
+                        <Card size='sm' className='p-0'>
+                            <CardContent className='relative flex max-w-[70vw] items-center gap-2 px-4 py-(--card-spacing) before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""] md:max-w-[50vw] lg:max-w-120'>
+                                {!!message.reference.image_url && (
+                                    <img src='https://placehold.co/100x100' alt='Attachment' className='aspect-square w-12 rounded-xs' />
+                                )}
+
+                                <p className='line-clamp-2 w-full text-muted-foreground italic'>
+                                    {message.reference.raw_content || '(Sent an image)'}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {!!message.content && (
-                        <div className='flex w-fit max-w-full min-w-0 items-center gap-2 overflow-hidden group-data-[align=end]/bubble:self-end'>
-                            {(message.from_self && !message.is_fake) && (
+                        <div className={cn(
+                            'flex w-fit max-w-full min-w-0 items-center gap-2 overflow-hidden group-data-[align=end]/bubble:self-end',
+                            { 'group/response flex-row-reverse': !message.from_self },
+                        )}>
+                            {message.from_self ? (
                                 <DropdownMenu>
-                                    <DropdownMenuTrigger asChild className='data-[state=closed]:invisible data-[state=closed]:group-hover/bubble:visible'>
+                                    <DropdownMenuTrigger
+                                        asChild
+                                        className={cn(
+                                            'data-[state=closed]:invisible',
+                                            { 'data-[state=closed]:group-hover/bubble:visible': !message.is_fake && !replyTo },
+                                        )}
+                                    >
                                         <Button variant='ghost' size='icon-sm'>
                                             <EllipsisVertical />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent side='left'>
+                                    <DropdownMenuContent side={message.from_self ? 'left' : 'right'}>
+                                        <DropdownMenuItem asChild>
+                                            <Button className='w-full justify-start' variant='ghost' onClick={reply}>
+                                                <Reply />
+                                                <span>Reply</span>
+                                            </Button>
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Button className='w-full justify-start' variant='ghost' onClick={edit}>
                                                 <Edit />
@@ -178,6 +218,18 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                            ) : (
+                                <Button
+                                    variant='ghost'
+                                    size='icon-sm'
+                                    className={cn(
+                                        'invisible',
+                                        { 'group-hover/response:visible': !message.is_fake && !replyTo },
+                                    )}
+                                    onClick={reply}
+                                >
+                                    <Reply />
+                                </Button>
                             )}
 
                             <BubbleContent
@@ -188,7 +240,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     )}
 
                     {(!!message.gif || !!message.image_url) && (
-                        <Media {...{ message, edit, destroy }} />
+                        <Media {...{ message, reply, edit, destroy }} />
                     )}
                 </Bubble>
             )}
@@ -197,7 +249,9 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     )
 }
 
-function Media({ message, edit, destroy }: { message: Message; edit: MouseEventHandler; destroy: MouseEventHandler }) {
+function Media({ message, reply, edit, destroy }: { message: Message; reply: MouseEventHandler; edit: MouseEventHandler; destroy: MouseEventHandler }) {
+    const { replyTo } = useContext(ChatContext)
+
     if (message.is_fake && (message.image_url || message.gif)) {
         return (
             <img
@@ -209,28 +263,54 @@ function Media({ message, edit, destroy }: { message: Message; edit: MouseEventH
 
     return (
         <div className='flex gap-2'>
-            {(message.from_self && !message.content && !message.is_fake) && (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild className='data-[state=closed]:invisible data-[state=closed]:group-hover/bubble:visible'>
-                        <Button variant='ghost' size='icon-sm'>
-                            <EllipsisVertical />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side='left' align='start'>
-                        <DropdownMenuItem asChild>
-                            <Button className='w-full justify-start' variant='ghost' onClick={edit}>
-                                <Edit />
-                                <span>Edit</span>
+            {!message.content && (
+                message.from_self ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            asChild
+                            className={cn(
+                                'data-[state=closed]:invisible',
+                                { 'data-[state=closed]:group-hover/bubble:visible': !message.is_fake && !replyTo },
+                            )}
+                        >
+                            <Button variant='ghost' size='icon-sm'>
+                                <EllipsisVertical />
                             </Button>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Button className='w-full justify-start hover:text-destructive!' variant='ghost' onClick={destroy}>
-                                <Trash2 />
-                                <span>Delete</span>
-                            </Button>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent side='left' align='start'>
+                            <DropdownMenuItem asChild>
+                                <Button className='w-full justify-start' variant='ghost' onClick={reply}>
+                                    <Reply />
+                                    <span>Reply</span>
+                                </Button>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Button className='w-full justify-start' variant='ghost' onClick={edit}>
+                                    <Edit />
+                                    <span>Edit</span>
+                                </Button>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Button className='w-full justify-start hover:text-destructive!' variant='ghost' onClick={destroy}>
+                                    <Trash2 />
+                                    <span>Delete</span>
+                                </Button>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                    <Button
+                        variant='ghost'
+                        size='icon-sm'
+                        className={cn(
+                            'invisible',
+                            { 'group-hover/response:visible': !message.is_fake && !replyTo },
+                        )}
+                        onClick={reply}
+                    >
+                        <Reply />
+                    </Button>
+                )
             )}
 
             {message.gif ? (

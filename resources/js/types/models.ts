@@ -17,7 +17,7 @@ export type Message = {
     id: number;
     reference?: {
         id: number;
-        content: string | null;
+        raw_content: string | null;
         gif: string | null;
         image_url: string | null;
         from_self: boolean;

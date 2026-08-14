@@ -40,6 +40,7 @@ class MessageController extends Controller
     public function store(Request $request, Chat $chat): JsonResource
     {
         $data = $request->validate([
+            'reference_id' => ['bail', 'nullable', 'integer', 'exists:messages,id'],
             'content' => ['nullable', 'required_without:file', 'string'],
             'file' => [
                 'nullable',
@@ -56,8 +57,8 @@ class MessageController extends Controller
         $message = auth()->user()
             ->messages()
             ->create([
+                ...Arr::only($data, ['reference_id', 'content']),
                 'chat_id' => $chat->id,
-                'content' => $data['content'],
                 'image' => $file instanceof UploadedFile ? $file->store("chats/{$chat->id}") : null,
                 'gif' => \is_string($file) ? $file : null,
                 'seen_at' => $request->boolean('seen') ? now() : null,

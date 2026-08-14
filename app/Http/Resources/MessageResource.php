@@ -2,9 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Message;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
 
@@ -12,6 +14,7 @@ use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
  * @property int $id
  * @property int $chat_id
  * @property int $sender_id
+ * @property Message|null $reference
  * @property ?string $content
  * @property ?string $gif
  * @property ?string $image
@@ -45,7 +48,15 @@ class MessageResource extends JsonResource
         return [
             'id' => $this->id,
             'sender_id' => $this->when($request->boolean('has_sender_id'), $this->sender_id),
-            'reference' => $this->whenLoaded('reference'),
+            'reference' => $this->whenLoaded(
+                'reference',
+                $this->reference
+                    ? Arr::only(
+                        new self($this->reference)->toArray($request),
+                        ['id', 'raw_content', 'image_url', 'gif', 'from_self'],
+                    )
+                    : null,
+            ),
             'raw_content' => $this->content,
             'content' => $content,
             'gif' => $this->gif,

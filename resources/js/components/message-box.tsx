@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react'
-import { useMutation } from '@tanstack/react-query'
+import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import type { EmojiClickData } from 'emoji-picker-react'
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
@@ -8,7 +8,9 @@ import type { ChangeEvent, KeyboardEvent } from 'react'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { Remarkable } from 'remarkable'
 
+import { ChatContext } from '@/components/chat-provider'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppearance } from '@/hooks/use-appearance'
@@ -16,19 +18,23 @@ import useAttachment from '@/hooks/use-attachment'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useThrottle } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
-import { PresenceContext } from '@/pages/chat'
-import type { Message } from '@/types/models'
+import type { Message, MessageResponse } from '@/types/models'
 
 export default function MessageBox() {
     const { chat_id: chatId } = usePage<{ chat_id: number }>().props
     const { image, gif, previewImage, setImage, revokePreviewImage } = useAttachment(null)
-    const { onlineIds } = useContext(PresenceContext)
+    const { onlineIds, replyTo, setReplyTo } = useContext(ChatContext)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
     const { insert, alter } = useMessage()
     const textarea = useRef<HTMLTextAreaElement>(null)
     const { appearance } = useAppearance()
     const throttle = useThrottle(1000)
+    const queryClient = useQueryClient()
     const channel = window.Echo.join(`room.${chatId}`)
+    const replyToMessage = queryClient.getQueryData<InfiniteData<MessageResponse>>(['messages', chatId])
+        ?.pages
+        .flatMap(page => page.items)
+        .find(message => message.id === replyTo)
 
     useEffect(() => {
         return () => {
@@ -39,7 +45,7 @@ export default function MessageBox() {
     const { mutate, isPending } = useMutation<
         AxiosResponse<Message>,
         Error,
-        { content: string; file: File | string | null; seen: boolean },
+        { reference_id: number | null; content: string; file: File | string | null; seen: boolean },
         { id: number }
     >({
         mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
@@ -55,6 +61,13 @@ export default function MessageBox() {
 
             insert(chatId, {
                 id: itemId,
+                reference: replyToMessage ? {
+                    id: replyToMessage.id,
+                    raw_content: replyToMessage.raw_content as (string | null),
+                    image_url: replyToMessage.image_url,
+                    gif: replyToMessage.gif,
+                    from_self: replyToMessage.from_self,
+                } : null,
                 content: new Remarkable({ html: false, breaks: true }).render(content),
                 gif: gif,
                 image_url: image ? previewImage : null,
@@ -64,6 +77,8 @@ export default function MessageBox() {
                 time_diff: 'Now',
                 is_fake: true,
             })
+
+            setReplyTo(null)
 
             if (textarea.current) {
                 textarea.current.value = ''
@@ -152,6 +167,7 @@ export default function MessageBox() {
         }
 
         mutate({
+            reference_id: replyTo,
             content: value,
             file: image,
             seen: onlineIds.length >= 2,
@@ -160,6 +176,28 @@ export default function MessageBox() {
 
     return (
         <form action={send} className='z-10'>
+            {!!replyToMessage && (
+                <div className='relative border-t p-4'>
+                    <Button
+                        variant='secondary'
+                        size='icon-xs'
+                        className='absolute top-3 right-3 size-4 rounded-full'
+                        onClick={setReplyTo.bind(null, null)}
+                    >
+                        <X />
+                    </Button>
+                    <Card size='sm'>
+                        <CardContent className='flex items-center gap-4'>
+                            {!!replyToMessage.image_url && (
+                                <img src='https://placehold.co/100x100' alt='' className='w-12 rounded-xs' />
+                            )}
+
+                            <p className='line-clamp-2 w-full text-muted-foreground italic'>{replyToMessage.raw_content || '(Sent an image)'}</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
             <InputGroup className='items-end rounded-none border-x-0 border-b-0 border-border dark:border-input/60 dark:bg-transparent'>
                 <InputGroupTextarea
                     ref={textarea}
