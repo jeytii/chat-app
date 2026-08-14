@@ -78,6 +78,7 @@ class MessageController extends Controller
     public function update(Request $request, Chat $chat, Message $message): JsonResource
     {
         $data = $request->validate([
+            'reference_id' => ['nullable', 'integer', Rule::in([$message->reference_id])],
             'content' => [
                 'nullable',
                 'required_without_all:image,gif',
@@ -103,8 +104,8 @@ class MessageController extends Controller
         $payload = Arr::only($data, ['content', 'gif']);
         $image = data_get($data, 'image');
 
-        if ($message->content === $payload['content'] && $message->image === $image) {
-            return $message->toResource();
+        if (! data_get($data, 'reference_id')) {
+            $payload['reference_id'] = null;
         }
 
         if ($image instanceof UploadedFile) {
@@ -132,8 +133,8 @@ class MessageController extends Controller
                 'MessageEdited',
                 $chat->id,
                 Arr::only(
-                    $message->toResource()->toArray($request),
-                    ['id', 'raw_content', 'content', 'edited'],
+                    $message->load('reference')->toResource()->toArray($request),
+                    ['id', 'reference', 'raw_content', 'content', 'edited'],
                 ),
             ))->toOthers();
         }

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import { Edit, EllipsisVertical, Reply, Trash2 } from 'lucide-react'
-import { type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 
 import { ChatContext } from '@/components/chat-provider'
 import MessageEditor from '@/components/message-editor'
@@ -140,6 +140,16 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         )
     }
 
+    if (message.from_self && editMode) {
+        return (
+            <MessageEditor
+                cancel={setEditMode.bind(null, false)}
+                chatId={chatId}
+                message={message}
+            />
+        )
+    }
+
     return (
         <MessageContent className='gap-1'>
             {(!message.is_fake && firstInAMinute) && (
@@ -153,118 +163,33 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>(edited)</p>
             )}
 
-            {(message.from_self && editMode) ? (
-                <MessageEditor
-                    cancel={setEditMode.bind(null, false)}
-                    chatId={chatId}
-                    message={message}
-                />
-            ) : (
-                <Bubble
-                    align={message.from_self ? 'end' : 'start'}
-                    variant={message.from_self ? 'default' : 'muted'}
-                    className={cn({ 'opacity-60': message.is_fake })}
-                >
-                    {!!message.reference && (
-                        <Card size='sm' className='p-0'>
-                            <CardContent className='relative flex max-w-[70vw] items-center gap-2 px-4 py-(--card-spacing) before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""] md:max-w-[50vw] lg:max-w-120'>
-                                {!!message.reference.image_url && (
-                                    <img src='https://placehold.co/100x100' alt='Attachment' className='aspect-square w-12 rounded-xs' />
-                                )}
+            {!!message.reference && (
+                <Card size='sm' className='p-0'>
+                    <CardContent className='responsive-message relative flex items-center gap-2 px-4 py-(--card-spacing) before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""]'>
+                        {!!message.reference.image_url && (
+                            <img src={message.reference.image_url} alt='Attachment' className='aspect-square w-12 rounded-xs' />
+                        )}
 
-                                <p className='line-clamp-2 w-full text-muted-foreground italic'>
-                                    {message.reference.raw_content || '(Sent an image)'}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {!!message.content && (
-                        <div className={cn(
-                            'flex w-fit max-w-full min-w-0 items-center gap-2 overflow-hidden group-data-[align=end]/bubble:self-end',
-                            { 'group/response flex-row-reverse': !message.from_self },
-                        )}>
-                            {message.from_self ? (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger
-                                        asChild
-                                        className={cn(
-                                            'data-[state=closed]:invisible',
-                                            { 'data-[state=closed]:group-hover/bubble:visible': !message.is_fake && !replyTo },
-                                        )}
-                                    >
-                                        <Button variant='ghost' size='icon-sm'>
-                                            <EllipsisVertical />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent side={message.from_self ? 'left' : 'right'}>
-                                        <DropdownMenuItem asChild>
-                                            <Button className='w-full justify-start' variant='ghost' onClick={reply}>
-                                                <Reply />
-                                                <span>Reply</span>
-                                            </Button>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Button className='w-full justify-start' variant='ghost' onClick={edit}>
-                                                <Edit />
-                                                <span>Edit</span>
-                                            </Button>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Button className='w-full justify-start hover:text-destructive!' variant='ghost' onClick={destroy}>
-                                                <Trash2 />
-                                                <span>Delete</span>
-                                            </Button>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            ) : (
-                                <Button
-                                    variant='ghost'
-                                    size='icon-sm'
-                                    className={cn(
-                                        'invisible',
-                                        { 'group-hover/response:visible': !message.is_fake && !replyTo },
-                                    )}
-                                    onClick={reply}
-                                >
-                                    <Reply />
-                                </Button>
-                            )}
-
-                            <BubbleContent
-                                dangerouslySetInnerHTML={{ __html: message.content }}
-                                className='max-w-auto! w-auto! min-w-auto! space-y-2 overflow-auto!'
-                            />
-                        </div>
-                    )}
-
-                    {(!!message.gif || !!message.image_url) && (
-                        <Media {...{ message, reply, edit, destroy }} />
-                    )}
-                </Bubble>
+                        <p className='line-clamp-2 w-full text-muted-foreground italic'>
+                            {message.reference.raw_content || '(Sent an image)'}
+                        </p>
+                    </CardContent>
+                </Card>
             )}
 
-        </MessageContent>
-    )
-}
-
-function Media({ message, reply, edit, destroy }: { message: Message; reply: MouseEventHandler; edit: MouseEventHandler; destroy: MouseEventHandler }) {
-    const { replyTo } = useContext(ChatContext)
-
-    if (message.is_fake && (message.image_url || message.gif)) {
-        return (
-            <img
-                src={(message.image_url || message.gif) as string}
-                className='block max-h-60 w-full max-w-[70vw] rounded-md object-cover blur-xs md:max-w-[50vw] lg:max-h-120 lg:max-w-120'
-            />
-        )
-    }
-
-    return (
-        <div className='flex gap-2'>
-            {!message.content && (
-                message.from_self ? (
+            <Bubble
+                align={message.from_self ? 'end' : 'start'}
+                variant={message.from_self ? 'default' : 'muted'}
+                className={cn(
+                    'responsive-message flex-row gap-2',
+                    {
+                        'opacity-60': message.is_fake,
+                        'flex-row-reverse': !message.from_self,
+                        'items-center': message.content && !message.image_url && !message.gif,
+                    },
+                )}
+            >
+                {message.from_self ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             asChild
@@ -277,7 +202,10 @@ function Media({ message, reply, edit, destroy }: { message: Message; reply: Mou
                                 <EllipsisVertical />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent side='left' align='start'>
+                        <DropdownMenuContent
+                            side={message.from_self ? 'left' : 'right'}
+                            align={message.content && (message.image_url || message.gif) ? 'start' : 'center'}
+                        >
                             <DropdownMenuItem asChild>
                                 <Button className='w-full justify-start' variant='ghost' onClick={reply}>
                                     <Reply />
@@ -304,15 +232,45 @@ function Media({ message, reply, edit, destroy }: { message: Message; reply: Mou
                         size='icon-sm'
                         className={cn(
                             'invisible',
-                            { 'group-hover/response:visible': !message.is_fake && !replyTo },
+                            { 'group-hover/bubble:visible': !message.is_fake && !replyTo },
                         )}
                         onClick={reply}
                     >
                         <Reply />
                     </Button>
-                )
-            )}
+                )}
 
+
+                <div className='space-y-1'>
+                    {!!message.content && (
+                        <BubbleContent
+                            dangerouslySetInnerHTML={{ __html: message.content }}
+                            className='max-w-auto! w-auto! min-w-auto! space-y-2 overflow-auto!'
+                        />
+                    )}
+
+                    {(!!message.gif || !!message.image_url) && (
+                        <Media message={message} />
+                    )}
+                </div>
+            </Bubble>
+
+        </MessageContent>
+    )
+}
+
+function Media({ message }: { message: Message }) {
+    if (message.is_fake && (message.image_url || message.gif)) {
+        return (
+            <img
+                src={(message.image_url || message.gif) as string}
+                className='responsive-message block max-h-60 w-full rounded-md object-cover blur-xs lg:max-h-120'
+            />
+        )
+    }
+
+    return (
+        <div className={cn('flex', { 'justify-end': message.from_self })}>
             {message.gif ? (
                 <Attachment orientation='vertical' className='w-[20vw] cursor-pointer'>
                     <div className='p-2'>
@@ -326,7 +284,7 @@ function Media({ message, reply, edit, destroy }: { message: Message; reply: Mou
             ) : (
                 <Dialog>
                     <DialogTrigger>
-                        <Attachment orientation='vertical' className='w-full max-w-[70vw] cursor-pointer md:max-w-[50vw] lg:max-w-120'>
+                        <Attachment orientation='vertical' className='w-full cursor-pointer'>
                             <Photo
                                 src={message.image_url as string}
                                 className='block h-auto! max-h-60 w-full! rounded-md! object-cover lg:max-h-120'
