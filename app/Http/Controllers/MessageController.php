@@ -54,11 +54,10 @@ class MessageController extends Controller
 
         $file = data_get($data, 'file');
 
-        $message = auth()->user()
-            ->messages()
+        $message = $chat->messages()
             ->create([
                 ...Arr::only($data, ['reference_id', 'content']),
-                'chat_id' => $chat->id,
+                'sender_id' => auth()->id(),
                 'image' => $file instanceof UploadedFile ? $file->store("chats/{$chat->id}") : null,
                 'gif' => \is_string($file) ? $file : null,
                 'seen_at' => $request->boolean('seen') ? now() : null,

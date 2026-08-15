@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
 
         User::factory(8)->create();
 
-        $first->belongsToMany(User::class, 'chats', 'requestor_id', 'accepter_id')->attach([2, 3]);
+        $first->chats()->create()->users()->attach(2);
+        $first->chats()->create()->users()->attach(3);
     }
 }

@@ -13,8 +13,16 @@ return new class extends Migration
     {
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('accepter_id')->constrained('users');
-            $table->foreignId('requestor_id')->constrained('users');
+            $table->string('name')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('chat_user', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('chat_id')->constrained();
+            $table->foreignId('user_id')->constrained();
+            $table->boolean('hidden')->default(false);
+            $table->timestamp('cleared_at')->nullable();
             $table->timestamps();
         });
     }

@@ -20,7 +20,7 @@ class ChatPolicy
      */
     public function view(User $user, Chat $model): bool
     {
-        return $model->requestor_id === $user->id || $model->accepter_id === $user->id;
+        return $user->chats()->where('chats.id', $model->id)->exists();
     }
 
     /**

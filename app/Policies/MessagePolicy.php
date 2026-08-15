@@ -13,7 +13,7 @@ class MessagePolicy
      */
     public function viewAny(User $user, Chat $chat): bool
     {
-        return $chat->requestor_id === $user->id || $chat->accepter_id === $user->id;
+        return $user->chats()->where('chats.id', $chat->id)->exists();
     }
 
     /**
@@ -21,7 +21,7 @@ class MessagePolicy
      */
     public function viewImage(User $user, Message $message, Chat $chat): bool
     {
-        return $chat->requestor_id === $user->id || $chat->accepter_id === $user->id;
+        return $user->chats()->where('chats.id', $chat->id)->exists();
     }
 
     /**
@@ -29,7 +29,7 @@ class MessagePolicy
      */
     public function create(User $user, Chat $chat): bool
     {
-        return $chat->requestor_id === $user->id || $chat->accepter_id === $user->id;
+        return $user->chats()->where('chats.id', $chat->id)->exists();
     }
 
     /**

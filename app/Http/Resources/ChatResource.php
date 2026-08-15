@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Chat;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Chat
+ */
 class ChatResource extends JsonResource
 {
     /**
@@ -16,9 +20,7 @@ class ChatResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user' => $this->requestor_id !== $request->user()->id
-                ? new UserResource($this->whenLoaded('requestor'))
-                : new UserResource($this->whenLoaded('accepter')),
+            'user' => new UserResource($this->whenLoaded('users')->first()),
             'has_new_message' => $this->whenCounted('unseen_messages_count') >= 1,
         ];
     }

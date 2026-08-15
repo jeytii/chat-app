@@ -1,24 +1,12 @@
 <?php
 
-use App\Models\Chat;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('chat.{id}', function (User $user, int $id): bool {
-    $chat = Chat::query()->find($id);
+Broadcast::channel('chat.{id}', fn (User $user, int $id): bool => (
+    $user->chats()->where('chats.id', $id)->exists()
+));
 
-    return (bool) $chat && $chat->accepter_id === $user->id || $chat->requestor_id === $user->id;
-});
-
-Broadcast::channel('room.{id}', function (User $user, int $id) {
-    $chat = Chat::query()->find($id);
-
-    if (
-        ! $chat
-        || ($chat->accepter_id !== $user->id && $chat->requestor_id !== $user->id)
-    ) {
-        return false;
-    }
-
-    return $user->id;
-});
+Broadcast::channel('room.{id}', fn (User $user, int $id): int|bool => (
+    $user->chats()->where('chats.id', $id)->exists() ? $user->id : false
+));

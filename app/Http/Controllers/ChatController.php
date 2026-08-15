@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ChatResource;
 use App\Models\Chat;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
@@ -19,10 +20,8 @@ class ChatController extends Controller
 
         $authId = auth()->id();
         $chats = Chat::query()
-            ->where('accepter_id', $authId)
-            ->orWhere('requestor_id', $authId)
-            ->latest()
-            ->with(['requestor', 'accepter'])
+            ->whereRelation('users', 'users.id', $authId)
+            ->with('users', fn (Relation $query) => $query->whereNot('users.id', $authId))
             ->withCount([
                 'messages as unseen_messages_count' => fn (Builder $query) => (
                     $query->whereNot('sender_id', $authId)->whereNull('seen_at')
