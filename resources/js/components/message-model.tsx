@@ -245,7 +245,10 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     {!!message.content && (
                         <BubbleContent
                             dangerouslySetInnerHTML={{ __html: message.content }}
-                            className='max-w-auto! w-auto! min-w-auto! space-y-2 overflow-auto!'
+                            className={cn(
+                                'space-y-2 overflow-auto!',
+                                { 'ml-auto': message.from_self },
+                            )}
                         />
                     )}
 

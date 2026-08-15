@@ -8,13 +8,13 @@ use App\Models\Chat;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Image;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MessageController extends Controller
 {
@@ -159,13 +159,10 @@ class MessageController extends Controller
     }
 
     #[Authorize('viewImage', ['message', 'chat'])]
-    public function viewImage(Chat $chat, Message $message): StreamedResponse
+    public function viewImage(Request $request, Chat $chat, Message $message): Response
     {
-        return Storage::response(
-            $message->image,
-            headers: [
-                'Cache-Control' => 'private, max-age=86400, immutable',
-            ],
-        );
+        return Image::fromStorage($message->image)
+            ->toResponse($request)
+            ->header('Cache-Control', 'private, max-age=86400, immutable');
     }
 }
