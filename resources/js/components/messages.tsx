@@ -34,7 +34,7 @@ async function getMessages(pageParam: string | null, chatId: number, signal: Abo
 
 export default function Messages() {
     const { auth, chat_id: chatId } = usePage<{ chat_id: number }>().props
-    const { isViewing, setOnlineIds } = useContext(ChatContext)
+    const { isViewing, onlineIds } = useContext(ChatContext)
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,
@@ -63,7 +63,7 @@ export default function Messages() {
     const queryClient = useQueryClient()
     const { insert, alter, remove } = useMessage()
     const { start, end } = useMessageScrollerScrollable()
-    const { debounce } = useDebounce(1000)
+    const { debounce } = useDebounce(500)
 
     const insertRef = useRef<(chatId: number, message: MessageType) => void>(insert)
     const alterRef = useRef<(chatId: number, id: number, newData: Partial<MessageType>) => void>(alter)
@@ -91,15 +91,13 @@ export default function Messages() {
 
         presenceChannel
             .here((ids: number[]) => {
-                setOnlineIds(ids)
+                onlineIds.current = ids
             })
             .joining((id: number) => {
-                setOnlineIds(current => ([
-                    ...new Set([...current, id]),
-                ]))
+                onlineIds.current = [...onlineIds.current, id]
             })
             .leaving((id: number) => {
-                setOnlineIds(current => current.filter(onlineId => onlineId !== id))
+                onlineIds.current = onlineIds.current.filter(onlineId => onlineId !== id)
             })
             .listen('.MessageSent', ({ sender_id: senderId, chat_id: contactId, seen, ...message }: MessageSentData) => {
                 insertRef.current(chatId, {
@@ -149,7 +147,7 @@ export default function Messages() {
         return () => {
             window.Echo.leave(`room.${chatId}`)
         }
-    }, [chatId, auth.user.id, setOnlineIds, queryClient, debounce])
+    }, [chatId, auth.user.id, onlineIds, queryClient, debounce])
 
     useEffect(() => {
         if (end && !start && hasPreviousPage && !isFetchingPreviousPage) {

@@ -170,7 +170,7 @@ export default function MessageBox() {
             reference_id: replyTo,
             content: value,
             file: image,
-            seen: onlineIds.length >= 2,
+            seen: onlineIds.current.length >= 2,
         })
     }
 

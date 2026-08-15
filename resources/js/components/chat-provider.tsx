@@ -1,34 +1,31 @@
 import { usePage } from '@inertiajs/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createContext, type Dispatch, type ReactNode, type SetStateAction, useEffect, useState } from 'react'
+import { createContext, type Dispatch, type ReactNode, type RefObject, type SetStateAction, useEffect, useRef, useState } from 'react'
 
 import type { Chat } from '@/types/models'
 
 type Context = {
     isViewing: boolean;
-    onlineIds: number[];
+    onlineIds: RefObject<number[]>;
     replyTo: number | null;
-    setOnlineIds: Dispatch<SetStateAction<number[]>>;
     setReplyTo: Dispatch<SetStateAction<number | null>>;
 }
 
 export const ChatContext = createContext<Context>({
     isViewing: false,
-    onlineIds: [],
+    onlineIds: { current: [] },
     replyTo: null,
-    setOnlineIds: () => { },
     setReplyTo: () => { },
 })
 
 export default function ChatProvider({ children }: { children: (isHidden: boolean) => ReactNode }) {
     const id = usePage<{ chat_id: number }>().props.chat_id
-    const [onlineIds, setOnlineIds] = useState<number[]>([])
+    const queryClient = useQueryClient()
+    const onlineIds = useRef<number[]>([])
     const [replyTo, setReplyTo] = useState<number | null>(null)
     const [visibilityState, setVisibilityState] = useState<DocumentVisibilityState>(() => (
         typeof document === 'undefined' ? 'visible' : document.visibilityState
     ))
-
-    const queryClient = useQueryClient()
 
     useEffect(() => {
         const markMessagesAsSeen = () => {
@@ -62,7 +59,6 @@ export default function ChatProvider({ children }: { children: (isHidden: boolea
             isViewing: visibilityState === 'visible',
             onlineIds,
             replyTo,
-            setOnlineIds,
             setReplyTo,
         }}>
             {children(visibilityState === 'hidden')}
