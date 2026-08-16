@@ -23,7 +23,7 @@ import type { Message, MessageResponse } from '@/types/models'
 export default function MessageBox() {
     const { chat_id: chatId } = usePage<{ chat_id: number }>().props
     const { image, gif, previewImage, setImage, revokePreviewImage } = useAttachment(null)
-    const { onlineIds, replyTo, setReplyTo } = useContext(ChatContext)
+    const { onlineIds, reference, setReference } = useContext(ChatContext)
     const [showEmojis, setShowEmojis] = useState<boolean>(false)
     const { insert, alter } = useMessage()
     const textarea = useRef<HTMLTextAreaElement>(null)
@@ -31,10 +31,10 @@ export default function MessageBox() {
     const throttle = useThrottle(1000)
     const queryClient = useQueryClient()
     const channel = window.Echo.join(`room.${chatId}`)
-    const replyToMessage = queryClient.getQueryData<InfiniteData<MessageResponse>>(['messages', chatId])
+    const replyTo = queryClient.getQueryData<InfiniteData<MessageResponse>>(['messages', chatId])
         ?.pages
         .flatMap(page => page.items)
-        .find(message => message.id === replyTo)
+        .find(message => message.id === reference)
 
     useEffect(() => {
         return () => {
@@ -61,12 +61,12 @@ export default function MessageBox() {
 
             insert(chatId, {
                 id: itemId,
-                reference: replyToMessage ? {
-                    id: replyToMessage.id,
-                    raw_content: replyToMessage.raw_content as (string | null),
-                    image_url: replyToMessage.image_url,
-                    gif: replyToMessage.gif,
-                    from_self: replyToMessage.from_self,
+                reference: replyTo ? {
+                    id: replyTo.id,
+                    raw_content: replyTo.raw_content as (string | null),
+                    image_url: replyTo.image_url,
+                    gif: replyTo.gif,
+                    from_self: replyTo.from_self,
                 } : null,
                 content: new Remarkable({ html: false, breaks: true }).render(content),
                 gif: gif,
@@ -78,7 +78,7 @@ export default function MessageBox() {
                 is_fake: true,
             })
 
-            setReplyTo(null)
+            setReference(null)
 
             if (textarea.current) {
                 textarea.current.value = ''
@@ -167,7 +167,7 @@ export default function MessageBox() {
         }
 
         mutate({
-            reference_id: replyTo || '',
+            reference_id: reference || '',
             content: value || '',
             image: image || '',
             seen: onlineIds.current.length >= 2,
@@ -176,24 +176,24 @@ export default function MessageBox() {
 
     return (
         <form action={send} className='z-10'>
-            {!!replyToMessage && (
+            {!!replyTo && (
                 <div className='relative border-t p-4'>
                     <Button
                         type='button'
                         variant='secondary'
                         size='icon-xs'
                         className='absolute top-3 right-3 size-4 rounded-full'
-                        onClick={setReplyTo.bind(null, null)}
+                        onClick={setReference.bind(null, null)}
                     >
                         <X />
                     </Button>
                     <Card size='sm'>
                         <CardContent className='flex items-center gap-4'>
-                            {!!replyToMessage.image_url && (
+                            {!!replyTo.image_url && (
                                 <img src='https://placehold.co/100x100' alt='' className='w-12 rounded-xs' />
                             )}
 
-                            <p className='line-clamp-2 w-full text-muted-foreground italic'>{replyToMessage.raw_content || '(Sent an image)'}</p>
+                            <p className='line-clamp-2 w-full text-muted-foreground italic'>{replyTo.raw_content || '(Sent an image)'}</p>
                         </CardContent>
                     </Card>
                 </div>

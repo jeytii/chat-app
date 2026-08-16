@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
+import { cn } from '@/lib/utils'
 import type { Chat, Message as MessageType, MessageResponse } from '@/types/models'
 
 type MessageSentData = Omit<MessageType, 'from_self'> & {
@@ -174,7 +175,9 @@ export default function Messages() {
             {data.pages.map((message, index, messages) => (
                 <Fragment key={message.id}>
                     {((index !== 0 && !isSameDay(message.date, messages[index - 1].date)) || (!index && !hasPreviousPage)) && (
-                        <MessageScrollerItem>
+                        <MessageScrollerItem className={cn({
+                            'pt-2': messages[index - 1]?.image_url || messages[index - 1]?.gif,
+                        })}>
                             <Marker variant='separator'>
                                 <MarkerContent>{message.date_diff}</MarkerContent>
                             </Marker>

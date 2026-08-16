@@ -7,22 +7,22 @@ import type { Chat } from '@/types/models'
 type Context = {
     isViewing: boolean;
     onlineIds: RefObject<number[]>;
-    replyTo: number | null;
-    setReplyTo: Dispatch<SetStateAction<number | null>>;
+    reference: number | null;
+    setReference: Dispatch<SetStateAction<number | null>>;
 }
 
 export const ChatContext = createContext<Context>({
     isViewing: false,
     onlineIds: { current: [] },
-    replyTo: null,
-    setReplyTo: () => { },
+    reference: null,
+    setReference: () => { },
 })
 
 export default function ChatProvider({ children }: { children: (isHidden: boolean) => ReactNode }) {
     const id = usePage<{ chat_id: number }>().props.chat_id
     const queryClient = useQueryClient()
     const onlineIds = useRef<number[]>([])
-    const [replyTo, setReplyTo] = useState<number | null>(null)
+    const [reference, setReference] = useState<number | null>(null)
     const [visibilityState, setVisibilityState] = useState<DocumentVisibilityState>(() => (
         typeof document === 'undefined' ? 'visible' : document.visibilityState
     ))
@@ -58,8 +58,8 @@ export default function ChatProvider({ children }: { children: (isHidden: boolea
         <ChatContext value={{
             isViewing: visibilityState === 'visible',
             onlineIds,
-            replyTo,
-            setReplyTo,
+            reference,
+            setReference,
         }}>
             {children(visibilityState === 'hidden')}
         </ChatContext>

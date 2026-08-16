@@ -189,7 +189,7 @@
 }
 
 .responsive-message {
-    @apply max-w-[70vw] md:max-w-[50vw] lg:max-w-180;
+    @apply max-w-[70vw]! md:max-w-[50vw]! lg:max-w-180!;
 }
 
 @keyframes blink {

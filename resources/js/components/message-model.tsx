@@ -29,7 +29,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     const queryClient = useQueryClient()
     const messageToDelete = useRef<Message>(null)
     const [editMode, setEditMode] = useState<boolean>(false)
-    const { replyTo, setReplyTo } = useContext(ChatContext)
+    const { reference, setReference } = useContext(ChatContext)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
@@ -54,7 +54,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     })
 
     function edit() {
-        if ((!message.from_self && !message.is_fake) || replyTo) {
+        if ((!message.from_self && !message.is_fake) || reference) {
             return
         }
 
@@ -62,7 +62,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     async function destroy() {
-        if ((!message.from_self && !message.is_fake) || replyTo) {
+        if ((!message.from_self && !message.is_fake) || reference) {
             return
         }
 
@@ -92,11 +92,11 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     function reply() {
-        if (message.is_fake || replyTo) {
+        if (message.is_fake || reference) {
             return
         }
 
-        setReplyTo(message.id)
+        setReference(message.id)
     }
 
     useEffect(() => {
@@ -194,7 +194,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                             asChild
                             className={cn(
                                 'data-[state=closed]:invisible',
-                                { 'data-[state=closed]:group-hover/bubble:visible': !message.is_fake && !replyTo },
+                                { 'data-[state=closed]:group-hover/bubble:visible': !message.is_fake && !reference },
                             )}
                         >
                             <Button variant='ghost' size='icon-sm'>
@@ -231,7 +231,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                         size='icon-sm'
                         className={cn(
                             'invisible',
-                            { 'group-hover/bubble:visible': !message.is_fake && !replyTo },
+                            { 'group-hover/bubble:visible': !message.is_fake && !reference },
                         )}
                         onClick={reply}
                     >
