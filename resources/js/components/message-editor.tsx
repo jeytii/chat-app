@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import type { AxiosResponse } from 'axios'
 import axios from 'axios'
 import { Image, Smile, X } from 'lucide-react'
-import { type ChangeEvent, useEffect, useState } from 'react'
+import { type ChangeEvent, type SubmitEvent, useEffect, useState } from 'react'
 
 import { Bubble } from '@/components/ui/bubble'
 import { Button } from '@/components/ui/button'
@@ -22,10 +22,10 @@ type Props = {
 
 type Payload = {
     id: number;
-    reference_id: number | null;
+    reference_id: number | string;
     content: string;
-    image: File | string | null;
-    gif: string | null;
+    image: File | string;
+    gif: string;
 }
 
 export default function MessageEditor({ message, chatId, cancel }: Props) {
@@ -55,10 +55,9 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
         onMutate(payload, { client }) {
             client.cancelQueries({ queryKey: ['messages', chatId] })
         },
-        onSuccess({ data }, { id }) {
+        async onSuccess({ data }, { id }, context, { client }) {
             alter(chatId, id, data)
-        },
-        async onSettled(data, error, payload, context, { client }) {
+
             await client.invalidateQueries({
                 queryKey: ['messages', chatId],
                 refetchType: 'none',
@@ -73,6 +72,21 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
             revokePreviewImage()
         }
     }, [revokePreviewImage])
+
+    useEffect(() => {
+        const keydownCancel = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault()
+                cancel()
+            }
+        }
+
+        document.addEventListener('keydown', keydownCancel)
+
+        return () => {
+            document.removeEventListener('keydown', keydownCancel)
+        }
+    }, [cancel])
 
     function upload(event: ChangeEvent<HTMLInputElement>) {
         const file = (event.target.files as FileList)[0]
@@ -96,8 +110,11 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
         setGif(null)
     }
 
-    function update(data: FormData) {
-        const content = data.get('content')?.toString() || ''
+    function update(event: SubmitEvent) {
+        event.preventDefault()
+
+        const data = new FormData(event.target)
+        const content = data.get('content')?.toString()
 
         if (
             (
@@ -112,10 +129,10 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
 
         mutate({
             id: message.id,
-            reference_id: reference?.id || null,
-            content,
-            image,
-            gif,
+            reference_id: reference?.id || '',
+            content: content || '',
+            image: image || '',
+            gif: gif || '',
         })
     }
 
@@ -150,15 +167,15 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
                 </div>
             )}
 
-            <Bubble align='end' variant='ghost'>
-                <form action={update} className='space-y-1'>
-                    <div className='rounded-md border'>
+            <Bubble align='end' variant='ghost' className='responsive-message lg:max-w-170!'>
+                <form onSubmit={update} className='space-y-1'>
+                    <div className='ml-auto w-fit rounded-md border'>
                         <Textarea
                             name='content'
                             defaultValue={message.raw_content || ''}
                             placeholder='Write a message'
                             disabled={isPending}
-                            className='responsive-message ml-auto min-h-auto! min-w-25 rounded-none border-x-0 border-t-0 leading-relaxed'
+                            className='ml-auto min-h-auto! rounded-none border-x-0 border-t-0 leading-relaxed'
                         />
 
                         <div className='space-x-1 px-1 text-right'>
@@ -166,7 +183,8 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
                                 type='button'
                                 variant='ghost'
                                 size='icon-sm'
-                                disabled={isPending}>
+                                disabled={isPending}
+                            >
                                 <Smile />
                             </Button>
                             <Button
@@ -200,11 +218,11 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
                     </div>
 
                     {!!previewImage && (
-                        <div className='relative ml-auto max-w-62.5'>
+                        <div className='relative ml-auto w-full'>
                             <img
                                 src={previewImage}
                                 className={cn(
-                                    'block w-full rounded-md',
+                                    'block max-h-60 w-full rounded-md lg:max-h-120',
                                     { 'opacity-60': isPending },
                                 )}
                             />

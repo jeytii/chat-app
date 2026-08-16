@@ -164,8 +164,8 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
             )}
 
             {!!message.reference && (
-                <Card size='sm' className='p-0'>
-                    <CardContent className='responsive-message relative flex items-center gap-2 px-4 py-(--card-spacing) before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""]'>
+                <Card size='sm' className='responsive-message p-0'>
+                    <CardContent className='relative flex items-center gap-2 px-4 py-(--card-spacing) before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""]'>
                         {!!message.reference.image_url && (
                             <img src={message.reference.image_url} alt='Attachment' className='aspect-square w-12 rounded-xs' />
                         )}
@@ -181,11 +181,10 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 align={message.from_self ? 'end' : 'start'}
                 variant={message.from_self ? 'default' : 'muted'}
                 className={cn(
-                    'responsive-message flex-row gap-2',
+                    'responsive-message flex-row items-center gap-2',
                     {
                         'opacity-60': message.is_fake,
                         'flex-row-reverse': !message.from_self,
-                        'items-center': message.content && !message.image_url && !message.gif,
                     },
                 )}
             >
@@ -240,7 +239,6 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     </Button>
                 )}
 
-
                 <div className='space-y-1'>
                     {!!message.content && (
                         <BubbleContent
@@ -257,7 +255,6 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     )}
                 </div>
             </Bubble>
-
         </MessageContent>
     )
 }

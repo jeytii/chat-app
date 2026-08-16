@@ -45,7 +45,7 @@ export default function MessageBox() {
     const { mutate, isPending } = useMutation<
         AxiosResponse<Message>,
         Error,
-        { reference_id: number | null; content: string; file: File | string | null; seen: boolean },
+        { reference_id: number | string; content: string; image: File | string; seen: boolean },
         { id: number }
     >({
         mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
@@ -167,9 +167,9 @@ export default function MessageBox() {
         }
 
         mutate({
-            reference_id: replyTo,
-            content: value,
-            file: image,
+            reference_id: replyTo || '',
+            content: value || '',
+            image: image || '',
             seen: onlineIds.current.length >= 2,
         })
     }
@@ -179,6 +179,7 @@ export default function MessageBox() {
             {!!replyToMessage && (
                 <div className='relative border-t p-4'>
                     <Button
+                        type='button'
                         variant='secondary'
                         size='icon-xs'
                         className='absolute top-3 right-3 size-4 rounded-full'
@@ -255,6 +256,7 @@ export default function MessageBox() {
                         </svg>
                     </InputGroupButton>
                     <InputGroupButton
+                        type='submit'
                         variant='ghost'
                         size='icon-xs'
                         className='ml-auto'

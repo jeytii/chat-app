@@ -3,18 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageEvent;
+use App\Http\Requests\MessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Chat;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Image;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class MessageController extends Controller
 {
@@ -37,32 +36,30 @@ class MessageController extends Controller
     }
 
     #[Authorize('create', [Message::class, 'chat'])]
-    public function store(Request $request, Chat $chat): JsonResource
+    public function store(MessageRequest $request, Chat $chat): JsonResource
     {
-        $data = $request->validate([
-            'reference_id' => ['bail', 'nullable', 'integer', 'exists:messages,id'],
-            'content' => ['nullable', 'required_without:file', 'string'],
-            'file' => [
-                'nullable',
-                'required_without:content',
-                Rule::anyOf([
-                    ['image', 'mimes:jpg,png,webp'],
-                    ['string', 'starts_with:https://', 'ends_with:.gif'],
-                ]),
-            ],
-        ]);
+        $payload = $request->validated();
+        $image = $request->safe()->file('image');
 
-        $file = data_get($data, 'file');
+        if ($image) {
+            $filename = Str::random(40).'.'.$image->extension();
+
+            $payload['image'] = "chats/{$chat->id}/{$filename}";
+        }
 
         $message = $chat->messages()
             ->create([
-                ...Arr::only($data, ['reference_id', 'content']),
+                ...$payload,
                 'sender_id' => auth()->id(),
-                'image' => $file instanceof UploadedFile ? $file->store("chats/{$chat->id}") : null,
-                'gif' => \is_string($file) ? $file : null,
                 'seen_at' => $request->boolean('seen') ? now() : null,
             ])
             ->toResource();
+
+        if ($image) {
+            $path = explode('/', $payload['image']);
+
+            $image->storeAs("chats/{$chat->id}", end($path));
+        }
 
         broadcast(new MessageEvent(
             'MessageSent',
@@ -74,58 +71,22 @@ class MessageController extends Controller
     }
 
     #[Authorize('update', 'message')]
-    public function update(Request $request, Chat $chat, Message $message): JsonResource
+    public function update(MessageRequest $request, Chat $chat, Message $message): JsonResource
     {
-        $data = $request->validate([
-            'reference_id' => ['nullable', 'integer', Rule::in([$message->reference_id])],
-            'content' => [
-                'nullable',
-                'required_without_all:image,gif',
-                'string',
-            ],
-            'image' => [
-                'nullable',
-                'required_without_all:content,gif',
-                Rule::anyOf([
-                    ['image', 'mimes:jpg,png,webp'],
-                    ['string'],
-                ]),
-            ],
-            'gif' => [
-                'nullable',
-                'required_without_all:content,image',
-                'string',
-                'starts_with:https://',
-                'ends_with:.gif',
-            ],
-        ]);
+        $payload = $request->safe()->except('image');
+        $image = $request->safe()->file('image');
 
-        $payload = Arr::only($data, ['content', 'gif']);
-        $image = data_get($data, 'image');
-
-        if (! data_get($data, 'reference_id')) {
-            $payload['reference_id'] = null;
-        }
-
-        if ($image instanceof UploadedFile) {
-            $dir = "chats/{$chat->id}";
+        if ($image) {
             $filename = Str::random(40).'.'.$image->extension();
 
-            $payload['image'] = "{$dir}/{$filename}";
-        } else {
-            $payload['image'] = $image;
+            $payload['image'] = "chats/{$chat->id}/{$filename}";
         }
 
-        $updated = $message->update($payload);
-
-        if ($updated) {
-            if ($image instanceof UploadedFile) {
+        if ($message->update($payload)) {
+            if ($image) {
                 $paths = explode('/', $message->image);
 
-                $image->storeAs(
-                    implode('/', \array_slice($paths, 0, -1)),
-                    end($paths),
-                );
+                $image->storeAs("chats/{$chat->id}", end($paths));
             }
 
             broadcast(new MessageEvent(
