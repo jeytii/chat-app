@@ -1,21 +1,19 @@
 import { usePage } from '@inertiajs/react'
 import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
-import type { EmojiClickData } from 'emoji-picker-react'
-import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect } from 'react'
 import { Remarkable } from 'remarkable'
 
 import { ChatContext } from '@/components/chat-provider'
+import Emojis from '@/components/emojis'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { useAppearance } from '@/hooks/use-appearance'
 import useAttachment from '@/hooks/use-attachment'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
+import useEmojiPicker from '@/hooks/use-emoji-picker'
 import { useThrottle } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
 import type { Message, MessageResponse } from '@/types/models'
@@ -24,10 +22,8 @@ export default function MessageBox() {
     const { chat_id: chatId } = usePage<{ chat_id: number }>().props
     const { image, gif, previewImage, setImage, revokePreviewImage } = useAttachment(null)
     const { onlineIds, reference, setReference } = useContext(ChatContext)
-    const [showEmojis, setShowEmojis] = useState<boolean>(false)
     const { insert, alter } = useMessage()
-    const textarea = useRef<HTMLTextAreaElement>(null)
-    const { appearance } = useAppearance()
+    const { textarea, insertEmoji } = useEmojiPicker()
     const throttle = useThrottle(1000)
     const queryClient = useQueryClient()
     const channel = window.Echo.join(`room.${chatId}`)
@@ -80,9 +76,7 @@ export default function MessageBox() {
 
             setReference(null)
 
-            if (textarea.current) {
-                textarea.current.value = ''
-            }
+            textarea.current?.form?.reset()
 
             return { id: itemId }
         },
@@ -110,30 +104,6 @@ export default function MessageBox() {
         throttle(() => {
             channel.whisper('typing', {})
         })
-    }
-
-    function insertEmoji({ emoji }: EmojiClickData) {
-        const input = textarea.current as HTMLTextAreaElement
-        // 1. Get the current cursor positions
-        const start = input.selectionStart
-        const end = input.selectionEnd
-        const value = input.value
-
-        // 2. Splice the emoji between the text chunks
-        input.value = value.substring(0, start) + emoji + value.substring(end)
-
-        // 3. Put focus back onto the textarea
-        input.focus()
-
-        // 4. Move the cursor directly after the inserted emoji
-        if (start !== value.length) {
-            const position = start + emoji.length
-
-            input.selectionStart = position
-            input.selectionEnd = position
-        }
-
-        setShowEmojis(true)
     }
 
     function upload(event: ChangeEvent<HTMLInputElement>) {
@@ -209,31 +179,11 @@ export default function MessageBox() {
                     onChange={handleMessage}
                 />
                 <InputGroupAddon align='block-end'>
-                    <Popover open={showEmojis} onOpenChange={setShowEmojis}>
-                        <PopoverTrigger asChild>
-                            <InputGroupButton type='button' variant='ghost' size='icon-xs'>
-                                <Smile />
-                            </InputGroupButton>
-                        </PopoverTrigger>
-                        <PopoverContent align='start' className='w-auto p-2'>
-                            <EmojiPicker
-                                open={showEmojis}
-                                theme={
-                                    {
-                                        light: Theme.LIGHT,
-                                        dark: Theme.DARK,
-                                        system: Theme.AUTO,
-                                    }[appearance]
-                                }
-                                emojiStyle={EmojiStyle.GOOGLE}
-                                autoFocusSearch={false}
-                                previewConfig={{ showPreview: false }}
-                                skinTonesDisabled
-                                lazyLoadEmojis
-                                onEmojiClick={insertEmoji}
-                            />
-                        </PopoverContent>
-                    </Popover>
+                    <Emojis onInsert={insertEmoji}>
+                        <InputGroupButton type='button' variant='ghost' size='icon-xs'>
+                            <Smile />
+                        </InputGroupButton>
+                    </Emojis>
                     <InputGroupButton
                         type='button'
                         variant='ghost'

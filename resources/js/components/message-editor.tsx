@@ -4,12 +4,14 @@ import axios from 'axios'
 import { Image, Smile, X } from 'lucide-react'
 import { type ChangeEvent, type SubmitEvent, useEffect, useState } from 'react'
 
+import Emojis from '@/components/emojis'
 import { Bubble } from '@/components/ui/bubble'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { MessageContent } from '@/components/ui/message'
 import { Textarea } from '@/components/ui/textarea'
 import useAttachment from '@/hooks/use-attachment'
+import useEmojiPicker from '@/hooks/use-emoji-picker'
 import useMessage from '@/hooks/use-message'
 import { cn } from '@/lib/utils'
 import type { Message } from '@/types/models'
@@ -40,6 +42,7 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
     } = useAttachment(message.image_url, message.gif)
 
     const { alter } = useMessage()
+    const { textarea, insertEmoji } = useEmojiPicker()
 
     const { mutate, isPending } = useMutation<AxiosResponse<Message>, Error, Payload>({
         mutationFn: ({ id, ...payload }) => axios.post(
@@ -81,12 +84,18 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
             }
         }
 
+        const input = textarea.current
+        const end = input?.value.length || 0
+
+        input?.focus()
+        input?.setSelectionRange(end, end)
+
         document.addEventListener('keydown', keydownCancel)
 
         return () => {
             document.removeEventListener('keydown', keydownCancel)
         }
-    }, [cancel])
+    }, [cancel, textarea])
 
     function upload(event: ChangeEvent<HTMLInputElement>) {
         const file = (event.target.files as FileList)[0]
@@ -171,6 +180,7 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
                 <form onSubmit={update} className='space-y-1'>
                     <div className='ml-auto w-fit rounded-md border'>
                         <Textarea
+                            ref={textarea}
                             name='content'
                             defaultValue={message.raw_content || ''}
                             placeholder='Write a message'
@@ -179,14 +189,16 @@ export default function MessageEditor({ message, chatId, cancel }: Props) {
                         />
 
                         <div className='space-x-1 px-1 text-right'>
-                            <Button
-                                type='button'
-                                variant='ghost'
-                                size='icon-sm'
-                                disabled={isPending}
-                            >
-                                <Smile />
-                            </Button>
+                            <Emojis onInsert={insertEmoji}>
+                                <Button
+                                    type='button'
+                                    variant='ghost'
+                                    size='icon-sm'
+                                    disabled={isPending}
+                                >
+                                    <Smile />
+                                </Button>
+                            </Emojis>
                             <Button
                                 type='button'
                                 variant='ghost'
