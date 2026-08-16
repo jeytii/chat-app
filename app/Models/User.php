@@ -18,6 +18,13 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
+    protected static function booted()
+    {
+        static::updated(function (self $model): void {
+            cache()->forget("auth-user:{$model->id}");
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *
