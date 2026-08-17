@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { useDebounce } from '@/hooks/use-limit'
 
-export default function PresenceIndicator({ chatId, isOnline }: { chatId: string; isOnline: boolean; }) {
+export default function PresenceIndicator({ chatId, isOnline }: { chatId: string; isOnline?: boolean; }) {
     const [isTyping, setIsTyping] = useState<boolean>(false)
     const { debounce } = useDebounce(1000)
 

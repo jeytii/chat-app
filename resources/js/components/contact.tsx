@@ -76,7 +76,7 @@ export default function Contact({ chat }: { chat: Chat }) {
                     <div className='relative'>
                         <Photo src={chat.user.image_url as string} alt={chat.user.name} />
 
-                        {chat.user.is_online && (
+                        {chat.is_online && (
                             <span className='absolute right-px bottom-px size-2.5 rounded-full border border-primary bg-green-700' />
                         )}
                     </div>

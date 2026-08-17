@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 
 import AppLogo from '@/components/app-logo'
 import Contact from '@/components/contact'
@@ -19,10 +20,44 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { Chat } from '@/types/models'
 
 export default function AppSidebar() {
+    const queryClient = useQueryClient()
+
     const { data, isLoading } = useQuery<Chat[]>({
         queryKey: ['chats'],
         queryFn: async () => (await fetch('/chats')).json(),
     })
+
+    useEffect(() => {
+        window.Echo.join('online')
+            .here((emails: string[]) => {
+                queryClient.setQueryData<Chat[]>(['chats'], current => (
+                    !current ? current : current.map(chat => ({
+                        ...chat,
+                        is_online: !!emails.find(email => chat.user.email === email),
+                    }))
+                ))
+            })
+            .joining((email: string) => {
+                queryClient.setQueryData<Chat[]>(['chats'], current => (
+                    !current ? current : current.map(chat => ({
+                        ...chat,
+                        is_online: chat.user.email === email ? true : chat.is_online,
+                    }))
+                ))
+            })
+            .leaving((email: string) => {
+                queryClient.setQueryData<Chat[]>(['chats'], current => (
+                    !current ? current : current.map(chat => ({
+                        ...chat,
+                        is_online: chat.user.email === email ? false : chat.is_online,
+                    }))
+                ))
+            })
+
+        return () => {
+            window.Echo.leave('online')
+        }
+    }, [queryClient])
 
     return (
         <Sidebar collapsible='icon' variant='inset' className='px-0!'>

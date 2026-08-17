@@ -7,9 +7,8 @@ export type User = {
 
 export type Chat = {
     id: string;
-    user: Omit<User, 'id'> & {
-        is_online: boolean;
-    };
+    user: Omit<User, 'id'>;
+    is_online?: boolean;
     has_new_message?: boolean;
 }
 

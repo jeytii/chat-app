@@ -56,7 +56,7 @@ export default function Chat() {
                                     <Photo src={chat.user.image_url as string} alt={chat.user.name} />
                                     <div>
                                         <h1>{chat.user.name}</h1>
-                                        <PresenceIndicator chatId={id} isOnline={chat.user.is_online} />
+                                        <PresenceIndicator chatId={id} isOnline={chat.is_online} />
                                     </div>
                                 </div>
                             </div>
