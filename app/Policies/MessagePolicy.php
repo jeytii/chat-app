@@ -37,7 +37,7 @@ class MessagePolicy
      */
     public function update(User $user, Message $message): bool
     {
-        return $message->sender_id === $user->id && ! $message->trashed();
+        return $message->sender_id === $user->id;
     }
 
     /**

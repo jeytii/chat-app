@@ -6,11 +6,13 @@ import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdow
 import { Separator } from '@/components/ui/separator'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { type Appearance, useAppearance } from '@/hooks/use-appearance'
-import { useMobileNavigation } from '@/hooks/use-mobile-navigation'
 
 export function UserMenuContent() {
-    const cleanup = useMobileNavigation()
     const { appearance, updateAppearance } = useAppearance()
+    const cleanup = () => {
+        // Remove pointer-events style from body...
+        document.body.style.removeProperty('pointer-events')
+    }
 
     const themes: { value: Appearance; icon: LucideIcon }[] = [
         { value: 'light', icon: Sun },

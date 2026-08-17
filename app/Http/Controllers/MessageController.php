@@ -39,6 +39,7 @@ class MessageController extends Controller
     public function store(MessageRequest $request, Chat $chat): JsonResource
     {
         $payload = $request->validated();
+        $user = $request->user();
         $image = $request->safe()->file('image');
 
         if ($image) {
@@ -50,7 +51,7 @@ class MessageController extends Controller
         $message = $chat->messages()
             ->create([
                 ...$payload,
-                'sender_id' => auth()->id(),
+                'sender_id' => $user->id,
                 'seen_at' => $request->boolean('seen') ? now() : null,
             ])
             ->toResource();
@@ -64,7 +65,7 @@ class MessageController extends Controller
         broadcast(new MessageEvent(
             'MessageSent',
             $chat->id,
-            $message->toArray($request->merge(['has_sender_id' => true])),
+            $message->toArray($request->merge(['sender_email' => $user->email])),
         ))->toOthers();
 
         return $message;

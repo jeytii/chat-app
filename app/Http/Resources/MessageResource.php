@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use App\Models\Message;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Arr;
@@ -11,17 +10,7 @@ use Illuminate\Support\Str;
 use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
 
 /**
- * @property int $id
- * @property int $chat_id
- * @property int $sender_id
- * @property Message|null $reference
- * @property ?string $content
- * @property ?string $gif
- * @property ?string $image
- * @property CarbonImmutable|null $seen_at
- * @property CarbonImmutable $created_at
- * @property CarbonImmutable|null $updated_at
- * @property CarbonImmutable|null $deleted_at
+ * @mixin Message
  */
 class MessageResource extends JsonResource
 {
@@ -47,7 +36,7 @@ class MessageResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'sender_id' => $this->when($request->boolean('has_sender_id'), $this->sender_id),
+            'sender' => $this->when($request->boolean('sender_email'), $request->string('sender_email')),
             'reference' => $this->whenLoaded(
                 'reference',
                 $this->reference
@@ -61,7 +50,7 @@ class MessageResource extends JsonResource
             'content' => $content,
             'gif' => $this->gif,
             'image_url' => $this->getImageUrl($this->image),
-            'from_self' => $this->unless($request->boolean('has_sender_id'), $this->sender_id === auth()->id()),
+            'from_self' => $this->unless($request->boolean('sender_email'), $this->sender_id === auth()->id()),
             'date' => $this->created_at,
             'seen' => $request->boolean('seen', (bool) $this->seen_at),
             'edited' => (bool) $this->updated_at,
