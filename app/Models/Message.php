@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,18 +13,20 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * @property int $id
- * @property int $chat_id
- * @property int $sender_id
+ * @property string $id
+ * @property string $chat_id
+ * @property string $sender_id
  * @property ?string $content
  * @property ?string $gif
  * @property ?string $image
+ * @property ?CarbonImmutable $seen_at
  * @property CarbonImmutable $created_at
- * @property CarbonImmutable|null $updated_at
- * @property CarbonImmutable|null $deleted_at
+ * @property ?CarbonImmutable $updated_at
+ * @property ?CarbonImmutable $deleted_at
  */
 class Message extends Model
 {
+    use HasUuids;
     use SoftDeletes;
 
     protected static function booted(): void

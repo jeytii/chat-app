@@ -19,7 +19,7 @@ import useMessage from '@/hooks/use-message'
 import type { Message, MessageResponse } from '@/types/models'
 
 export default function MessageBox() {
-    const { chat_id: chatId } = usePage<{ chat_id: number }>().props
+    const { chat_id: chatId } = usePage<{ chat_id: string }>().props
     const { image, gif, previewImage, setImage, revokePreviewImage } = useAttachment(null)
     const { onlineIds, reference, setReference } = useContext(ChatContext)
     const { insert, alter } = useMessage()
@@ -41,8 +41,8 @@ export default function MessageBox() {
     const { mutate, isPending } = useMutation<
         AxiosResponse<Message>,
         Error,
-        { reference_id: number | string; content: string; image: File | string; seen: boolean },
-        { id: number }
+        { reference_id: string | string; content: string; image: File | string; seen: boolean },
+        { id: string }
     >({
         mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
             headers: {
@@ -53,7 +53,7 @@ export default function MessageBox() {
         async onMutate({ content }, { client }) {
             await client.cancelQueries({ queryKey: ['messages', chatId] })
 
-            const itemId = Math.floor(Math.random() * 1000000000)
+            const itemId = Math.floor(Math.random() * 1000000000).toString()
 
             insert(chatId, {
                 id: itemId,

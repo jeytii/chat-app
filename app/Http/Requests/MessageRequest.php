@@ -43,7 +43,7 @@ class MessageRequest extends FormRequest
 
             return [
                 ...$rules,
-                'reference_id' => ['nullable', 'integer', Rule::in([$message->reference_id])],
+                'reference_id' => ['nullable', 'string', Rule::in([$message->reference_id])],
                 'image' => [
                     'nullable',
                     'required_without_all:content,gif',
@@ -58,7 +58,7 @@ class MessageRequest extends FormRequest
 
         return [
             ...$rules,
-            'reference_id' => ['bail', 'nullable', 'integer', 'exists:messages,id'],
+            'reference_id' => ['bail', 'nullable', 'string', 'exists:messages,id'],
         ];
     }
 }

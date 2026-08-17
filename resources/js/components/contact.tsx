@@ -8,20 +8,20 @@ import useMessage from '@/hooks/use-message'
 import type { Chat, Message } from '@/types/models'
 
 type MessageSentData = Omit<Message, 'from_self'> & {
-    chat_id: number;
-    sender_id: number;
+    chat_id: string;
+    sender_email: string;
 }
 
-type MessageEditedData = Message & { chat_id: number }
+type MessageEditedData = Message & { chat_id: string }
 
 export default function Contact({ chat }: { chat: Chat }) {
-    const { auth, chat_id: chatId } = usePage<{ chat_id: number }>().props
+    const { auth, chat_id: chatId } = usePage<{ chat_id: string }>().props
     const queryClient = useQueryClient()
     const { insert, alter, remove } = useMessage()
 
-    const insertRef = useRef<(chatId: number, message: Message) => void>(insert)
-    const alterRef = useRef<(chatId: number, id: number, newData: Partial<Message>) => void>(alter)
-    const removeRef = useRef<(chatId: number, id: number) => void>(remove)
+    const insertRef = useRef<(chatId: string, message: Message) => void>(insert)
+    const alterRef = useRef<(chatId: string, id: string, newData: Partial<Message>) => void>(alter)
+    const removeRef = useRef<(chatId: string, id: string) => void>(remove)
 
     useEffect(() => {
         insertRef.current = insert
@@ -33,7 +33,7 @@ export default function Contact({ chat }: { chat: Chat }) {
         const { channels } = window.Echo.connector
 
         window.Echo.private(`chat.${chat.id}`)
-            .listen('.MessageSent', ({ chat_id: privateChatId, sender_id: senderId, ...message }: MessageSentData) => {
+            .listen('.MessageSent', ({ chat_id: privateChatId, sender_email: senderEmail, ...message }: MessageSentData) => {
                 if (!channels[`presence-room.${privateChatId}`]) {
                     queryClient.setQueryData<Chat[]>(['chats'], current => (
                         !current ? current : current.map(chat => ({
@@ -44,7 +44,7 @@ export default function Contact({ chat }: { chat: Chat }) {
 
                     insertRef.current(chat.id, {
                         ...message,
-                        from_self: senderId === auth.user.id,
+                        from_self: senderEmail === auth.user.email,
                     })
                 }
             })
@@ -53,7 +53,7 @@ export default function Contact({ chat }: { chat: Chat }) {
                     alterRef.current(chat.id, message.id, message)
                 }
             })
-            .listen('.MessageDeleted', (message: { chat_id: number; id: number }) => {
+            .listen('.MessageDeleted', (message: { chat_id: string; id: string }) => {
                 if (!channels[`presence-room.${message.chat_id}`]) {
                     removeRef.current(chat.id, message.id)
                 }
@@ -62,7 +62,7 @@ export default function Contact({ chat }: { chat: Chat }) {
         return () => {
             window.Echo.leave(`chat.${chat.id}`)
         }
-    }, [auth.user.id, chat.id, queryClient])
+    }, [auth.user.email, chat.id, queryClient])
 
     return (
         <SidebarMenuItem>

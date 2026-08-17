@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { Chat as ChatType } from '@/types/models'
 
 export default function Chat() {
-    const id = usePage<{ chat_id: number }>().props.chat_id
+    const id = usePage<{ chat_id: string }>().props.chat_id
     const { data, isLoading } = useQuery<ChatType[]>({
         queryKey: ['chats'],
         queryFn: async () => (await fetch('/chats')).json(),

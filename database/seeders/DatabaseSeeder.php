@@ -18,14 +18,16 @@ class DatabaseSeeder extends Seeder
             'username' => 'testuser',
         ]);
 
-        User::factory()->create([
+        $second = User::factory()->create([
             'name' => 'Dummy User',
             'username' => 'dummyuser',
         ]);
 
-        User::factory(8)->create();
+        $third = User::factory()->create();
 
-        $first->chats()->create()->users()->attach(2);
-        $first->chats()->create()->users()->attach(3);
+        User::factory(7)->create();
+
+        $first->chats()->create()->users()->attach($second);
+        $first->chats()->create()->users()->attach($third);
     }
 }

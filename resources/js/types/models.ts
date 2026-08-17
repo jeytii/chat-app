@@ -1,22 +1,22 @@
 export type User = {
-    id: number;
     name: string;
+    email: string;
     username: string;
     image_url: string | null;
 }
 
 export type Chat = {
-    id: number;
-    user: User & {
+    id: string;
+    user: Omit<User, 'id'> & {
         is_online: boolean;
     };
     has_new_message?: boolean;
 }
 
 export type Message = {
-    id: number;
+    id: string;
     reference?: {
-        id: number;
+        id: string;
         raw_content: string | null;
         gif: string | null;
         image_url: string | null;

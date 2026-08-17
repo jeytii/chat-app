@@ -19,12 +19,12 @@ import { cn } from '@/lib/utils'
 import type { Chat, Message as MessageType, MessageResponse } from '@/types/models'
 
 type MessageSentData = Omit<MessageType, 'from_self'> & {
-    chat_id: number;
-    sender_id: number;
+    chat_id: string;
+    sender_email: string;
     seen: boolean;
 }
 
-async function getMessages(pageParam: string | null, chatId: number, signal: AbortSignal) {
+async function getMessages(pageParam: string | null, chatId: string, signal: AbortSignal) {
     const { data } = await axios<MessageResponse>(`/chats/${chatId}/messages`, {
         params: { cursor: pageParam },
         signal,
@@ -34,7 +34,7 @@ async function getMessages(pageParam: string | null, chatId: number, signal: Abo
 }
 
 export default function Messages() {
-    const { auth, chat_id: chatId } = usePage<{ chat_id: number }>().props
+    const { auth, chat_id: chatId } = usePage<{ chat_id: string }>().props
     const { isViewing, onlineIds } = useContext(ChatContext)
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
@@ -66,9 +66,9 @@ export default function Messages() {
     const { start, end } = useMessageScrollerScrollable()
     const { debounce } = useDebounce(500)
 
-    const insertRef = useRef<(chatId: number, message: MessageType) => void>(insert)
-    const alterRef = useRef<(chatId: number, id: number, newData: Partial<MessageType>) => void>(alter)
-    const removeRef = useRef<(chatId: number, id: number) => void>(remove)
+    const insertRef = useRef<(chatId: string, message: MessageType) => void>(insert)
+    const alterRef = useRef<(chatId: string, id: string, newData: Partial<MessageType>) => void>(alter)
+    const removeRef = useRef<(chatId: string, id: string) => void>(remove)
     const isViewingRef = useRef<boolean>(isViewing)
 
     const lastItemIsFromSelf = data?.pages[data.pages.length - 1]?.from_self
@@ -91,19 +91,19 @@ export default function Messages() {
         }, 500)
 
         presenceChannel
-            .here((ids: number[]) => {
+            .here((ids: string[]) => {
                 onlineIds.current = ids
             })
-            .joining((id: number) => {
+            .joining((id: string) => {
                 onlineIds.current = [...onlineIds.current, id]
             })
-            .leaving((id: number) => {
+            .leaving((id: string) => {
                 onlineIds.current = onlineIds.current.filter(onlineId => onlineId !== id)
             })
-            .listen('.MessageSent', ({ sender_id: senderId, chat_id: contactId, seen, ...message }: MessageSentData) => {
+            .listen('.MessageSent', ({ sender_email: senderEmail, chat_id: contactId, seen, ...message }: MessageSentData) => {
                 insertRef.current(chatId, {
                     ...message,
-                    from_self: senderId === auth.user.id,
+                    from_self: senderEmail === auth.user.email,
                     seen,
                 })
 
@@ -134,13 +134,19 @@ export default function Messages() {
                 queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
                     !current ? current : {
                         ...current,
-                        pages: current.pages.map(page => ({
-                            ...page,
-                            items: page.items.map(item => ({
-                                ...item,
-                                seen: item.from_self ? true : item.seen,
-                            })),
-                        })),
+                        pages: current.pages.map((page, index, pages) => {
+                            if (index < (pages.length - 2)) {
+                                return page
+                            }
+
+                            return {
+                                ...page,
+                                items: page.items.map(item => ({
+                                    ...item,
+                                    seen: item.from_self ? true : item.seen,
+                                })),
+                            }
+                        }),
                     }
                 ))
             })
@@ -148,7 +154,7 @@ export default function Messages() {
         return () => {
             window.Echo.leave(`room.${chatId}`)
         }
-    }, [chatId, auth.user.id, onlineIds, queryClient, debounce])
+    }, [chatId, auth.user.email, onlineIds, queryClient, debounce])
 
     useEffect(() => {
         if (end && !start && hasPreviousPage && !isFetchingPreviousPage) {

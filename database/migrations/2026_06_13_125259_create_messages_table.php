@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('messages', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('sender_id')->constrained('users');
-            $table->foreignId('chat_id')->constrained();
-            $table->foreignId('reference_id')->nullable()->constrained('messages')->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('sender_id')->constrained('users');
+            $table->foreignUuid('chat_id')->constrained();
+            $table->foreignUuid('reference_id')->nullable()->constrained('messages')->nullOnDelete();
             $table->longText('content')->nullable();
             $table->string('gif')->nullable();
             $table->string('image')->nullable();

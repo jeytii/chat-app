@@ -21,7 +21,7 @@ class MessageEvent implements ShouldBroadcast
      */
     public function __construct(
         public string $eventName,
-        public int $chatId,
+        public string $chatId,
         public array $data,
     ) {}
 

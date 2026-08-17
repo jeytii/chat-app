@@ -5,7 +5,7 @@ import type { Message, MessageResponse } from '@/types/models'
 export default function useMessage() {
     const queryClient = useQueryClient()
 
-    const insert = (chatId: number, message: Message) => {
+    const insert = (chatId: string, message: Message) => {
         queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => {
             if (!current) {
                 return current
@@ -45,7 +45,7 @@ export default function useMessage() {
         })
     }
 
-    const alter = (chatId: number, id: number, newData: Partial<Message>) => {
+    const alter = (chatId: string, id: string, newData: Partial<Message>) => {
         queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
             !current ? current : {
                 ...current,
@@ -61,7 +61,7 @@ export default function useMessage() {
         ))
     }
 
-    const remove = (chatId: number, id: number) => {
+    const remove = (chatId: string, id: string) => {
         queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
             !current ? current : {
                 ...current,

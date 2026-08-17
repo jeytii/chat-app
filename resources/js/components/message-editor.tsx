@@ -18,13 +18,13 @@ import type { Message } from '@/types/models'
 
 type Props = {
     message: Message;
-    chatId: number;
+    chatId: string;
     cancel: CallableFunction;
 }
 
 type Payload = {
-    id: number;
-    reference_id: number | string;
+    id: string;
+    reference_id: string;
     content: string;
     image: File | string;
     gif: string;

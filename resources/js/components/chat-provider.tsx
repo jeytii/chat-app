@@ -6,9 +6,9 @@ import type { Chat } from '@/types/models'
 
 type Context = {
     isViewing: boolean;
-    onlineIds: RefObject<number[]>;
-    reference: number | null;
-    setReference: Dispatch<SetStateAction<number | null>>;
+    onlineIds: RefObject<string[]>;
+    reference: string | null;
+    setReference: Dispatch<SetStateAction<string | null>>;
 }
 
 export const ChatContext = createContext<Context>({
@@ -19,10 +19,10 @@ export const ChatContext = createContext<Context>({
 })
 
 export default function ChatProvider({ children }: { children: (isHidden: boolean) => ReactNode }) {
-    const id = usePage<{ chat_id: number }>().props.chat_id
+    const id = usePage<{ chat_id: string }>().props.chat_id
     const queryClient = useQueryClient()
-    const onlineIds = useRef<number[]>([])
-    const [reference, setReference] = useState<number | null>(null)
+    const onlineIds = useRef<string[]>([])
+    const [reference, setReference] = useState<string | null>(null)
     const [visibilityState, setVisibilityState] = useState<DocumentVisibilityState>(() => (
         typeof document === 'undefined' ? 'visible' : document.visibilityState
     ))

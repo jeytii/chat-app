@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 import type { Message } from '@/types/models'
 
 type Props = {
-    chatId: number;
+    chatId: string;
     message: Message;
     firstInAMinute: boolean;
 }
