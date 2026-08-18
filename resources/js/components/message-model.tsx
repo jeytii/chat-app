@@ -1,18 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
-import { Edit, EllipsisVertical, Reply, Trash2 } from 'lucide-react'
+import { Edit, Reply, Trash2 } from 'lucide-react'
 import { useContext, useEffect, useRef, useState } from 'react'
 
 import { ChatContext } from '@/components/chat-provider'
 import MessageEditor from '@/components/message-editor'
-import Photo from '@/components/photo'
 import { Attachment } from '@/components/ui/attachment'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MessageContent } from '@/components/ui/message'
+import { MessageContent, MessageHeader } from '@/components/ui/message'
 import { getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
@@ -59,6 +58,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         }
 
         setEditMode(true)
+        setReference(null)
     }
 
     async function destroy() {
@@ -71,6 +71,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         messageToDelete.current = message
 
         remove(chatId, message.id)
+        setReference(null)
 
         debounce(() => {
             mutate({ deletedMessage: messageToDelete.current as Message })
@@ -152,16 +153,18 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
 
     return (
         <MessageContent className='gap-1'>
-            {(!message.is_fake && firstInAMinute) && (
-                <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>
-                    <span>{date}</span>
-                    {message.edited && <span>(edited)</span>}
-                </p>
-            )}
+            <MessageHeader className='px-1'>
+                {(!message.is_fake && firstInAMinute) && (
+                    <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>
+                        <span>{date}</span>
+                        {message.edited && <span>(edited)</span>}
+                    </p>
+                )}
 
-            {(!message.is_fake && !firstInAMinute && message.edited) && (
-                <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>(edited)</p>
-            )}
+                {(!message.is_fake && !firstInAMinute && message.edited) && (
+                    <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>(edited)</p>
+                )}
+            </MessageHeader>
 
             {!!message.reference && (
                 <Card size='sm' className='responsive-message p-0'>
@@ -177,126 +180,98 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 </Card>
             )}
 
-            <Bubble
-                align={message.from_self ? 'end' : 'start'}
-                variant={message.from_self ? 'default' : 'muted'}
-                className={cn(
-                    'responsive-message flex-row items-center gap-2',
-                    {
-                        'opacity-60': message.is_fake,
-                        'flex-row-reverse': !message.from_self,
-                    },
-                )}
-            >
-                {message.from_self ? (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            asChild
-                            className={cn(
-                                'data-[state=closed]:invisible',
-                                { 'data-[state=closed]:group-hover/bubble:visible': !message.is_fake && !reference },
-                            )}
-                        >
-                            <Button variant='ghost' size='icon-sm'>
-                                <EllipsisVertical />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            side={message.from_self ? 'left' : 'right'}
-                            align={message.content && (message.image_url || message.gif) ? 'start' : 'center'}
-                        >
-                            <DropdownMenuItem asChild>
+            <ContextMenu>
+                <ContextMenuTrigger>
+                    <Bubble
+                        align={message.from_self ? 'end' : 'start'}
+                        variant={message.from_self ? 'default' : 'muted'}
+                        className='responsive-message'
+                    >
+                        {!!message.content && (
+                            <BubbleContent
+                                dangerouslySetInnerHTML={{ __html: message.content }}
+                                className={cn(
+                                    'space-y-2 overflow-auto!',
+                                    { 'ml-auto': message.from_self },
+                                    { 'opacity-60': message.is_fake },
+                                )}
+                            />
+                        )}
+
+                        {(!!message.gif || !!message.image_url) && (
+                            <Media message={message} />
+                        )}
+                    </Bubble>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                    {message.from_self ? (
+                        <>
+                            <ContextMenuItem asChild>
                                 <Button className='w-full justify-start' variant='ghost' onClick={reply}>
                                     <Reply />
                                     <span>Reply</span>
                                 </Button>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
+                            </ContextMenuItem>
+                            <ContextMenuItem asChild>
                                 <Button className='w-full justify-start' variant='ghost' onClick={edit}>
                                     <Edit />
                                     <span>Edit</span>
                                 </Button>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
+                            </ContextMenuItem>
+                            <ContextMenuItem asChild>
                                 <Button className='w-full justify-start hover:text-destructive!' variant='ghost' onClick={destroy}>
                                     <Trash2 />
                                     <span>Delete</span>
                                 </Button>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                ) : (
-                    <Button
-                        variant='ghost'
-                        size='icon-sm'
-                        className={cn(
-                            'invisible',
-                            { 'group-hover/bubble:visible': !message.is_fake && !reference },
-                        )}
-                        onClick={reply}
-                    >
-                        <Reply />
-                    </Button>
-                )}
-
-                <div className='space-y-1'>
-                    {!!message.content && (
-                        <BubbleContent
-                            dangerouslySetInnerHTML={{ __html: message.content }}
-                            className={cn(
-                                'space-y-2 overflow-auto!',
-                                { 'ml-auto': message.from_self },
-                            )}
-                        />
+                            </ContextMenuItem>
+                        </>
+                    ) : (
+                        <ContextMenuItem asChild>
+                            <Button className='w-full justify-start' variant='ghost' onClick={edit}>
+                                <Reply />
+                                <span>Reply</span>
+                            </Button>
+                        </ContextMenuItem>
                     )}
-
-                    {(!!message.gif || !!message.image_url) && (
-                        <Media message={message} />
-                    )}
-                </div>
-            </Bubble>
+                </ContextMenuContent>
+            </ContextMenu>
         </MessageContent>
     )
 }
 
 function Media({ message }: { message: Message }) {
-    if (message.is_fake && (message.image_url || message.gif)) {
+    if (message.gif) {
         return (
-            <img
-                src={(message.image_url || message.gif) as string}
-                className='responsive-message block max-h-60 w-full rounded-md object-cover blur-xs lg:max-h-120'
-            />
+            <div className={cn('flex', { 'justify-end': message.from_self })}>
+                <Attachment orientation='vertical' className='w-[20vw] cursor-pointer'>
+                    <div className='p-2'>
+                        <img
+                            src={message.gif}
+                            className='block h-auto w-full rounded-md object-cover'
+                            alt='GIF'
+                        />
+                    </div>
+                </Attachment>
+            </div>
         )
     }
 
     return (
         <div className={cn('flex', { 'justify-end': message.from_self })}>
-            {message.gif ? (
-                <Attachment orientation='vertical' className='w-[20vw] cursor-pointer'>
-                    <div className='p-2'>
-                        <Photo
-                            src={message.gif}
-                            className='block h-auto! w-full! rounded-md! object-cover'
-                            skeletonClassName='size-25 rounded-md! lg:size-50'
+            <Dialog>
+                <DialogTrigger>
+                    <Attachment orientation='vertical' className='w-full cursor-pointer'>
+                        <img
+                            src={message.image_url as string}
+                            className='block h-auto max-h-60 w-full rounded-md object-cover lg:max-h-100 lg:max-w-120'
+                            alt='Attachment'
                         />
-                    </div>
-                </Attachment>
-            ) : (
-                <Dialog>
-                    <DialogTrigger>
-                        <Attachment orientation='vertical' className='w-full cursor-pointer'>
-                            <Photo
-                                src={message.image_url as string}
-                                className='block h-auto! max-h-60 w-full! rounded-md! object-cover lg:max-h-120'
-                                skeletonClassName='size-25 rounded-md! lg:size-50'
-                            />
-                        </Attachment>
-                    </DialogTrigger>
-                    <DialogContent className='w-auto! max-w-full! p-0 sm:max-w-full! [&>button]:top-2 [&>button]:right-2 [&>button]:rounded-full [&>button]:bg-background [&>button]:p-1'>
-                        <img src={message.image_url as string} className='block max-h-[90vh] max-w-[90vw] rounded-lg' />
-                    </DialogContent>
-                </Dialog>
-            )}
+                    </Attachment>
+                </DialogTrigger>
+                <DialogContent className='w-auto! max-w-full! p-0 sm:max-w-full! [&>button]:top-2 [&>button]:right-2 [&>button]:rounded-full [&>button]:bg-background [&>button]:p-1'>
+                    <img src={message.image_url as string} className='block max-h-[90vh] max-w-[90vw] rounded-lg' />
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

@@ -8,14 +8,13 @@ import { Fragment, useContext, useEffect, useRef } from 'react'
 
 import { ChatContext } from '@/components/chat-provider'
 import MessageModel from '@/components/message-model'
-import { Marker, MarkerContent } from '@/components/ui/marker'
+import { Marker, MarkerContent, MarkerIcon } from '@/components/ui/marker'
 import { Message } from '@/components/ui/message'
 import { MessageScrollerContent, MessageScrollerItem, useMessageScrollerScrollable } from '@/components/ui/message-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
-import { cn } from '@/lib/utils'
 import type { Chat, Message as MessageType, MessageResponse } from '@/types/models'
 
 type MessageSentData = Omit<MessageType, 'from_self'> & {
@@ -181,13 +180,9 @@ export default function Messages() {
             {data.pages.map((message, index, messages) => (
                 <Fragment key={message.id}>
                     {((index !== 0 && !isSameDay(message.date, messages[index - 1].date)) || (!index && !hasPreviousPage)) && (
-                        <MessageScrollerItem className={cn({
-                            'pt-2': messages[index - 1]?.image_url || messages[index - 1]?.gif,
-                        })}>
-                            <Marker variant='separator'>
-                                <MarkerContent>{message.date_diff}</MarkerContent>
-                            </Marker>
-                        </MessageScrollerItem>
+                        <Marker variant='separator'>
+                            <MarkerContent>{message.date_diff}</MarkerContent>
+                        </Marker>
                     )}
 
                     <MessageScrollerItem>
@@ -212,10 +207,12 @@ export default function Messages() {
             ))}
 
             {(allMessagesAreSeen && lastItemIsFromSelf) && (
-                <p className='flex items-center justify-end gap-1 text-xs text-green-400'>
-                    <CheckCheck size={14} />
-                    <span>Seen</span>
-                </p>
+                <Marker className='justify-end px-1 text-xs text-green-400'>
+                    <MarkerIcon>
+                        <CheckCheck size={14} />
+                    </MarkerIcon>
+                    <MarkerContent>Seen</MarkerContent>
+                </Marker>
             )}
         </MessageScrollerContent>
     )
