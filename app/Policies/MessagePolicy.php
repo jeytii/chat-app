@@ -47,4 +47,12 @@ class MessagePolicy
     {
         return $message->sender_id === $user->id;
     }
+
+    /**
+     * Determine whether the user can react to the model.
+     */
+    public function react(User $user, Message $message, Chat $chat): bool
+    {
+        return $user->chats()->where('chats.id', $chat->id)->exists();
+    }
 }

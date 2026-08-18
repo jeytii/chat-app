@@ -11,6 +11,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('chats', ChatController::class)
         ->only(['index', 'show']);
 
+    Route::post('chats/{chat}/messages/{message}/react', [MessageController::class, 'react'])
+        ->name('chats.messages.react');
     Route::get('chats/{chat}/image/{message:image}', [MessageController::class, 'viewImage'])
         ->scopeBindings()
         ->name('chats.messages.image');

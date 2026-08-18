@@ -3,15 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageEvent;
+use App\Events\MessageReaction;
 use App\Http\Requests\MessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Chat;
 use App\Models\Message;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Image;
 use Illuminate\Support\Str;
 
@@ -26,7 +29,20 @@ class MessageController extends Controller
         $messages = $chat->messages()
             ->withTrashed()
             ->latest()
-            ->with('reference')
+            ->with([
+                'reference',
+                'reactions' => fn (Relation $query) => (
+                    // Group reactions by the unique emoji code
+                    $query->select('message_id', 'reactions.name', 'emoji')
+                        ->selectRaw('count(reactions.name) as total')
+                        ->selectRaw(
+                            // Append a custom attribute that determines if the user has already reacted with the current emoji
+                            'EXISTS(SELECT 1 FROM reactions WHERE user_id = ? AND message_id = reactions.message_id AND name = reactions.name) AS has_reacted',
+                            [auth()->id()],
+                        )
+                        ->groupBy('reactions.name')
+                ),
+            ])
             ->cursorPaginate(20);
 
         return [
@@ -116,6 +132,56 @@ class MessageController extends Controller
                 $message->only('id'),
             ))->toOthers();
         }
+
+        return ['success' => true];
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    #[Authorize('react', ['message', 'chat'])]
+    public function react(Request $request, Chat $chat, Message $message): array
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'emoji' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        // User can't react with the same emoji twice
+        if ($request->boolean('has_reacted')) {
+            DB::table('reactions')
+                ->where('user_id', $user->id)
+                ->where('name', $data['name'])
+                ->delete();
+        } else {
+            $message->reactions()->attachOrFail($user, $data);
+        }
+
+        // Broadcast the clicked reaction
+        $reaction = $message
+            ->load(['reactions' => fn (Relation $query) => (
+                $query->select('message_id', 'reactions.name', 'emoji')
+                    ->selectRaw('count(reactions.name) as total')
+                    ->selectRaw(
+                        'EXISTS(SELECT 1 FROM reactions WHERE user_id = ? AND name = ?) AS has_reacted',
+                        [$user->id, $data['name']],
+                    )
+                    ->groupBy('reactions.name')
+                    ->where('reactions.name', $data['name'])
+            )])
+            ->reactions
+            ->first()
+            ?->only(['name', 'emoji', 'total', 'has_reacted']);
+
+        $broadcastData = $reaction ?? [
+            ...$data,
+            'total' => 0,
+            'has_reacted' => false,
+        ];
+
+        broadcast(new MessageReaction($chat->id, $message->id, $broadcastData))->toOthers();
 
         return ['success' => true];
     }

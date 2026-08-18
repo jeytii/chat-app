@@ -1,17 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
+import EmojiPicker, { EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
 import { Edit, Reply, Trash2 } from 'lucide-react'
 import { useContext, useEffect, useRef, useState } from 'react'
 
 import { ChatContext } from '@/components/chat-provider'
 import MessageEditor from '@/components/message-editor'
 import { Attachment } from '@/components/ui/attachment'
+import { Badge } from '@/components/ui/badge'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { MessageContent, MessageHeader } from '@/components/ui/message'
+import { MessageContent, MessageFooter, MessageHeader } from '@/components/ui/message'
+import { useAppearance } from '@/hooks/use-appearance'
 import { getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
@@ -32,8 +35,11 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
+    const { appearance } = useAppearance()
+    const reactionsCount = message.reactions.reduce((total, message) => total + message.total, 0)
+    const reactions = message.reactions.filter(reaction => reaction.total)
 
-    const { mutate } = useMutation<AxiosResponse, Error, { deletedMessage: Message }>({
+    const { mutate: deleteMessage } = useMutation<AxiosResponse, Error, { deletedMessage: Message }>({
         mutationFn: () => axios.delete(`/chats/${chatId}/messages/${message.id}`, {
             headers: {
                 'X-Socket-ID': window.Echo.socketId(),
@@ -49,6 +55,40 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
             })
 
             messageToDelete.current = null
+        },
+    })
+
+    const { mutate: reactToMessage } = useMutation<AxiosResponse, Error, { name: string; emoji: string; has_reacted: boolean; }>({
+        mutationFn: data => axios.post(`/chats/${chatId}/messages/${message.id}/react`, data, {
+            headers: {
+                'X-Socket-ID': window.Echo.socketId(),
+            },
+        }),
+        onMutate({ name, emoji, has_reacted: hasReacted }) {
+            alter(chatId, message.id, {
+                reactions: message.reactions.findIndex(reaction => reaction.name === name) !== -1
+                    ? message.reactions.map(reaction => (
+                        reaction.name === name
+                            ? {
+                                ...reaction,
+                                total: hasReacted ? reaction.total - 1 : reaction.total + 1,
+                                has_reacted: !hasReacted,
+                            }
+                            : reaction
+                    ))
+                    : [...message.reactions, {
+                        name,
+                        emoji,
+                        has_reacted: true,
+                        total: 1,
+                    }],
+            })
+        },
+        onSuccess() {
+            queryClient.invalidateQueries({
+                queryKey: ['messages', chatId],
+                refetchType: 'none',
+            })
         },
     })
 
@@ -74,7 +114,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         setReference(null)
 
         debounce(() => {
-            mutate({ deletedMessage: messageToDelete.current as Message })
+            deleteMessage({ deletedMessage: messageToDelete.current as Message })
         })
     }
 
@@ -98,6 +138,16 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         }
 
         setReference(message.id)
+    }
+
+    function react({ emoji, unified: name }: EmojiClickData) {
+        const reaction = message.reactions.find(reaction => reaction.name === name)
+
+        reactToMessage({
+            name,
+            emoji,
+            has_reacted: reaction?.has_reacted || false,
+        })
     }
 
     useEffect(() => {
@@ -204,6 +254,27 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     </Bubble>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
+                    <ContextMenuItem>
+                        <EmojiPicker
+                            reactionsDefaultOpen
+                            allowExpandReactions={false}
+                            reactions={['1f44d', '2764-fe0f', '1f60d', '1f602', '1f440', '1f60a', '1f44e']}
+                            theme={
+                                {
+                                    light: Theme.LIGHT,
+                                    dark: Theme.DARK,
+                                    system: Theme.AUTO,
+                                }[appearance]
+                            }
+                            emojiStyle={EmojiStyle.GOOGLE}
+                            autoFocusSearch={false}
+                            previewConfig={{ showPreview: false }}
+                            skinTonesDisabled
+                            lazyLoadEmojis
+                            onReactionClick={react}
+                        />
+                    </ContextMenuItem>
+
                     {message.from_self ? (
                         <>
                             <ContextMenuItem asChild>
@@ -235,6 +306,18 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     )}
                 </ContextMenuContent>
             </ContextMenu>
+
+            {!!reactionsCount && (
+                <MessageFooter className='px-0'>
+                    <Badge variant='outline' className='px-2 py-1'>
+                        {reactions.map(reaction => (
+                            <span key={reaction.name}>{reaction.emoji}</span>
+                        ))}
+
+                        <span>{reactionsCount}</span>
+                    </Badge>
+                </MessageFooter>
+            )}
         </MessageContent>
     )
 }

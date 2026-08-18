@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
-import type { Chat, Message as MessageType, MessageResponse } from '@/types/models'
+import type { Chat, Message as MessageType, MessageResponse, Reaction } from '@/types/models'
 
 type MessageSentData = Omit<MessageType, 'from_self'> & {
     chat_id: string;
@@ -85,6 +85,28 @@ export default function Messages() {
     useEffect(() => {
         const presenceChannel = window.Echo.join(`room.${chatId}`)
 
+        const manageReactions = (reactions: Reaction[], payload: Omit<Reaction, 'has_reacted'>) => {
+            // Remove reaction if total is 0
+            if (!payload.total) {
+                return reactions.filter(reaction => reaction.name !== payload.name)
+            }
+
+            // Edit reaction if it already exists in the list
+            if (reactions.findIndex(reaction => reaction.name === payload.name) !== -1) {
+                return reactions.map(reaction => (
+                    reaction.name === payload.name
+                        ? { ...reaction, ...payload }
+                        : reaction
+                ))
+            }
+
+            // Else, append new reaction
+            return [
+                ...reactions,
+                { ...payload, has_reacted: false },
+            ]
+        }
+
         setTimeout(() => {
             presenceChannel.whisper('seen', {})
         }, 500)
@@ -128,6 +150,16 @@ export default function Messages() {
             })
             .listen('.MessageDeleted', (message: Pick<MessageType, 'id'>) => {
                 removeRef.current(chatId, message.id)
+            })
+            .listen('MessageReaction', (payload: { message_id: string; reaction: Omit<Reaction, 'has_reacted'> }) => {
+                const message = queryClient.getQueryData<InfiniteData<MessageResponse>>(['messages', chatId])
+                    ?.pages
+                    .flatMap(page => page.items)
+                    .find(message => message.id === payload.message_id) as MessageType
+
+                alterRef.current(chatId, payload.message_id, {
+                    reactions: manageReactions(message.reactions, payload.reaction),
+                })
             })
             .listenForWhisper('seen', () => {
                 queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (

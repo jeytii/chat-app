@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
@@ -82,6 +83,15 @@ class Message extends Model
     public function reference(): BelongsTo
     {
         return $this->belongsTo(self::class, 'reference_id');
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function reactions(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'reactions', 'message_id', 'user_id')
+            ->withPivot(['name', 'emoji']);
     }
 
     /**
