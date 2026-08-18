@@ -68,6 +68,7 @@ export default function MessageBox() {
                 gif: gif,
                 image_url: image ? previewImage : null,
                 from_self: true,
+                reactions: [],
                 date: new Date().toLocaleString(),
                 date_diff: 'Today',
                 time_diff: 'Now',

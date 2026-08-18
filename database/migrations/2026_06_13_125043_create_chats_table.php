@@ -16,15 +16,6 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->timestamps();
         });
-
-        Schema::create('chat_user', function (Blueprint $table) {
-            $table->id();
-            $table->foreignUuid('chat_id')->constrained();
-            $table->foreignUuid('user_id')->constrained();
-            $table->boolean('hidden')->default(false);
-            $table->timestamp('cleared_at')->nullable();
-            $table->timestamps();
-        });
     }
 
     /**

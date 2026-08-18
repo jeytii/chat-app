@@ -30,9 +30,17 @@ export type Message = {
     date_diff: string;
     time_diff: string;
     seen?: boolean;
+    reactions: Reaction[];
     edited?: boolean;
     deleted?: boolean;
     is_fake?: boolean;
+}
+
+export type Reaction = {
+    name: string;
+    emoji: string;
+    total: number;
+    has_reacted: boolean;
 }
 
 export type MessageResponse = {
