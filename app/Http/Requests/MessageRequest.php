@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Message;
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -58,7 +60,17 @@ class MessageRequest extends FormRequest
 
         return [
             ...$rules,
-            'reference_id' => ['bail', 'nullable', 'string', 'exists:messages,id'],
+            'reference_id' => [
+                'bail',
+                'nullable',
+                'string',
+                'exists:messages,id',
+                function (string $attribute, mixed $value, Closure $fail) {
+                    if (Message::find($value)?->chat_id !== $this->route('chat')->id) {
+                        $fail('The given message does not exist.');
+                    }
+                },
+            ],
         ];
     }
 }
