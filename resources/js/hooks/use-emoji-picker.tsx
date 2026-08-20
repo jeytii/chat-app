@@ -14,12 +14,10 @@ export default function useEmojiPicker() {
 
         input.focus()
 
-        if (start !== value.length) {
-            const position = start + emoji.length
-
-            input.selectionStart = position
-            input.selectionEnd = position
-        }
+        setTimeout(() => {
+            input.selectionStart = start + emoji.length
+            input.selectionEnd = start + emoji.length
+        }, 0)
     }
 
     return { textarea, insertEmoji }

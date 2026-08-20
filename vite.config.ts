@@ -4,24 +4,37 @@ import tailwindcss from '@tailwindcss/vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import laravel from 'laravel-vite-plugin'
 import { bunny } from 'laravel-vite-plugin/fonts'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv, type UserConfig } from 'vite'
 
-export default defineConfig({
-    plugins: [
-        laravel({
-            input: ['resources/css/app.css', 'resources/js/app.tsx'],
-            refresh: true,
-            fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
-                }),
-            ],
-        }),
-        inertia(),
-        react(),
-        babel({
-            presets: [reactCompilerPreset()],
-        }),
-        tailwindcss(),
-    ],
+export default defineConfig(({ mode }) => {
+    const assetUrl = loadEnv(mode, process.cwd()).ASSET_URL
+    const config: UserConfig = {
+        plugins: [
+            laravel({
+                input: ['resources/css/app.css', 'resources/js/app.tsx'],
+                refresh: true,
+                fonts: [
+                    bunny('Instrument Sans', {
+                        weights: [400, 500, 600],
+                    }),
+                ],
+            }),
+            inertia(),
+            react(),
+            babel({
+                presets: [reactCompilerPreset()],
+            }),
+            tailwindcss(),
+        ],
+    }
+
+    if (mode === 'development' && assetUrl) {
+        config.server = {
+            host: '0.0.0.0',
+            cors: true,
+            origin: assetUrl,
+        }
+    }
+
+    return config
 })

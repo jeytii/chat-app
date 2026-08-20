@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react'
+import { usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
 
 import ChatProvider from '@/components/chat-provider'
@@ -37,44 +37,34 @@ export default function Chat() {
     const chat = data.find(chat => chat.id === id) as ChatType
 
     return (
-        <ChatProvider>
-            {isHidden => (
-                <>
-                    <Head title={
-                        isHidden && chat && chat.has_new_message
-                            ? `${chat.user.name} sent a message...`
-                            : undefined
-                    } />
+        <ChatProvider chat={chat}>
+            <MessageScrollerProvider scrollEdgeThreshold={200} autoScroll>
+                {/* ===== HEADER ===== */}
+                <header className='z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4 dark:border-input/60'>
+                    <div className='flex items-center gap-2'>
+                        <SidebarTrigger className='-ml-1' />
 
-                    <MessageScrollerProvider scrollEdgeThreshold={200} autoScroll>
-                        {/* ===== HEADER ===== */}
-                        <header className='z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4 dark:border-input/60'>
-                            <div className='flex items-center gap-2'>
-                                <SidebarTrigger className='-ml-1' />
-
-                                <div className='flex items-center gap-2'>
-                                    <Photo src={chat.user.image_url as string} alt={chat.user.name} />
-                                    <div>
-                                        <h1>{chat.user.name}</h1>
-                                        <PresenceIndicator chatId={id} isOnline={chat.is_online} />
-                                    </div>
-                                </div>
+                        <div className='flex items-center gap-2'>
+                            <Photo src={chat.user.image_url as string} alt={chat.user.name} />
+                            <div>
+                                <h1>{chat.user.name}</h1>
+                                <PresenceIndicator chatId={id} isOnline={chat.is_online} />
                             </div>
-                        </header>
+                        </div>
+                    </div>
+                </header>
 
-                        {/* ===== MESSAGES ===== */}
-                        <MessageScroller>
-                            <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
-                                <Messages />
-                            </MessageScrollerViewport>
-                            <MessageScrollerButton />
-                        </MessageScroller>
+                {/* ===== MESSAGES ===== */}
+                <MessageScroller>
+                    <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
+                        <Messages />
+                    </MessageScrollerViewport>
+                    <MessageScrollerButton />
+                </MessageScroller>
 
-                        {/* ===== MESSAGE BOX ===== */}
-                        <MessageBox />
-                    </MessageScrollerProvider>
-                </>
-            )}
+                {/* ===== MESSAGE BOX ===== */}
+                <MessageBox />
+            </MessageScrollerProvider>
         </ChatProvider>
     )
 }

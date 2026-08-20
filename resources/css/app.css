@@ -188,6 +188,17 @@
     }
 }
 
+aside.EmojiPickerReact {
+    --epr-emoji-size: 25px;
+    --epr-search-input-height: 35px;
+    --epr-picker-border-color: transparent;
+    --epr-category-label-bg-color: transparent;
+
+    .epr-category-nav {
+        @apply hidden;
+    }
+}
+
 .responsive-message {
     @apply max-w-[70vw]! md:max-w-[50vw]! lg:max-w-180!;
 }

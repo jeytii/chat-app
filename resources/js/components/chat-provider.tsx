@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react'
+import { Head, usePage } from '@inertiajs/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createContext, type Dispatch, type ReactNode, type RefObject, type SetStateAction, useEffect, useRef, useState } from 'react'
 
@@ -18,7 +18,7 @@ export const ChatContext = createContext<Context>({
     setReference: () => { },
 })
 
-export default function ChatProvider({ children }: { children: (isHidden: boolean) => ReactNode }) {
+export default function ChatProvider({ chat, children }: { chat: Chat; children: ReactNode }) {
     const id = usePage<{ chat_id: string }>().props.chat_id
     const queryClient = useQueryClient()
     const onlineIds = useRef<string[]>([])
@@ -61,7 +61,13 @@ export default function ChatProvider({ children }: { children: (isHidden: boolea
             reference,
             setReference,
         }}>
-            {children(visibilityState === 'hidden')}
+            <Head title={
+                visibilityState === 'hidden' && chat && chat.has_new_message
+                    ? `${chat.user.name} sent a message...`
+                    : undefined
+            } />
+
+            {children}
         </ChatContext>
     )
 }
