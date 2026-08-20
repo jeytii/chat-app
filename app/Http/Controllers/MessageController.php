@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Image;
 use Illuminate\Support\Str;
@@ -90,29 +90,33 @@ class MessageController extends Controller
     #[Authorize('update', 'message')]
     public function update(MessageRequest $request, Chat $chat, Message $message): JsonResource
     {
-        $payload = $request->safe()->except('image');
-        $image = $request->safe()->file('image');
+        $payload = $request->validated();
 
-        if ($image) {
+        /** @var UploadedFile|string|null */
+        $image = $payload['image'];
+
+        if ($request->hasFile('image')) {
             $filename = Str::random(40).'.'.$image->extension();
 
             $payload['image'] = "chats/{$chat->id}/{$filename}";
         }
 
-        if ($message->update($payload)) {
-            if ($image) {
-                $paths = explode('/', $message->image);
+        $message->update($payload);
 
-                $image->storeAs("chats/{$chat->id}", end($paths));
-            }
+        if ($message->wasChanged('image') && $request->hasFile('image')) {
+            $paths = explode('/', $message->image);
 
+            $image->storeAs("chats/{$chat->id}", end($paths));
+        }
+
+        if ($message->wasChanged()) {
             broadcast(new MessageEvent(
                 'MessageEdited',
                 $chat->id,
-                Arr::only(
-                    $message->load('reference')->toResource()->toArray($request),
-                    ['id', 'reference', 'raw_content', 'content', 'edited'],
-                ),
+                $message->load('reference')->toResource()->resource->only([
+                    'id', 'reference', 'raw_content',
+                    'content', 'image_url', 'gif', 'edited',
+                ]),
             ))->toOthers();
         }
 

@@ -5,20 +5,19 @@ namespace App\Models;
 use Carbon\CarbonImmutable;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
 /**
  * @property string $id
  * @property string $chat_id
  * @property string $sender_id
+ * @property ?string $reference_id
  * @property ?string $content
  * @property ?string $gif
  * @property ?string $image
@@ -55,6 +54,16 @@ class Message extends Model
                 Storage::delete($image);
             }
         });
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'content' => 'encrypted',
+        ];
     }
 
     public function resolveRouteBindingQuery($query, $value, $field = null)
@@ -97,16 +106,5 @@ class Message extends Model
     {
         return $this->belongsToMany(User::class, 'reactions', 'message_id', 'user_id')
             ->withPivot(['name', 'emoji']);
-    }
-
-    /**
-     * @return Attribute<string|null, string|null>
-     */
-    protected function content(): Attribute
-    {
-        return Attribute::make(
-            set: fn (?string $value): ?string => $value ? Crypt::encryptString($value) : null,
-            get: fn (?string $value): ?string => $value ? Crypt::decryptString($value) : null,
-        );
     }
 }

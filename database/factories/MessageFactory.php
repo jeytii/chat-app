@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Message;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Http\UploadedFile;
 
 /**
  * @extends Factory<Message>
@@ -22,10 +23,12 @@ class MessageFactory extends Factory
         ];
     }
 
-    public function withImage(string $chatId): static
+    public function withImage(string $chatId, string $filename = 'image.png'): static
     {
         return $this->state([
-            'image' => fake()->image("chats/{$chatId}", fullPath: false),
+            'image' => UploadedFile::fake()
+                ->image($filename)
+                ->store("chats/{$chatId}"),
         ]);
     }
 

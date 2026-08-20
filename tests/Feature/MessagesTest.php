@@ -10,23 +10,26 @@ use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    $this->otherUser = User::factory()->create();
+    $this->chat = $this->user->chats()->create();
+
+    $this->chat->users()->attach($this->otherUser);
+});
+
 test('can correctly fetch paginated messages', function () {
-    $user = User::factory()->create();
-    $chat = $user->chats()->create();
-
-    $chat->users()->attach(User::factory()->create());
-
     Message::factory(30)
-        ->for($chat)
-        ->for($user, 'sender')
+        ->for($this->chat)
+        ->for($this->user, 'sender')
         ->state(new Sequence(
             fn (Sequence $sequence) => ['created_at' => now()->addMinutes($sequence->index + 1)],
         ))
         ->create();
 
     // First fetch
-    $firstFetch = actingAs($user)
-        ->get(route('chats.messages.index', $chat))
+    $firstFetch = actingAs($this->user)
+        ->get(route('chats.messages.index', $this->chat))
         ->assertOk()
         ->assertJsonCount(20, 'items')
         ->assertJsonStructure([
@@ -44,9 +47,9 @@ test('can correctly fetch paginated messages', function () {
     expect($firstFetchNextCursor)->not()->toBeNull();
 
     // Second fetch
-    $secondFetch = actingAs($user)
+    $secondFetch = actingAs($this->user)
         ->get(route('chats.messages.index', [
-            'chat' => $chat,
+            'chat' => $this->chat,
             'cursor' => $firstFetchNextCursor,
         ]))
         ->assertOk()
@@ -58,12 +61,6 @@ test('can correctly fetch paginated messages', function () {
 describe('CREATE', function () {
     beforeEach(function () {
         Event::fake();
-
-        $this->user = User::factory()->create();
-        $this->otherUser = User::factory()->create();
-        $this->chat = $this->user->chats()->create();
-
-        $this->chat->users()->attach($this->otherUser);
     });
 
     test('can send a message', function () {
@@ -142,6 +139,19 @@ describe('CREATE', function () {
             ->assertOnlyJsonValidationErrors(['content', 'image', 'gif']);
     });
 
+    test('cannot send a message with an attachment that is not JPEG/PNG/WEBP', function (string $image) {
+        actingAs($this->user)
+            ->postJson(route('chats.messages.store', $this->chat), [
+                'image' => UploadedFile::fake()->image($image),
+            ])
+            ->assertStatus(422)
+            ->assertOnlyJsonValidationErrors('image');
+    })->with([
+        'image.gif',
+        'vector.svg',
+        'file.pdf',
+    ]);
+
     test('cannot send a message with both a static image and a GIF', function () {
         actingAs($this->user)
             ->postJson(route('chats.messages.store', $this->chat), [
@@ -170,5 +180,155 @@ describe('CREATE', function () {
             ])
             ->assertStatus(422)
             ->assertOnlyJsonValidationErrors('reference_id');
+    });
+});
+
+describe('UPDATE', function () {
+    beforeEach(function () {
+        Event::fake();
+        Storage::fake();
+    });
+
+    test('can update a message', function () {
+        $message = Message::factory()
+            ->for($this->chat)
+            ->for($this->user, 'sender')
+            ->withImage($this->chat->id)
+            ->create();
+
+        $currentContent = $message->content;
+        $currentImage = $message->image;
+
+        actingAs($this->user)
+            ->putJson(
+                route('chats.messages.update', [
+                    'chat' => $this->chat,
+                    'message' => $message,
+                ]),
+                [
+                    'content' => 'hey there',
+                    'image' => UploadedFile::fake()->image('upload.webp'),
+                ],
+            )
+            ->assertStatus(200)
+            ->assertJsonMissingValidationErrors(['content', 'image', 'gif']);
+
+        $message = $message->refresh();
+
+        expect($message->content)->not()->toBe($currentContent);
+        expect($message->image)->not()->toBe($currentImage);
+
+        Storage::assertExists($message->image);
+
+        Event::assertDispatched(
+            MessageEvent::class,
+            fn (MessageEvent $event) => $event->eventName === 'MessageEdited',
+        );
+    });
+
+    test('uploaded image nullifies gif attribute', function () {
+        $message = Message::factory()
+            ->for($this->chat)
+            ->for($this->user, 'sender')
+            ->withGif()
+            ->create();
+
+        actingAs($this->user)
+            ->putJson(
+                route('chats.messages.update', [
+                    'chat' => $this->chat,
+                    'message' => $message,
+                ]),
+                [
+                    'image' => UploadedFile::fake()->image('upload.webp'),
+                    'gif' => null,
+                ],
+            )
+            ->assertStatus(200)
+            ->assertJsonMissingValidationErrors(['content', 'image', 'gif']);
+
+        $message = $message->refresh();
+
+        expect($message->gif)->toBeNull();
+        expect($message->image)->not()->toBeNull();
+
+        Storage::assertExists($message->image);
+
+        Event::assertDispatched(
+            MessageEvent::class,
+            fn (MessageEvent $event) => $event->eventName === 'MessageEdited',
+        );
+    });
+
+    test('selected gif nullifies image attribute', function () {
+        $message = Message::factory()
+            ->for($this->chat)
+            ->for($this->user, 'sender')
+            ->withImage($this->chat->id)
+            ->create();
+
+        actingAs($this->user)
+            ->putJson(
+                route('chats.messages.update', [
+                    'chat' => $this->chat,
+                    'message' => $message,
+                ]),
+                [
+                    'gif' => 'https://tenor.com/7D6cByKD0E.gif',
+                    'image' => null,
+                ],
+            )
+            ->assertStatus(200)
+            ->assertJsonMissingValidationErrors(['content', 'image', 'gif']);
+
+        $message = $message->refresh();
+
+        expect($message->image)->toBeNull();
+        expect($message->gif)->not()->toBeNull();
+
+        Event::assertDispatched(
+            MessageEvent::class,
+            fn (MessageEvent $event) => $event->eventName === 'MessageEdited',
+        );
+    });
+
+    test('nothing happens if the referenced message and submitted image are the same as their current values', function () {
+        $reference = Message::factory()
+            ->for($this->chat)
+            ->for($this->otherUser, 'sender')
+            ->create();
+
+        $message = Message::factory()
+            ->for($this->chat)
+            ->for($this->user, 'sender')
+            ->for($reference, 'reference')
+            ->withImage($this->chat->id)
+            ->create();
+
+        $currentContent = $message->content;
+        $currentImage = $message->image;
+
+        actingAs($this->user)
+            ->putJson(
+                route('chats.messages.update', [
+                    'chat' => $this->chat,
+                    'message' => $message,
+                ]),
+                [
+                    'reference_id' => $reference->id,
+                    'content' => $message->content,
+                    'image' => $currentImage,
+                ],
+            )
+            ->assertStatus(200)
+            ->assertJsonMissingValidationErrors(['content', 'image', 'gif']);
+
+        $message = $message->refresh();
+
+        expect($message->reference_id)->toBe($reference->id);
+        expect($message->image)->toBe($currentImage);
+        expect($message->content)->toBe($currentContent);
+
+        Event::assertNotDispatched(MessageEvent::class);
     });
 });
