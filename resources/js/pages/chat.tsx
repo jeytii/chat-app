@@ -9,6 +9,7 @@ import { MessageScroller, MessageScrollerButton, MessageScrollerProvider, Messag
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import ChatProvider from '@/providers/chat-provider'
+import MessageProvider from '@/providers/message-provider'
 import type { Chat as ChatType } from '@/types/models'
 
 export default function Chat() {
@@ -54,16 +55,18 @@ export default function Chat() {
                     </div>
                 </header>
 
-                {/* ===== MESSAGES ===== */}
-                <MessageScroller>
-                    <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
-                        <Messages />
-                    </MessageScrollerViewport>
-                    <MessageScrollerButton />
-                </MessageScroller>
+                <MessageProvider>
+                    {/* ===== MESSAGES ===== */}
+                    <MessageScroller>
+                        <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
+                            <Messages />
+                        </MessageScrollerViewport>
+                        <MessageScrollerButton />
+                    </MessageScroller>
 
-                {/* ===== MESSAGE BOX ===== */}
-                <MessageBox />
+                    {/* ===== MESSAGE BOX ===== */}
+                    <MessageBox />
+                </MessageProvider>
             </MessageScrollerProvider>
         </ChatProvider>
     )

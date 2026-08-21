@@ -1,10 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
-import EmojiPicker, { EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
+import EmojiPicker, { type EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
 import { Edit, Reply, Trash2 } from 'lucide-react'
 import { useContext, useEffect, useRef, useState } from 'react'
 
-import MessageEditor from '@/components/message-editor'
 import { Attachment } from '@/components/ui/attachment'
 import { Badge } from '@/components/ui/badge'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
@@ -30,8 +29,7 @@ type Props = {
 export default function MessageModel({ chatId, message, firstInAMinute }: Props) {
     const queryClient = useQueryClient()
     const messageToDelete = useRef<Message>(null)
-    const [editMode, setEditMode] = useState<boolean>(false)
-    const { reference, setReference } = useContext(MessageContext)
+    const { reference, editId, setContent, setImage, setGif, setReference, setEditId, revokePreviewImage } = useContext(MessageContext)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
@@ -97,8 +95,12 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
             return
         }
 
-        setEditMode(true)
-        setReference(null)
+        setEditId(message.id)
+        setContent(message.raw_content || null)
+        setReference(message.reference?.id || null)
+        revokePreviewImage()
+        setImage(message.image_url)
+        setGif(message.gif)
     }
 
     async function destroy() {
@@ -111,7 +113,15 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         messageToDelete.current = message
 
         remove(chatId, message.id)
-        setReference(null)
+
+        if (editId === message.id) {
+            setEditId(null)
+            setContent(null)
+            setReference(null)
+            revokePreviewImage()
+            setImage(null)
+            setGif(null)
+        }
 
         debounce(() => {
             deleteMessage({ deletedMessage: messageToDelete.current as Message })
@@ -138,6 +148,11 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         }
 
         setReference(message.id)
+        setEditId(null)
+        setContent(null)
+        revokePreviewImage()
+        setImage(null)
+        setGif(null)
     }
 
     function react({ emoji, unified: name }: EmojiClickData) {
@@ -188,16 +203,6 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     </BubbleContent>
                 </Bubble>
             </MessageContent>
-        )
-    }
-
-    if (message.from_self && editMode) {
-        return (
-            <MessageEditor
-                cancel={setEditMode.bind(null, false)}
-                chatId={chatId}
-                message={message}
-            />
         )
     }
 

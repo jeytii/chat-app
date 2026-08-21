@@ -1,33 +1,46 @@
 import { usePage } from '@inertiajs/react'
 import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
+import type { EmojiClickData } from 'emoji-picker-react'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
-import type { ChangeEvent, KeyboardEvent } from 'react'
-import { useContext, useEffect } from 'react'
+import { type ChangeEvent, type KeyboardEvent, type SubmitEvent, useContext, useEffect, useRef } from 'react'
 import { Remarkable } from 'remarkable'
 
 import Emojis from '@/components/emojis'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
-import useAttachment from '@/hooks/use-attachment'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
-import useEmojiPicker from '@/hooks/use-emoji-picker'
 import { useThrottle } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
+import { cn } from '@/lib/utils'
 import { ChatContext } from '@/providers/chat-provider'
 import { MessageContext } from '@/providers/message-provider'
 import type { Message, MessageResponse } from '@/types/models'
 
+type CreationPayload = {
+    reference_id: string | string;
+    content: string;
+    image: File | string;
+    seen: boolean;
+}
+
+type UpdatePayload = {
+    id: string;
+    reference_id: string;
+    content: string;
+    image: File | string;
+    gif: string;
+}
+
 export default function MessageBox() {
     const { chat_id: chatId } = usePage<{ chat_id: string }>().props
-    const { image, gif, previewImage, setImage, revokePreviewImage } = useAttachment(null)
     const { onlineIds } = useContext(ChatContext)
-    const { reference, setReference } = useContext(MessageContext)
+    const { content, image, gif, reference, previewImage, editId, setContent, setImage, setGif, setReference, setEditId, revokePreviewImage } = useContext(MessageContext)
     const { insert, alter } = useMessage()
-    const { textarea, insertEmoji } = useEmojiPicker()
     const throttle = useThrottle(1000)
     const queryClient = useQueryClient()
+    const textarea = useRef<HTMLTextAreaElement>(null)
     const channel = window.Echo.join(`room.${chatId}`)
     const replyTo = queryClient.getQueryData<InfiniteData<MessageResponse>>(['messages', chatId])
         ?.pages
@@ -40,19 +53,22 @@ export default function MessageBox() {
         }
     }, [revokePreviewImage])
 
-    const { mutate, isPending } = useMutation<
-        AxiosResponse<Message>,
-        Error,
-        { reference_id: string | string; content: string; image: File | string; seen: boolean },
-        { id: string }
-    >({
+    useEffect(() => {
+        if (editId) {
+            setTimeout(() => {
+                textarea.current?.focus()
+            }, 500)
+        }
+    }, [editId])
+
+    const { mutate: create, isPending: isCreating } = useMutation<AxiosResponse<Message>, Error, CreationPayload, { id: string }>({
         mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 'X-Socket-ID': window.Echo.socketId(),
             },
         }),
-        async onMutate({ content }, { client }) {
+        async onMutate(payload, { client }) {
             await client.cancelQueries({ queryKey: ['messages', chatId] })
 
             const itemId = Math.floor(Math.random() * 1000000000).toString()
@@ -66,7 +82,7 @@ export default function MessageBox() {
                     gif: replyTo.gif,
                     from_self: replyTo.from_self,
                 } : null,
-                content: new Remarkable({ html: false, breaks: true }).render(content),
+                content: new Remarkable({ html: false, breaks: true }).render(payload.content),
                 gif: gif,
                 image_url: image ? previewImage : null,
                 from_self: true,
@@ -78,8 +94,7 @@ export default function MessageBox() {
             })
 
             setReference(null)
-
-            textarea.current?.form?.reset()
+            setContent(null)
 
             return { id: itemId }
         },
@@ -92,8 +107,7 @@ export default function MessageBox() {
                 is_fake: undefined,
             })
 
-            revokePreviewImage()
-            setImage(null)
+            removeUpload()
         },
         onSettled(data, error, payload, context, { client }) {
             client.invalidateQueries({
@@ -103,13 +117,71 @@ export default function MessageBox() {
         },
     })
 
-    function handleMessage() {
+    const { mutate: update, isPending: isUpdating } = useMutation<AxiosResponse<Message>, Error, UpdatePayload>({
+        mutationFn: ({ id, ...payload }) => axios.post(
+            `/chats/${chatId}/messages/${id}`,
+            { _method: 'PATCH', ...payload },
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'X-Socket-ID': window.Echo.socketId(),
+                },
+            },
+        ),
+        onMutate(payload, { client }) {
+            client.cancelQueries({ queryKey: ['messages', chatId] })
+        },
+        onSuccess({ data }, { id }, context, { client }) {
+            alter(chatId, id, data)
+
+            setEditId(null)
+            setReference(null)
+            setContent(null)
+            removeUpload()
+
+            client.invalidateQueries({
+                queryKey: ['messages', chatId],
+                refetchType: 'none',
+            })
+        },
+    })
+
+    function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
+        setContent(event.target.value)
+
         throttle(() => {
             channel.whisper('typing', {})
         })
     }
 
+    function insertEmoji({ emoji }: EmojiClickData) {
+        if (isUpdating) {
+            return
+        }
+
+        const input = textarea.current as HTMLTextAreaElement
+        const start = input.selectionStart
+        const end = input.selectionEnd
+
+        setContent(current => {
+            const value = current || ''
+
+            return value.substring(0, start) + emoji + value.substring(end)
+        })
+
+        input.focus()
+
+        setTimeout(() => {
+            input.selectionStart = start + emoji.length
+            input.selectionEnd = start + emoji.length
+        }, 0)
+    }
+
     function upload(event: ChangeEvent<HTMLInputElement>) {
+        if (isUpdating) {
+            return
+        }
+
         const file = (event.target.files as FileList)[0]
 
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
@@ -117,12 +189,25 @@ export default function MessageBox() {
         }
 
         revokePreviewImage()
+        setGif(null)
         setImage(file)
     }
 
     function removeUpload() {
         revokePreviewImage()
         setImage(null)
+        setGif(null)
+    }
+
+    function cancelEditMode() {
+        if (isUpdating) {
+            return
+        }
+
+        setEditId(null)
+        setContent(null)
+        setReference(null)
+        removeUpload()
     }
 
     function handleSubmit(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -132,23 +217,33 @@ export default function MessageBox() {
         }
     }
 
-    function send(data: FormData) {
-        const value = data.get('message')?.toString() || ''
+    function send(event: SubmitEvent<HTMLFormElement>) {
+        event.preventDefault()
 
-        if (!value.length && !image) {
+        if ((!content?.length && !image && !gif) || isUpdating) {
             return
         }
 
-        mutate({
-            reference_id: reference || '',
-            content: value || '',
-            image: image || '',
-            seen: onlineIds.current.length >= 2,
-        })
+        if (editId) {
+            update({
+                id: editId,
+                reference_id: reference || '',
+                content: content || '',
+                image: image || '',
+                gif: gif || '',
+            })
+        } else {
+            create({
+                reference_id: reference || '',
+                content: content || '',
+                image: image || '',
+                seen: onlineIds.current.length >= 2,
+            })
+        }
     }
 
     return (
-        <form action={send} className='z-10'>
+        <form onSubmit={send} className='z-10'>
             {!!replyTo && (
                 <div className='relative border-t p-4'>
                     <Button
@@ -176,14 +271,41 @@ export default function MessageBox() {
                 <InputGroupTextarea
                     ref={textarea}
                     name='message'
+                    value={content || ''}
                     placeholder='Write a message'
+                    disabled={isUpdating}
                     className='min-h-auto px-4'
                     onKeyDown={handleSubmit}
                     onChange={handleMessage}
                 />
+
+                {(!!previewImage && !isCreating) && (
+                    <div className='w-full px-4 pt-3'>
+                        <div className='relative inline-block'>
+                            <img src={previewImage} className='block max-h-25 max-w-25 rounded' />
+
+                            <Button
+                                type='button'
+                                variant='outline'
+                                size='icon-xs'
+                                className='absolute -top-2.5 -right-2.5 bg-background!'
+                                disabled={isUpdating}
+                                onClick={removeUpload}
+                            >
+                                <X />
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 <InputGroupAddon align='block-end'>
                     <Emojis onInsert={insertEmoji}>
-                        <InputGroupButton type='button' variant='ghost' size='icon-xs'>
+                        <InputGroupButton
+                            type='button'
+                            variant='ghost'
+                            size='icon-xs'
+                            disabled={isUpdating}
+                        >
                             <Smile />
                         </InputGroupButton>
                     </Emojis>
@@ -191,7 +313,7 @@ export default function MessageBox() {
                         type='button'
                         variant='ghost'
                         size='icon-xs'
-                        asChild
+                        disabled={isUpdating}
                     >
                         <label>
                             <Image />
@@ -199,43 +321,48 @@ export default function MessageBox() {
                                 type='file'
                                 accept='image/jpeg, image/png, image/webp'
                                 className='hidden'
+                                disabled={isUpdating}
                                 onChange={upload}
                             />
                         </label>
                     </InputGroupButton>
-                    <InputGroupButton type='button' variant='ghost' size='icon-xs'>
+                    <InputGroupButton
+                        type='button'
+                        variant='ghost'
+                        size='icon-xs'
+                        disabled={isUpdating}
+                    >
                         <svg viewBox='0 0 20 20' fill='currentColor'>
                             <path fillRule='evenodd' d='M1 5.25A2.25 2.25 0 0 1 3.25 3h13.5A2.25 2.25 0 0 1 19 5.25v9.5A2.25 2.25 0 0 1 16.75 17H3.25A2.25 2.25 0 0 1 1 14.75v-9.5Zm4.026 2.879C5.356 7.65 5.72 7.5 6 7.5s.643.15.974.629a.75.75 0 0 0 1.234-.854C7.66 6.484 6.873 6 6 6c-.873 0-1.66.484-2.208 1.275C3.25 8.059 3 9.048 3 10c0 .952.25 1.941.792 2.725C4.34 13.516 5.127 14 6 14c.873 0 1.66-.484 2.208-1.275a.75.75 0 0 0 .133-.427V10a.75.75 0 0 0-.75-.75H6.25a.75.75 0 0 0 0 1.5h.591v1.295c-.293.342-.6.455-.841.455-.279 0-.643-.15-.974-.629C4.69 11.386 4.5 10.711 4.5 10c0-.711.19-1.386.526-1.871ZM10.75 6a.75.75 0 0 1 .75.75v6.5a.75.75 0 0 1-1.5 0v-6.5a.75.75 0 0 1 .75-.75Zm3 0h2.5a.75.75 0 0 1 0 1.5H14.5v1.75h.75a.75.75 0 0 1 0 1.5h-.75v2.5a.75.75 0 0 1-1.5 0v-6.5a.75.75 0 0 1 .75-.75Z' clipRule='evenodd' />
                         </svg>
                     </InputGroupButton>
+                    {(!!editId && !isUpdating) && (
+                        <InputGroupButton
+                            type='submit'
+                            variant='destructive'
+                            size='xs'
+                            className='ml-auto pr-3! text-xs'
+                            onClick={cancelEditMode}
+                        >
+                            <X />
+                            <span>Cancel</span>
+                        </InputGroupButton>
+                    )}
                     <InputGroupButton
                         type='submit'
                         variant='ghost'
-                        size='icon-xs'
-                        className='ml-auto'
+                        size='xs'
+                        disabled={isUpdating}
+                        className={cn(
+                            'text-xs text-accent-foreground/80',
+                            { 'ml-auto': !editId || isUpdating },
+                        )}
                     >
+                        <span>Send</span>
                         <SendHorizonal />
                     </InputGroupButton>
                 </InputGroupAddon>
             </InputGroup>
-
-            {(!!previewImage && !isPending) && (
-                <div className='px-4 pb-4'>
-                    <div className='relative inline-block'>
-                        <img src={previewImage} className='block max-h-25 max-w-25 rounded' />
-
-                        <Button
-                            type='button'
-                            variant='outline'
-                            size='icon-xs'
-                            className='absolute -top-2.5 -right-2.5 bg-background!'
-                            onClick={removeUpload}
-                        >
-                            <X />
-                        </Button>
-                    </div>
-                </div>
-            )}
         </form>
     )
 }
