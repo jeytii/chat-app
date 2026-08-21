@@ -1,7 +1,6 @@
 import { usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
 
-import ChatProvider from '@/components/chat-provider'
 import MessageBox from '@/components/message-box'
 import Messages, { Placeholder as MessagesPlaceholder } from '@/components/messages'
 import Photo from '@/components/photo'
@@ -9,6 +8,7 @@ import PresenceIndicator from '@/components/presence-indicator'
 import { MessageScroller, MessageScrollerButton, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
+import ChatProvider from '@/providers/chat-provider'
 import type { Chat as ChatType } from '@/types/models'
 
 export default function Chat() {

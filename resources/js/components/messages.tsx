@@ -6,7 +6,6 @@ import { differenceInMinutes, isSameDay } from 'date-fns'
 import { CheckCheck } from 'lucide-react'
 import { Fragment, useContext, useEffect, useRef } from 'react'
 
-import { ChatContext } from '@/components/chat-provider'
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent, MarkerIcon } from '@/components/ui/marker'
 import { Message } from '@/components/ui/message'
@@ -15,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
+import { ChatContext } from '@/providers/chat-provider'
 import type { Chat, Message as MessageType, MessageResponse, Reaction } from '@/types/models'
 
 type MessageSentData = Omit<MessageType, 'from_self'> & {

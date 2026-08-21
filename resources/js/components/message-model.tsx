@@ -4,7 +4,6 @@ import EmojiPicker, { EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-rea
 import { Edit, Reply, Trash2 } from 'lucide-react'
 import { useContext, useEffect, useRef, useState } from 'react'
 
-import { ChatContext } from '@/components/chat-provider'
 import MessageEditor from '@/components/message-editor'
 import { Attachment } from '@/components/ui/attachment'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +18,7 @@ import { getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
 import { cn } from '@/lib/utils'
+import { MessageContext } from '@/providers/message-provider'
 import type { Message } from '@/types/models'
 
 type Props = {
@@ -31,7 +31,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     const queryClient = useQueryClient()
     const messageToDelete = useRef<Message>(null)
     const [editMode, setEditMode] = useState<boolean>(false)
-    const { reference, setReference } = useContext(ChatContext)
+    const { reference, setReference } = useContext(MessageContext)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)

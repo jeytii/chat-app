@@ -6,7 +6,6 @@ import type { ChangeEvent, KeyboardEvent } from 'react'
 import { useContext, useEffect } from 'react'
 import { Remarkable } from 'remarkable'
 
-import { ChatContext } from '@/components/chat-provider'
 import Emojis from '@/components/emojis'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,12 +15,15 @@ import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import useEmojiPicker from '@/hooks/use-emoji-picker'
 import { useThrottle } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
+import { ChatContext } from '@/providers/chat-provider'
+import { MessageContext } from '@/providers/message-provider'
 import type { Message, MessageResponse } from '@/types/models'
 
 export default function MessageBox() {
     const { chat_id: chatId } = usePage<{ chat_id: string }>().props
     const { image, gif, previewImage, setImage, revokePreviewImage } = useAttachment(null)
-    const { onlineIds, reference, setReference } = useContext(ChatContext)
+    const { onlineIds } = useContext(ChatContext)
+    const { reference, setReference } = useContext(MessageContext)
     const { insert, alter } = useMessage()
     const { textarea, insertEmoji } = useEmojiPicker()
     const throttle = useThrottle(1000)
@@ -161,7 +163,7 @@ export default function MessageBox() {
                     <Card size='sm'>
                         <CardContent className='flex items-center gap-4'>
                             {!!replyTo.image_url && (
-                                <img src='https://placehold.co/100x100' alt='' className='w-12 rounded-xs' />
+                                <img src={replyTo.image_url} alt='Attachment' className='w-12 rounded-xs' />
                             )}
 
                             <p className='line-clamp-2 w-full text-muted-foreground italic'>{replyTo.raw_content || '(Sent an image)'}</p>
