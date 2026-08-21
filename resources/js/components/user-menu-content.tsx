@@ -25,6 +25,10 @@ export function UserMenuContent() {
         router.flushAll()
     }
 
+    const leaveEchoChannels = () => {
+        window.Echo.leaveAllChannels()
+    }
+
     return (
         <>
             <DropdownMenuItem asChild className='p-0'>
@@ -65,6 +69,7 @@ export function UserMenuContent() {
                     href='/logout'
                     method='post'
                     as='button'
+                    onBefore={leaveEchoChannels}
                     onClick={handleLogout}
                     data-test='logout-button'
                 >

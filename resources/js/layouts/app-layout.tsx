@@ -34,7 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
                 </SidebarInset>
             </SidebarProvider>
 
-            <ReactQueryDevtools position='right' />
+            <ReactQueryDevtools position='right' buttonPosition='bottom-left' />
         </QueryClientProvider>
     )
 }
