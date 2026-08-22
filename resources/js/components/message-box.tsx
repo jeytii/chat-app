@@ -1,15 +1,18 @@
 import { usePage } from '@inertiajs/react'
 import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
-import type { EmojiClickData } from 'emoji-picker-react'
+import EmojiPicker, { type EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
+import { Popover as PopoverPrimitive } from 'radix-ui'
 import { type ChangeEvent, type KeyboardEvent, type SubmitEvent, useContext, useEffect, useRef } from 'react'
 import { Remarkable } from 'remarkable'
 
-import Emojis from '@/components/emojis'
+import GifPicker from '@/components/gif-picker'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { useAppearance } from '@/hooks/use-appearance'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useThrottle } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
@@ -19,18 +22,19 @@ import { MessageContext } from '@/providers/message-provider'
 import type { Message, MessageResponse } from '@/types/models'
 
 type CreationPayload = {
-    reference_id: string | string;
-    content: string;
-    image: File | string;
+    reference_id: string | null;
+    content: string | null;
+    image: File | string | null;
+    gif: string | null;
     seen: boolean;
 }
 
 type UpdatePayload = {
     id: string;
-    reference_id: string;
-    content: string;
-    image: File | string;
-    gif: string;
+    reference_id: string | null;
+    content: string | null;
+    image: File | string | null;
+    gif: string | null;
 }
 
 export default function MessageBox() {
@@ -40,7 +44,9 @@ export default function MessageBox() {
     const { insert, alter } = useMessage()
     const throttle = useThrottle(1000)
     const queryClient = useQueryClient()
+    const { appearance } = useAppearance()
     const textarea = useRef<HTMLTextAreaElement>(null)
+    const gifsClose = useRef<HTMLButtonElement>(null)
     const channel = window.Echo.join(`room.${chatId}`)
     const replyTo = queryClient.getQueryData<InfiniteData<MessageResponse>>(['messages', chatId])
         ?.pages
@@ -82,7 +88,9 @@ export default function MessageBox() {
                     gif: replyTo.gif,
                     from_self: replyTo.from_self,
                 } : null,
-                content: new Remarkable({ html: false, breaks: true }).render(payload.content),
+                content: payload.content
+                    ? new Remarkable({ html: false, breaks: true }).render(payload.content)
+                    : null,
                 gif: gif,
                 image_url: image ? previewImage : null,
                 from_self: true,
@@ -193,6 +201,14 @@ export default function MessageBox() {
         setImage(file)
     }
 
+    function selectGif(event: ChangeEvent<HTMLInputElement>) {
+        event.preventDefault()
+
+        setGif(event.target.value)
+
+        gifsClose.current?.click()
+    }
+
     function removeUpload() {
         revokePreviewImage()
         setImage(null)
@@ -237,6 +253,7 @@ export default function MessageBox() {
                 reference_id: reference || '',
                 content: content || '',
                 image: image || '',
+                gif: gif || '',
                 seen: onlineIds.current.length >= 2,
             })
         }
@@ -299,16 +316,35 @@ export default function MessageBox() {
                 )}
 
                 <InputGroupAddon align='block-end'>
-                    <Emojis onInsert={insertEmoji}>
-                        <InputGroupButton
-                            type='button'
-                            variant='ghost'
-                            size='icon-xs'
-                            disabled={isUpdating}
-                        >
-                            <Smile />
-                        </InputGroupButton>
-                    </Emojis>
+                    <Popover>
+                        <PopoverTrigger asChild className='data-[state=open]:text-accent-foreground'>
+                            <InputGroupButton
+                                type='button'
+                                variant='ghost'
+                                size='icon-xs'
+                                disabled={isUpdating}
+                            >
+                                <Smile />
+                            </InputGroupButton>
+                        </PopoverTrigger>
+                        <PopoverContent align='start' className='w-auto p-2'>
+                            <EmojiPicker
+                                theme={
+                                    {
+                                        light: Theme.LIGHT,
+                                        dark: Theme.DARK,
+                                        system: Theme.AUTO,
+                                    }[appearance]
+                                }
+                                emojiStyle={EmojiStyle.GOOGLE}
+                                autoFocusSearch={false}
+                                previewConfig={{ showPreview: false }}
+                                skinTonesDisabled
+                                lazyLoadEmojis
+                                onEmojiClick={insertEmoji}
+                            />
+                        </PopoverContent>
+                    </Popover>
                     <InputGroupButton
                         type='button'
                         variant='ghost'
@@ -326,16 +362,24 @@ export default function MessageBox() {
                             />
                         </label>
                     </InputGroupButton>
-                    <InputGroupButton
-                        type='button'
-                        variant='ghost'
-                        size='icon-xs'
-                        disabled={isUpdating}
-                    >
-                        <svg viewBox='0 0 20 20' fill='currentColor'>
-                            <path fillRule='evenodd' d='M1 5.25A2.25 2.25 0 0 1 3.25 3h13.5A2.25 2.25 0 0 1 19 5.25v9.5A2.25 2.25 0 0 1 16.75 17H3.25A2.25 2.25 0 0 1 1 14.75v-9.5Zm4.026 2.879C5.356 7.65 5.72 7.5 6 7.5s.643.15.974.629a.75.75 0 0 0 1.234-.854C7.66 6.484 6.873 6 6 6c-.873 0-1.66.484-2.208 1.275C3.25 8.059 3 9.048 3 10c0 .952.25 1.941.792 2.725C4.34 13.516 5.127 14 6 14c.873 0 1.66-.484 2.208-1.275a.75.75 0 0 0 .133-.427V10a.75.75 0 0 0-.75-.75H6.25a.75.75 0 0 0 0 1.5h.591v1.295c-.293.342-.6.455-.841.455-.279 0-.643-.15-.974-.629C4.69 11.386 4.5 10.711 4.5 10c0-.711.19-1.386.526-1.871ZM10.75 6a.75.75 0 0 1 .75.75v6.5a.75.75 0 0 1-1.5 0v-6.5a.75.75 0 0 1 .75-.75Zm3 0h2.5a.75.75 0 0 1 0 1.5H14.5v1.75h.75a.75.75 0 0 1 0 1.5h-.75v2.5a.75.75 0 0 1-1.5 0v-6.5a.75.75 0 0 1 .75-.75Z' clipRule='evenodd' />
-                        </svg>
-                    </InputGroupButton>
+                    <Popover>
+                        <PopoverTrigger asChild className='data-[state=open]:text-accent-foreground'>
+                            <InputGroupButton
+                                type='button'
+                                variant='ghost'
+                                size='icon-xs'
+                                disabled={isUpdating}
+                            >
+                                <svg viewBox='0 0 20 20' fill='currentColor'>
+                                    <path fillRule='evenodd' d='M1 5.25A2.25 2.25 0 0 1 3.25 3h13.5A2.25 2.25 0 0 1 19 5.25v9.5A2.25 2.25 0 0 1 16.75 17H3.25A2.25 2.25 0 0 1 1 14.75v-9.5Zm4.026 2.879C5.356 7.65 5.72 7.5 6 7.5s.643.15.974.629a.75.75 0 0 0 1.234-.854C7.66 6.484 6.873 6 6 6c-.873 0-1.66.484-2.208 1.275C3.25 8.059 3 9.048 3 10c0 .952.25 1.941.792 2.725C4.34 13.516 5.127 14 6 14c.873 0 1.66-.484 2.208-1.275a.75.75 0 0 0 .133-.427V10a.75.75 0 0 0-.75-.75H6.25a.75.75 0 0 0 0 1.5h.591v1.295c-.293.342-.6.455-.841.455-.279 0-.643-.15-.974-.629C4.69 11.386 4.5 10.711 4.5 10c0-.711.19-1.386.526-1.871ZM10.75 6a.75.75 0 0 1 .75.75v6.5a.75.75 0 0 1-1.5 0v-6.5a.75.75 0 0 1 .75-.75Zm3 0h2.5a.75.75 0 0 1 0 1.5H14.5v1.75h.75a.75.75 0 0 1 0 1.5h-.75v2.5a.75.75 0 0 1-1.5 0v-6.5a.75.75 0 0 1 .75-.75Z' clipRule='evenodd' />
+                                </svg>
+                            </InputGroupButton>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-auto space-y-2 px-2! pt-2! pb-0!' align='start'>
+                            <GifPicker onSelect={selectGif} />
+                            <PopoverPrimitive.Close ref={gifsClose} className='hidden' />
+                        </PopoverContent>
+                    </Popover>
                     {(!!editId && !isUpdating) && (
                         <InputGroupButton
                             type='submit'

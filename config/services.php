@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'klipy' => [
+        'app_key' => env('KLIPY_APP_KEY'),
+    ],
+
 ];

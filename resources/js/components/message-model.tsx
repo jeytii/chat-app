@@ -331,15 +331,11 @@ function Media({ message }: { message: Message }) {
     if (message.gif) {
         return (
             <div className={cn('flex', { 'justify-end': message.from_self })}>
-                <Attachment orientation='vertical' className='w-[20vw] cursor-pointer'>
-                    <div className='p-2'>
-                        <img
-                            src={message.gif}
-                            className='block h-auto w-full rounded-md object-cover'
-                            alt='GIF'
-                        />
-                    </div>
-                </Attachment>
+                <img
+                    src={message.gif}
+                    className='block h-auto w-full rounded-md object-cover'
+                    alt='GIF'
+                />
             </div>
         )
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\GifController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('chats.messages', MessageController::class)
         ->except('show')
         ->scoped();
+
+    Route::get('gifs', GifController::class);
 
     Route::controller(SettingsController::class)->name('settings.')->group(function () {
         Route::inertia('settings', 'settings')
