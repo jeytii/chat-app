@@ -1,17 +1,18 @@
 import { createContext, type Dispatch, type ReactNode, type SetStateAction, useEffect, useMemo, useState } from 'react'
 
 type Str = string | null
+type Gif = { md: Str; sm: Str } | null
 type Image = File | Str
 type Context = {
     content: Str;
     image: Image;
-    gif: Str;
+    gif: Gif;
     reference: Str;
     previewImage: Str;
     editId: Str;
     setContent: Dispatch<SetStateAction<Str>>;
     setImage: Dispatch<SetStateAction<Image>>;
-    setGif: Dispatch<SetStateAction<Str>>;
+    setGif: Dispatch<SetStateAction<Gif>>;
     setReference: Dispatch<SetStateAction<Str>>;
     setEditId: Dispatch<SetStateAction<Str>>;
     revokePreviewImage: CallableFunction;
@@ -22,7 +23,7 @@ export const MessageContext = createContext<Context>({} as Context)
 export default function MessageProvider({ children }: { children: ReactNode }) {
     const [content, setContent] = useState<Str>(null)
     const [image, setImage] = useState<Image>(null)
-    const [gif, setGif] = useState<Str>(null)
+    const [gif, setGif] = useState<Gif>(null)
     const [reference, setReference] = useState<Str>(null)
     const [editId, setEditId] = useState<Str>(null)
 
@@ -34,7 +35,7 @@ export default function MessageProvider({ children }: { children: ReactNode }) {
         }
 
         if (gif) {
-            return gif
+            return gif.sm
         }
 
         return null

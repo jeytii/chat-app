@@ -15,32 +15,25 @@ class GifController extends Controller
         abort_unless($request->wantsJson(), 404);
 
         $query = $request->query('q');
-        $page = $request->query('page', 1);
-        $tags = $query ? ['gifs', 'search', "query:{$query}"] : ['gifs', 'trending'];
+        $cacheKey = $query ?? 'trending';
 
-        return cache()->tags($tags)->rememberForever("page:{$page}", function () use ($page, $query): array {
+        // TODO: Removing caching step in production
+        return cache()->rememberForever("gifs:{$cacheKey}", function () use ($query): array {
             $appKey = config('services.klipy.app_key');
             $api = $query ? 'search' : 'trending';
             $response = Http::get("https://api.klipy.com/api/v1/{$appKey}/gifs/{$api}", [
                 'q' => $query,
-                'page' => $page,
-                'per_page' => 20,
+                'per_page' => 30,
                 'format_filter' => 'gif',
                 'content_filter' => 'off',
             ])->json()['data'];
 
-            $gifs = array_map(fn (array $gif) => [
+            return array_map(fn (array $gif) => [
                 'id' => $gif['id'],
                 'title' => $gif['title'],
                 'md' => data_get($gif, 'file.md.gif.url'),
                 'sm' => data_get($gif, 'file.sm.gif.url'),
             ], $response['data']);
-
-            return [
-                'data' => $gifs,
-                'page' => $response['current_page'],
-                'has_next' => $response['has_next'],
-            ];
         });
     }
 }

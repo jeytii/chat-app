@@ -1,10 +1,11 @@
-import { type InfiniteData, useInfiniteQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
-import { type ChangeEventHandler } from 'react'
+import { type ChangeEvent, useState } from 'react'
 
 import { Input } from '@/components/ui/input'
 import { PopoverHeader } from '@/components/ui/popover'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
+import { useDebounce } from '@/hooks/use-limit'
 import { cn } from '@/lib/utils'
 
 type Gif = {
@@ -14,75 +15,70 @@ type Gif = {
     sm: string;
 }
 
-type HttpResponse = {
-    data: Gif[];
-    page: number;
-    has_next: boolean;
-}
+export default function GifPicker({ onSelect }: { onSelect: (gif: { md: string; sm: string }) => void }) {
+    const [query, setQuery] = useState<string>('')
+    const { debounce } = useDebounce()
 
-async function getGifs(page: number, signal: AbortSignal) {
-    const { data } = await axios.get<HttpResponse>('/gifs', {
-        params: { page },
-        signal,
+    const { data, isLoading } = useQuery<Gif[], Error, Gif[], readonly string[]>({
+        queryKey: query ? ['gifs', query] : ['gifs'],
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await axios.get<Gif[]>('/gifs', {
+                params: { q: queryKey[1] || undefined },
+                signal,
+            })
+
+            return data
+        },
+        staleTime: 10 * 60 * 1000,
+        gcTime: 15 * 60 * 1000,
     })
 
-    return data
-}
+    function handleQuery(event: ChangeEvent<HTMLInputElement>) {
+        debounce(() => {
+            setQuery(event.target.value)
+        })
+    }
 
-export default function GifPicker({ onSelect }: { onSelect: ChangeEventHandler }) {
-    const { data, isLoading } = useInfiniteQuery<
-        HttpResponse,
-        Error,
-        InfiniteData<Gif>,
-        readonly unknown[],
-        number
-    >({
-        queryKey: ['gifs'],
-        queryFn: ({ pageParam, signal }) => getGifs(pageParam, signal),
-        getNextPageParam: ({ page, has_next: hasNext }) => hasNext ? page + 1 : null,
-        initialPageParam: 1,
-        select: data => ({
-            ...data,
-            pages: data.pages.flatMap(page => page.data),
-        }),
-    })
+    function select({ md, sm }: Gif, event: ChangeEvent<HTMLInputElement>) {
+        event.preventDefault()
+
+        onSelect({ md, sm })
+    }
 
     return (
         <>
             <PopoverHeader>
-                <Input placeholder='Search GIFs' className='text-sm' disabled={isLoading} />
+                <Input
+                    placeholder='Search GIFs'
+                    onChange={handleQuery}
+                    className='rounded-sm text-sm'
+                />
             </PopoverHeader>
 
             <div className={cn(
-                'h-100 w-[70vw] flex-1 px-2 sm:w-100',
+                'h-100 w-[70vw] flex-1 md:w-100',
                 isLoading ? 'overflow-y-hidden' : 'overflow-y-auto',
             )}>
                 {(isLoading || !data) ? (
-                    <div className='columns-2 gap-2 space-y-2'>
-                        <Skeleton className='aspect-square w-full rounded-none' />
-                        <Skeleton className='aspect-square w-full rounded-none' />
-                        <Skeleton className='aspect-square w-full rounded-none' />
-                        <Skeleton className='aspect-square w-full rounded-none' />
-                        <Skeleton className='aspect-square w-full rounded-none' />
-                        <Skeleton className='aspect-square w-full rounded-none' />
-                        <Skeleton className='aspect-square w-full rounded-none' />
+                    <div className='py-4'>
+                        <Spinner className='mx-auto size-6' />
                     </div>
                 ) : (
                     <div className='columns-2 gap-2 space-y-2'>
-                        {data.pages.map(gif => (
+                        {data.map(gif => (
                             <label key={gif.id} className='block w-full cursor-pointer'>
                                 <img
                                     src={gif.sm}
                                     alt={gif.title}
                                     loading='lazy'
-                                    className='block w-full'
+                                    className='block w-full rounded-xs'
                                 />
                                 <input
                                     type='radio'
                                     name='gif'
                                     value={gif.md}
                                     className='hidden'
-                                    onChange={onSelect}
+                                    onChange={select.bind(null, gif)}
                                 />
                             </label>
                         ))}
@@ -90,7 +86,7 @@ export default function GifPicker({ onSelect }: { onSelect: ChangeEventHandler }
                 )}
             </div>
 
-            <p className='px-2 py-1 text-center text-sm text-muted-foreground'>Powered by Klipy</p>
+            <p className='text-center text-sm text-muted-foreground'>Powered by Klipy</p>
         </>
     )
 }

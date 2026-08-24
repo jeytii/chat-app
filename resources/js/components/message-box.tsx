@@ -91,7 +91,7 @@ export default function MessageBox() {
                 content: payload.content
                     ? new Remarkable({ html: false, breaks: true }).render(payload.content)
                     : null,
-                gif: gif,
+                gif: gif?.sm || null,
                 image_url: image ? previewImage : null,
                 from_self: true,
                 reactions: [],
@@ -201,11 +201,8 @@ export default function MessageBox() {
         setImage(file)
     }
 
-    function selectGif(event: ChangeEvent<HTMLInputElement>) {
-        event.preventDefault()
-
-        setGif(event.target.value)
-
+    function selectGif(gif: { md: string; sm: string }) {
+        setGif(gif)
         gifsClose.current?.click()
     }
 
@@ -246,14 +243,14 @@ export default function MessageBox() {
                 reference_id: reference || '',
                 content: content || '',
                 image: image || '',
-                gif: gif || '',
+                gif: gif?.md || '',
             })
         } else {
             create({
                 reference_id: reference || '',
                 content: content || '',
                 image: image || '',
-                gif: gif || '',
+                gif: gif?.md || '',
                 seen: onlineIds.current.length >= 2,
             })
         }

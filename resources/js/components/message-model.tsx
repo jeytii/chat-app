@@ -100,7 +100,10 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         setReference(message.reference?.id || null)
         revokePreviewImage()
         setImage(message.image_url)
-        setGif(message.gif)
+        setGif({
+            md: message.gif,
+            sm: message.gif,
+        })
     }
 
     async function destroy() {
@@ -333,7 +336,7 @@ function Media({ message }: { message: Message }) {
             <div className={cn('flex', { 'justify-end': message.from_self })}>
                 <img
                     src={message.gif}
-                    className='block h-auto w-full rounded-md object-cover'
+                    className='block h-auto max-h-60 w-full rounded-md object-cover lg:max-h-100 lg:max-w-120'
                     alt='GIF'
                 />
             </div>
