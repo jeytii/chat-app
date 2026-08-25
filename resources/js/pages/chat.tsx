@@ -1,5 +1,6 @@
-import { usePage } from '@inertiajs/react'
-import { useQuery } from '@tanstack/react-query'
+import { Head, usePage } from '@inertiajs/react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
 
 import MessageBox from '@/components/message-box'
 import Messages, { Placeholder as MessagesPlaceholder } from '@/components/messages'
@@ -8,16 +9,49 @@ import PresenceIndicator from '@/components/presence-indicator'
 import { MessageScroller, MessageScrollerButton, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import ChatProvider from '@/providers/chat-provider'
-import MessageProvider from '@/providers/message-provider'
 import type { Chat as ChatType } from '@/types/models'
 
 export default function Chat() {
     const id = usePage<{ chat_id: string }>().props.chat_id
+    const queryClient = useQueryClient()
+    const onlineIds = useRef<string[]>([])
+    const [isViewing, setIsViewing] = useState<boolean>(() => (
+        typeof document === 'undefined'
+            ? true
+            : document.visibilityState === 'visible'
+    ))
+
     const { data, isLoading } = useQuery<ChatType[]>({
         queryKey: ['chats'],
         queryFn: async () => (await fetch('/chats')).json(),
     })
+
+    useEffect(() => {
+        const markMessagesAsSeen = () => {
+            queryClient.setQueryData<ChatType[]>(['chats'], current => (
+                !current ? current : current.map(chat => ({
+                    ...chat,
+                    has_new_message: chat.id === id ? false : chat.has_new_message,
+                }))
+            ))
+        }
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                markMessagesAsSeen()
+            }
+
+            setIsViewing(document.visibilityState === 'visible')
+        }
+
+        markMessagesAsSeen()
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+    }, [id, queryClient])
 
     if (isLoading || !data) {
         return (
@@ -38,7 +72,13 @@ export default function Chat() {
     const chat = data.find(chat => chat.id === id) as ChatType
 
     return (
-        <ChatProvider chat={chat}>
+        <>
+            <Head title={
+                !isViewing && chat && chat.has_new_message
+                    ? `${chat.user.name} sent a message...`
+                    : undefined
+            } />
+
             <MessageScrollerProvider scrollEdgeThreshold={200} autoScroll>
                 {/* ===== HEADER ===== */}
                 <header className='z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4 dark:border-input/60'>
@@ -55,19 +95,17 @@ export default function Chat() {
                     </div>
                 </header>
 
-                <MessageProvider>
-                    {/* ===== MESSAGES ===== */}
-                    <MessageScroller>
-                        <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
-                            <Messages />
-                        </MessageScrollerViewport>
-                        <MessageScrollerButton />
-                    </MessageScroller>
+                {/* ===== MESSAGES ===== */}
+                <MessageScroller>
+                    <MessageScrollerViewport className='data-autoscrolling:scrollbar-thin'>
+                        <Messages onlineIds={onlineIds} isViewing={isViewing} />
+                    </MessageScrollerViewport>
+                    <MessageScrollerButton />
+                </MessageScroller>
 
-                    {/* ===== MESSAGE BOX ===== */}
-                    <MessageBox />
-                </MessageProvider>
+                {/* ===== MESSAGE BOX ===== */}
+                <MessageBox onlineIds={onlineIds} />
             </MessageScrollerProvider>
-        </ChatProvider>
+        </>
     )
 }

@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import EmojiPicker, { type EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
 import { Edit, Reply, Trash2 } from 'lucide-react'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 
 import { Attachment } from '@/components/ui/attachment'
 import { Badge } from '@/components/ui/badge'
@@ -16,8 +17,8 @@ import { useAppearance } from '@/hooks/use-appearance'
 import { getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
+import useStore from '@/hooks/useStore'
 import { cn } from '@/lib/utils'
-import { MessageContext } from '@/providers/message-provider'
 import type { Message } from '@/types/models'
 
 type Props = {
@@ -29,13 +30,21 @@ type Props = {
 export default function MessageModel({ chatId, message, firstInAMinute }: Props) {
     const queryClient = useQueryClient()
     const messageToDelete = useRef<Message>(null)
-    const { reference, editId, setContent, setImage, setGif, setReference, setEditId, revokePreviewImage } = useContext(MessageContext)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
     const { appearance } = useAppearance()
     const reactionsCount = message.reactions.reduce((total, message) => total + message.total, 0)
     const reactions = message.reactions.filter(reaction => reaction.total)
+
+    const { editId, reference } = useStore(useShallow(state => ({
+        editId: state.editId,
+        reference: state.fields.reference,
+    })))
+
+    const set = useStore(state => state.set)
+    const revokeImagePreview = useStore(state => state.revokeImagePreview)
+    const clear = useStore(state => state.clear)
 
     const { mutate: deleteMessage } = useMutation<AxiosResponse, Error, { deletedMessage: Message }>({
         mutationFn: () => axios.delete(`/chats/${chatId}/messages/${message.id}`, {
@@ -95,12 +104,14 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
             return
         }
 
-        setEditId(message.id)
-        setContent(message.raw_content || null)
-        setReference(message.reference?.id || null)
-        revokePreviewImage()
-        setImage(message.image_url)
-        setGif({
+        set('editId', message.id)
+        set('content', message.raw_content || null)
+        set('reference', message.reference?.id || null)
+
+        revokeImagePreview()
+
+        set('image', message.image_url)
+        set('gif', {
             md: message.gif,
             sm: message.gif,
         })
@@ -118,12 +129,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         remove(chatId, message.id)
 
         if (editId === message.id) {
-            setEditId(null)
-            setContent(null)
-            setReference(null)
-            revokePreviewImage()
-            setImage(null)
-            setGif(null)
+            clear()
         }
 
         debounce(() => {
@@ -150,12 +156,8 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
             return
         }
 
-        setReference(message.id)
-        setEditId(null)
-        setContent(null)
-        revokePreviewImage()
-        setImage(null)
-        setGif(null)
+        clear()
+        set('reference', message.id)
     }
 
     function react({ emoji, unified: name }: EmojiClickData) {
@@ -228,7 +230,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 <Card size='sm' className='responsive-message p-0'>
                     <CardContent className='relative flex items-center gap-2 px-4 py-(--card-spacing) before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""]'>
                         {!!message.reference.image_url && (
-                            <img src={message.reference.image_url} alt='Attachment' className='aspect-square w-12 rounded-xs' />
+                            <img src={message.reference.image_url} alt='Attachment' className='block max-h-12 max-w-12 rounded-xs' />
                         )}
 
                         <p className='line-clamp-2 w-full text-muted-foreground italic'>

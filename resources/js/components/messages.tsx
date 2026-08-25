@@ -4,7 +4,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { differenceInMinutes, isSameDay } from 'date-fns'
 import { CheckCheck } from 'lucide-react'
-import { Fragment, useContext, useEffect, useRef } from 'react'
+import { Fragment, type RefObject, useEffect, useRef } from 'react'
 
 import MessageModel from '@/components/message-model'
 import { Marker, MarkerContent, MarkerIcon } from '@/components/ui/marker'
@@ -14,7 +14,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useDebounce } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
-import { ChatContext } from '@/providers/chat-provider'
 import type { Chat, Message as MessageType, MessageResponse, Reaction } from '@/types/models'
 
 type MessageSentData = Omit<MessageType, 'from_self'> & {
@@ -32,9 +31,8 @@ async function getMessages(pageParam: string | null, chatId: string, signal: Abo
     return data
 }
 
-export default function Messages() {
+export default function Messages({ onlineIds, isViewing }: { onlineIds: RefObject<string[]>; isViewing: boolean }) {
     const { auth, chat_id: chatId } = usePage<{ chat_id: string }>().props
-    const { isViewing, onlineIds } = useContext(ChatContext)
 
     const { data, isLoading, fetchPreviousPage, isFetchingPreviousPage, hasPreviousPage } = useInfiniteQuery<
         MessageResponse,

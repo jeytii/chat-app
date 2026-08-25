@@ -4,8 +4,9 @@ import axios, { type AxiosResponse } from 'axios'
 import EmojiPicker, { type EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
 import { Popover as PopoverPrimitive } from 'radix-ui'
-import { type ChangeEvent, type KeyboardEvent, type SubmitEvent, useContext, useEffect, useRef } from 'react'
+import { type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent, type RefObject, type SubmitEvent, useEffect, useMemo, useRef } from 'react'
 import { Remarkable } from 'remarkable'
+import { useShallow } from 'zustand/react/shallow'
 
 import GifPicker from '@/components/gif-picker'
 import { Button } from '@/components/ui/button'
@@ -16,9 +17,8 @@ import { useAppearance } from '@/hooks/use-appearance'
 import { getDateDiff, getTimeDiff } from '@/hooks/use-datetime'
 import { useThrottle } from '@/hooks/use-limit'
 import useMessage from '@/hooks/use-message'
+import useStore from '@/hooks/useStore'
 import { cn } from '@/lib/utils'
-import { ChatContext } from '@/providers/chat-provider'
-import { MessageContext } from '@/providers/message-provider'
 import type { Message, MessageResponse } from '@/types/models'
 
 type CreationPayload = {
@@ -37,16 +37,40 @@ type UpdatePayload = {
     gif: string | null;
 }
 
-export default function MessageBox() {
+export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[]> }) {
     const { chat_id: chatId } = usePage<{ chat_id: string }>().props
-    const { onlineIds } = useContext(ChatContext)
-    const { content, image, gif, reference, previewImage, editId, setContent, setImage, setGif, setReference, setEditId, revokePreviewImage } = useContext(MessageContext)
     const { insert, alter } = useMessage()
     const throttle = useThrottle(1000)
     const queryClient = useQueryClient()
     const { appearance } = useAppearance()
     const textarea = useRef<HTMLTextAreaElement>(null)
     const gifsClose = useRef<HTMLButtonElement>(null)
+
+    const { editId, reference, content, image, gif, imagePreview } = useStore(useShallow(state => ({
+        editId: state.editId,
+        content: state.fields.content,
+        reference: state.fields.reference,
+        image: state.fields.image,
+        gif: state.fields.gif,
+        imagePreview: state.imagePreview,
+    })))
+
+    const set = useStore(state => state.set)
+    const revokeImagePreview = useStore(state => state.revokeImagePreview)
+    const clear = useStore(state => state.clear)
+
+    const attachment = useMemo(() => {
+        if (gif?.sm) {
+            return gif.sm
+        }
+
+        if (typeof image === 'string') {
+            return image
+        }
+
+        return imagePreview
+    }, [image, gif, imagePreview])
+
     const channel = window.Echo.join(`room.${chatId}`)
     const replyTo = queryClient.getQueryData<InfiniteData<MessageResponse>>(['messages', chatId])
         ?.pages
@@ -55,9 +79,9 @@ export default function MessageBox() {
 
     useEffect(() => {
         return () => {
-            revokePreviewImage()
+            revokeImagePreview()
         }
-    }, [revokePreviewImage])
+    }, [revokeImagePreview])
 
     useEffect(() => {
         if (editId) {
@@ -66,6 +90,21 @@ export default function MessageBox() {
             }, 500)
         }
     }, [editId])
+
+    useEffect(() => {
+        const keydownCancel = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault()
+                clear()
+            }
+        }
+
+        document.addEventListener('keydown', keydownCancel)
+
+        return () => {
+            document.removeEventListener('keydown', keydownCancel)
+        }
+    }, [clear])
 
     const { mutate: create, isPending: isCreating } = useMutation<AxiosResponse<Message>, Error, CreationPayload, { id: string }>({
         mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
@@ -92,7 +131,7 @@ export default function MessageBox() {
                     ? new Remarkable({ html: false, breaks: true }).render(payload.content)
                     : null,
                 gif: gif?.sm || null,
-                image_url: image ? previewImage : null,
+                image_url: imagePreview,
                 from_self: true,
                 reactions: [],
                 date: new Date().toLocaleString(),
@@ -101,8 +140,8 @@ export default function MessageBox() {
                 is_fake: true,
             })
 
-            setReference(null)
-            setContent(null)
+            set('reference', null)
+            set('content', null)
 
             return { id: itemId }
         },
@@ -142,10 +181,7 @@ export default function MessageBox() {
         onSuccess({ data }, { id }, context, { client }) {
             alter(chatId, id, data)
 
-            setEditId(null)
-            setReference(null)
-            setContent(null)
-            removeUpload()
+            clear()
 
             client.invalidateQueries({
                 queryKey: ['messages', chatId],
@@ -155,7 +191,7 @@ export default function MessageBox() {
     })
 
     function handleMessage(event: ChangeEvent<HTMLTextAreaElement>) {
-        setContent(event.target.value)
+        set('content', event.target.value)
 
         throttle(() => {
             channel.whisper('typing', {})
@@ -170,12 +206,12 @@ export default function MessageBox() {
         const input = textarea.current as HTMLTextAreaElement
         const start = input.selectionStart
         const end = input.selectionEnd
+        const value = content || ''
 
-        setContent(current => {
-            const value = current || ''
-
-            return value.substring(0, start) + emoji + value.substring(end)
-        })
+        set(
+            'content',
+            value.substring(0, start) + emoji + value.substring(end),
+        )
 
         input.focus()
 
@@ -196,20 +232,24 @@ export default function MessageBox() {
             return
         }
 
-        revokePreviewImage()
-        setGif(null)
-        setImage(file)
+        revokeImagePreview()
+        set('gif', null)
+        set('image', file)
+        set('imagePreview', URL.createObjectURL(file))
     }
 
     function selectGif(gif: { md: string; sm: string }) {
-        setGif(gif)
+        revokeImagePreview()
+        set('image', null)
+        set('gif', gif)
+
         gifsClose.current?.click()
     }
 
     function removeUpload() {
-        revokePreviewImage()
-        setImage(null)
-        setGif(null)
+        revokeImagePreview()
+        set('image', null)
+        set('gif', null)
     }
 
     function cancelEditMode() {
@@ -217,13 +257,10 @@ export default function MessageBox() {
             return
         }
 
-        setEditId(null)
-        setContent(null)
-        setReference(null)
-        removeUpload()
+        clear()
     }
 
-    function handleSubmit(event: KeyboardEvent<HTMLTextAreaElement>) {
+    function handleSubmit(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
         if (!event.shiftKey && event.key === 'Enter') {
             event.preventDefault()
             textarea.current?.form?.requestSubmit()
@@ -233,7 +270,7 @@ export default function MessageBox() {
     function send(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
 
-        if ((!content?.length && !image && !gif) || isUpdating) {
+        if ((!content?.trim().length && !image && !gif) || isUpdating) {
             return
         }
 
@@ -259,23 +296,24 @@ export default function MessageBox() {
     return (
         <form onSubmit={send} className='z-10'>
             {!!replyTo && (
-                <div className='relative border-t p-4'>
-                    <Button
-                        type='button'
-                        variant='secondary'
-                        size='icon-xs'
-                        className='absolute top-3 right-3 size-4 rounded-full'
-                        onClick={setReference.bind(null, null)}
-                    >
-                        <X />
-                    </Button>
-                    <Card size='sm'>
+                <div className=''>
+                    <Card size='sm' className='relative bg-transparent!'>
                         <CardContent className='flex items-center gap-4'>
                             {!!replyTo.image_url && (
-                                <img src={replyTo.image_url} alt='Attachment' className='w-12 rounded-xs' />
+                                <img src={replyTo.image_url} alt='Attachment' className='block max-h-12 max-w-12 rounded-xs' />
                             )}
 
                             <p className='line-clamp-2 w-full text-muted-foreground italic'>{replyTo.raw_content || '(Sent an image)'}</p>
+
+                            <Button
+                                type='button'
+                                variant='ghost'
+                                size='icon-sm'
+                                className='size-5 rounded-full'
+                                onClick={set.bind(null, 'reference', null)}
+                            >
+                                <X />
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -293,10 +331,10 @@ export default function MessageBox() {
                     onChange={handleMessage}
                 />
 
-                {(!!previewImage && !isCreating) && (
+                {(!!attachment && !isCreating) && (
                     <div className='w-full px-4 pt-3'>
                         <div className='relative inline-block'>
-                            <img src={previewImage} className='block max-h-25 max-w-25 rounded' />
+                            <img src={attachment} className='block max-h-20 max-w-20 rounded' />
 
                             <Button
                                 type='button'
