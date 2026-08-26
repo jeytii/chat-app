@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react'
+import { Link, usePage } from '@inertiajs/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 
@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { Chat } from '@/types/models'
 
 export default function AppSidebar() {
+    const { name } = usePage().props
     const queryClient = useQueryClient()
 
     const { data, isLoading } = useQuery<Chat[]>({
@@ -66,7 +67,10 @@ export default function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size='lg' asChild>
                             <Link href='/' prefetch>
-                                <AppLogo />
+                                <AppLogo className='size-6!' />
+                                <div className='ml-1 grid flex-1 text-left text-sm'>
+                                    <span className='mb-0.5 truncate leading-tight font-semibold'>{name}</span>
+                                </div>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
