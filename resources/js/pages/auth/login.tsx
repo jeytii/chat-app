@@ -101,7 +101,3 @@ export default function Login({
         </>
     )
 }
-
-Login.layout = {
-    title: 'Log in to your account',
-}
