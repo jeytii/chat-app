@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { type MouseEvent, useEffect, useRef } from 'react'
 
 import Photo from '@/components/photo'
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
@@ -22,6 +22,12 @@ export default function Contact({ chat }: { chat: Chat }) {
     const insertRef = useRef<(chatId: string, message: Message) => void>(insert)
     const alterRef = useRef<(chatId: string, id: string, newData: Partial<Message>) => void>(alter)
     const removeRef = useRef<(chatId: string, id: string) => void>(remove)
+
+    function preventDefault(event: MouseEvent) {
+        if (chat.id === chatId) {
+            event.preventDefault()
+        }
+    }
 
     useEffect(() => {
         insertRef.current = insert
@@ -72,7 +78,7 @@ export default function Contact({ chat }: { chat: Chat }) {
                 asChild
                 className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
             >
-                <Link href={`/chats/${chat.id}`} replace>
+                <Link href={`/chats/${chat.id}`} replace onClick={preventDefault}>
                     <div className='relative'>
                         <Photo src={chat.user.image_url as string} alt={chat.user.name} />
 

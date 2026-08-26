@@ -22,11 +22,11 @@ export function ImageUploader({ src }: { src: string }) {
             return
         }
 
-        const blob = URL.createObjectURL(file)
+        const temporaryUrl = URL.createObjectURL(file)
         let img: HTMLImageElement | null = new Image()
         let isBelowMinimum = false
 
-        img.src = blob
+        img.src = temporaryUrl
 
         img.onload = () => {
             isBelowMinimum = (img?.naturalWidth as number) < 200 || (img?.naturalHeight as number) < 200
@@ -35,9 +35,11 @@ export function ImageUploader({ src }: { src: string }) {
         if (isBelowMinimum) {
             URL.revokeObjectURL(img.src)
         } else {
+            modal.current?.classList.add('animate-in', 'fade-in-0', 'zoom-in-95')
+
             setImage(file)
 
-            preview.current = blob
+            preview.current = temporaryUrl
 
             modal.current?.showModal()
 
@@ -69,16 +71,25 @@ export function ImageUploader({ src }: { src: string }) {
     }
 
     function cancel() {
-        if (image && preview.current) {
-            URL.revokeObjectURL(preview.current)
-            setImage(null)
-        }
+        modal.current?.classList.replace('animate-in', 'animate-out')
+        modal.current?.classList.replace('fade-in-0', 'fade-out-0')
+        modal.current?.classList.replace('zoom-in-95', 'zoom-out-95')
 
-        reset()
+        setTimeout(() => {
+            if (image && preview.current) {
+                URL.revokeObjectURL(preview.current)
+                preview.current = null
+                setImage(null)
+            }
 
-        modal.current?.close()
+            reset()
 
-        document.body.classList.remove('overflow-hidden')
+            modal.current?.close()
+
+            modal.current?.classList.remove('animate-out', 'fade-out-0', 'zoom-out-95')
+
+            document.body.classList.remove('overflow-hidden')
+        }, 120)
     }
 
     return (
@@ -106,7 +117,7 @@ export function ImageUploader({ src }: { src: string }) {
                 </div>
             </div>
 
-            {createPortal(
+            {document instanceof Document && createPortal(
                 <dialog ref={modal} className='m-auto bg-transparent backdrop:bg-black backdrop:opacity-90'>
                     <div className='space-y-4'>
                         <Cropper
