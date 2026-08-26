@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import axios, { type AxiosResponse } from 'axios'
 import EmojiPicker, { type EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
 import { Edit, Reply, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
 import { Attachment } from '@/components/ui/attachment'
@@ -28,8 +28,6 @@ type Props = {
 }
 
 export default function MessageModel({ chatId, message, firstInAMinute }: Props) {
-    const queryClient = useQueryClient()
-    const messageToDelete = useRef<Message>(null)
     const [date, setDate] = useState(getTimeDiff(message.date))
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
@@ -46,22 +44,47 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     const revokeImagePreview = useStore(state => state.revokeImagePreview)
     const clear = useStore(state => state.clear)
 
-    const { mutate: deleteMessage } = useMutation<AxiosResponse, Error, { deletedMessage: Message }>({
+    const { mutate: destroy, context: destroyContext, reset: resetDestroy } = useMutation<AxiosResponse, Error, { message: Message }, { message: Message }>({
         mutationFn: () => axios.delete(`/chats/${chatId}/messages/${message.id}`, {
             headers: {
                 'X-Socket-ID': window.Echo.socketId(),
             },
         }),
-        onError(error, { deletedMessage }) {
-            alter(chatId, deletedMessage.id, deletedMessage)
+        async onMutate({ message }, { client }) {
+            await client.cancelQueries({ queryKey: ['messages', chatId] })
+
+            remove(chatId, message.id)
+
+            if (editId === message.id) {
+                clear()
+            }
+
+            debounce(resetDestroy)
+
+            return { message }
         },
-        async onSettled(data, error, payload, context, { client }) {
-            await client.invalidateQueries({
+        onSettled(data, error, payload, context, { client }) {
+            client.invalidateQueries({
                 queryKey: ['messages', chatId],
                 refetchType: 'none',
             })
+        },
+    })
 
-            messageToDelete.current = null
+    const { mutate: restore } = useMutation<AxiosResponse, Error, { message: Message }>({
+        mutationFn: () => axios.put(`/chats/${chatId}/messages/${message.id}/restore`),
+        onMutate({ message: deletedMessage }) {
+            alter(chatId, message.id, deletedMessage)
+            stopDebounce()
+        },
+        onSuccess() {
+            resetDestroy()
+        },
+        onSettled(data, error, payload, context, { client }) {
+            client.invalidateQueries({
+                queryKey: ['messages', chatId],
+                refetchType: 'none',
+            })
         },
     })
 
@@ -91,8 +114,8 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     }],
             })
         },
-        onSuccess() {
-            queryClient.invalidateQueries({
+        onSuccess(data, payload, context, { client }) {
+            client.invalidateQueries({
                 queryKey: ['messages', chatId],
                 refetchType: 'none',
             })
@@ -117,38 +140,27 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         })
     }
 
-    async function destroy() {
+    async function deleteMessage() {
         if ((!message.from_self && !message.is_fake) || reference) {
             return
         }
 
-        await queryClient.cancelQueries({ queryKey: ['messages', chatId] })
-
-        messageToDelete.current = message
-
-        remove(chatId, message.id)
-
-        if (editId === message.id) {
-            clear()
-        }
-
-        debounce(() => {
-            deleteMessage({ deletedMessage: messageToDelete.current as Message })
-        })
+        destroy({ message })
     }
 
-    function undoDestroy() {
-        if (!message.from_self || !canStopDebounce) {
+    function undoDelete() {
+        const deletedMessage = destroyContext?.message
+
+        if (
+            !deletedMessage
+            || !deletedMessage.from_self
+            || message.id !== deletedMessage.id
+            || !canStopDebounce
+        ) {
             return
         }
 
-        alter(
-            chatId,
-            message.id,
-            messageToDelete.current as Message,
-        )
-
-        stopDebounce()
+        restore({ message: deletedMessage })
     }
 
     function reply() {
@@ -200,7 +212,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                                 variant='ghost'
                                 size='xs'
                                 className='bg-muted'
-                                onClick={undoDestroy}
+                                onClick={undoDelete}
                             >
                                 Undo
                             </Button>
@@ -222,7 +234,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 )}
 
                 {(!message.is_fake && !firstInAMinute && message.edited) && (
-                    <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>(edited)</p>
+                    <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>edited</p>
                 )}
             </MessageHeader>
 
@@ -300,7 +312,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                                 </Button>
                             </ContextMenuItem>
                             <ContextMenuItem asChild>
-                                <Button className='w-full justify-start hover:text-destructive!' variant='ghost' onClick={destroy}>
+                                <Button className='w-full justify-start hover:text-destructive!' variant='ghost' onClick={deleteMessage}>
                                     <Trash2 />
                                     <span>Delete</span>
                                 </Button>

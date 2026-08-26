@@ -6,6 +6,7 @@ use App\Events\MessageEvent;
 use App\Events\MessageReaction;
 use App\Http\Requests\MessageRequest;
 use App\Http\Resources\MessageResource;
+use App\Jobs\DeleteMessage;
 use App\Models\Chat;
 use App\Models\Message;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -130,12 +131,19 @@ class MessageController extends Controller
     public function destroy(Chat $chat, Message $message): array
     {
         if ($message->delete()) {
-            broadcast(new MessageEvent(
-                'MessageDeleted',
-                $chat->id,
-                $message->only('id'),
-            ))->toOthers();
+            DeleteMessage::dispatch($message, $chat->id)->delay(5);
         }
+
+        return ['success' => true];
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    #[Authorize('restore', 'message')]
+    public function restore(Chat $chat, Message $message): array
+    {
+        $message->restore();
 
         return ['success' => true];
     }

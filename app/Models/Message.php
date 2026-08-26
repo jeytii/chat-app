@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property string $id
@@ -38,21 +37,6 @@ class Message extends Model
     {
         static::creating(function (self $model): void {
             $model->updated_at = null;
-        });
-
-        static::softDeleted(function (self $model): void {
-            $image = $model->image;
-
-            $model->update([
-                'reference_id' => null,
-                'content' => null,
-                'image' => null,
-                'gif' => null,
-            ]);
-
-            if ($image) {
-                Storage::delete($image);
-            }
         });
     }
 

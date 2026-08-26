@@ -12,12 +12,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('chats', ChatController::class)
         ->only(['index', 'show']);
 
-    Route::post('chats/{chat}/messages/{message}/react', [MessageController::class, 'react'])
-        ->scopeBindings()
-        ->name('chats.messages.react');
-    Route::get('chats/{chat}/image/{message:image}', [MessageController::class, 'viewImage'])
-        ->scopeBindings()
-        ->name('chats.messages.image');
+    Route::controller(MessageController::class)->name('chats.messages')->scopeBindings()->group(function () {
+        Route::put('chats/{chat}/messages/{message}/restore', 'restore')
+            ->withTrashed()
+            ->name('.restore');
+        Route::post('chats/{chat}/messages/{message}/react', 'react')
+            ->name('.react');
+        Route::get('chats/{chat}/image/{message:image}', 'viewImage')
+            ->name('.image');
+    });
     Route::apiResource('chats.messages', MessageController::class)
         ->except('show')
         ->scoped();

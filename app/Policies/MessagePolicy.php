@@ -49,6 +49,16 @@ class MessagePolicy
     }
 
     /**
+     * Determine whether the user can restore the model.
+     */
+    public function restore(User $user, Message $message): bool
+    {
+        return $message->sender_id === $user->id
+            && $message->trashed()
+            && $message->deleted_at->diffInSeconds(now()) < 5;
+    }
+
+    /**
      * Determine whether the user can react to the model.
      */
     public function react(User $user, Message $message, Chat $chat): bool
