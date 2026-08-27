@@ -1,6 +1,5 @@
 import { Link, usePage } from '@inertiajs/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 import AppLogo from '@/components/app-logo'
 import Contact from '@/components/contact'
@@ -21,44 +20,11 @@ import type { Chat } from '@/types/models'
 
 export default function AppSidebar() {
     const { name } = usePage().props
-    const queryClient = useQueryClient()
 
     const { data, isLoading } = useQuery<Chat[]>({
         queryKey: ['chats'],
         queryFn: async () => (await fetch('/chats')).json(),
     })
-
-    useEffect(() => {
-        window.Echo.join('online')
-            .here((emails: string[]) => {
-                queryClient.setQueryData<Chat[]>(['chats'], current => (
-                    !current ? current : current.map(chat => ({
-                        ...chat,
-                        is_online: !!emails.find(email => chat.user.email === email),
-                    }))
-                ))
-            })
-            .joining((email: string) => {
-                queryClient.setQueryData<Chat[]>(['chats'], current => (
-                    !current ? current : current.map(chat => ({
-                        ...chat,
-                        is_online: chat.user.email === email ? true : chat.is_online,
-                    }))
-                ))
-            })
-            .leaving((email: string) => {
-                queryClient.setQueryData<Chat[]>(['chats'], current => (
-                    !current ? current : current.map(chat => ({
-                        ...chat,
-                        is_online: chat.user.email === email ? false : chat.is_online,
-                    }))
-                ))
-            })
-
-        return () => {
-            window.Echo.leave('online')
-        }
-    }, [queryClient])
 
     return (
         <Sidebar collapsible='icon' variant='inset' className='px-0!'>
@@ -66,11 +32,9 @@ export default function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size='lg' asChild>
-                            <Link href='/' prefetch>
+                            <Link href='/' replace className='gap-3'>
                                 <AppLogo className='size-6!' />
-                                <div className='ml-1 grid flex-1 text-left text-sm'>
-                                    <span className='mb-0.5 truncate leading-tight font-semibold'>{name}</span>
-                                </div>
+                                <h1 className='truncate text-sm leading-tight font-semibold'>{name}</h1>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

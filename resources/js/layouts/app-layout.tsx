@@ -1,9 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { useEffect } from 'react'
 
 import AppSidebar from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useCurrentUrl } from '@/hooks/use-current-url'
+import { Chat } from '@/types/models'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -16,25 +18,64 @@ const queryClient = new QueryClient({
 })
 
 export default function AppLayout({ children }: { children: React.ReactNode; }) {
-    const { currentUrl } = useCurrentUrl()
-
     return (
         <QueryClientProvider client={queryClient}>
-            <SidebarProvider>
-                <AppSidebar />
-                <SidebarInset className={currentUrl.startsWith('/chats') ? 'h-svh md:h-[calc(100svh-16px)]' : 'min-h-svh'}>
-                    {currentUrl === '/settings'
-                        ? (
-                            <section className='max-w-2xl space-y-4 p-4'>
-                                {children}
-                            </section>
-                        )
-                        : children
-                    }
-                </SidebarInset>
-            </SidebarProvider>
-
+            <Main>{children}</Main>
             <ReactQueryDevtools position='right' buttonPosition='bottom-left' />
         </QueryClientProvider>
+    )
+}
+
+function Main({ children }: { children: React.ReactNode }) {
+    const { currentUrl } = useCurrentUrl()
+    const queryClient = useQueryClient()
+
+    useEffect(() => {
+        window.Echo.join('online')
+            .here((emails: string[]) => {
+                queryClient.setQueryData<Chat[]>(['chats'], current => (
+                    !current ? current : current.map(chat => ({
+                        ...chat,
+                        is_online: !!emails.find(email => chat.user.email === email),
+                    }))
+                ))
+            })
+            .joining((email: string) => {
+                queryClient.setQueryData<Chat[]>(['chats'], current => (
+                    !current ? current : current.map(chat => ({
+                        ...chat,
+                        is_online: chat.user.email === email ? true : chat.is_online,
+                    }))
+                ))
+            })
+            .leaving((email: string) => {
+                queryClient.setQueryData<Chat[]>(['chats'], current => (
+                    !current ? current : current.map(chat => ({
+                        ...chat,
+                        is_online: chat.user.email === email ? false : chat.is_online,
+                    }))
+                ))
+            })
+
+        return () => {
+            window.Echo.leave('online')
+        }
+    }, [queryClient])
+
+    return (
+        <SidebarProvider>
+            {currentUrl !== '/' && <AppSidebar />}
+
+            <SidebarInset className={currentUrl.startsWith('/chats') ? 'h-svh md:h-[calc(100svh-16px)]' : 'min-h-svh'}>
+                {currentUrl === '/settings'
+                    ? (
+                        <section className='max-w-2xl space-y-4 p-4'>
+                            {children}
+                        </section>
+                    )
+                    : children
+                }
+            </SidebarInset>
+        </SidebarProvider>
     )
 }

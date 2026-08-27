@@ -3,8 +3,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { type MouseEvent, useEffect, useRef } from 'react'
 
 import Photo from '@/components/photo'
+import { Card, CardContent } from '@/components/ui/card'
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 import useMessage from '@/hooks/use-message'
+import { cn } from '@/lib/utils'
 import type { Chat, Message } from '@/types/models'
 
 type MessageSentData = Omit<Message, 'from_self'> & {
@@ -14,7 +16,7 @@ type MessageSentData = Omit<Message, 'from_self'> & {
 
 type MessageEditedData = Message & { chat_id: string }
 
-export default function Contact({ chat }: { chat: Chat }) {
+export default function Contact({ chat, isOutsideSidebar = false }: { chat: Chat; isOutsideSidebar?: boolean }) {
     const { auth, chat_id: chatId } = usePage<{ chat_id: string }>().props
     const queryClient = useQueryClient()
     const { insert, alter, remove } = useMessage()
@@ -69,6 +71,43 @@ export default function Contact({ chat }: { chat: Chat }) {
             window.Echo.leave(`chat.${chat.id}`)
         }
     }, [auth.user.email, chat.id, queryClient])
+
+    if (isOutsideSidebar) {
+        return (
+            <Link
+                key={chat.id}
+                href={`/chats/${chat.id}`}
+                replace
+                className='block'
+            >
+                <Card>
+                    <CardContent className='flex items-center gap-3'>
+                        <div className={cn(
+                            'rounded-full',
+                            { 'border-2 border-primary p-1': chat.has_new_message },
+                        )}>
+                            <Photo
+                                src={chat.user.image_url || undefined}
+                                alt='Image'
+                                className={chat.has_new_message ? 'size-10' : 'size-13'}
+                                skeletonClassName={chat.has_new_message ? 'size-10' : 'size-13'}
+                            />
+                        </div>
+
+                        <div className='space-y-1'>
+                            <h1 className='truncate font-bold'>{chat.user.name}</h1>
+
+                            {chat.is_online ? (
+                                <p className='text-xs text-green-600 dark:text-green-400'>Online</p>
+                            ) : (
+                                <p className='text-xs text-muted-foreground'>Offline</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </Link>
+        )
+    }
 
     return (
         <SidebarMenuItem>
