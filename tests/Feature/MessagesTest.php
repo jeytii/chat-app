@@ -1,14 +1,17 @@
 <?php
 
 use App\Events\MessageEvent;
+use App\Jobs\DeleteMessage;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
+use function Pest\Laravel\travelTo;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -330,5 +333,103 @@ describe('UPDATE', function () {
         expect($message->content)->toBe($currentContent);
 
         Event::assertNotDispatched(MessageEvent::class);
+    });
+});
+
+describe('DELETE', function () {
+    beforeEach(function () {
+        Queue::fake();
+        Event::fake();
+        Storage::fake();
+
+        $this->message = Message::factory()
+            ->for($this->chat)
+            ->for($this->user, 'sender')
+            ->create();
+    });
+
+    test('can delete a message with 5-second grace period to undo action', function () {
+        actingAs($this->user)
+            ->deleteJson(route('chats.messages.destroy', [
+                'chat' => $this->chat,
+                'message' => $this->message,
+            ]))
+            ->assertStatus(200);
+
+        expect($this->message->refresh()->trashed())->toBeTrue();
+        expect($this->message->content)->not()->toBeNull();
+
+        Event::assertNotDispatched(MessageEvent::class);
+
+        Queue::assertPushed(
+            DeleteMessage::class,
+            fn (DeleteMessage $job) => $job->delay === 5,
+        );
+
+        travelTo(now()->addSeconds(5));
+
+        (new DeleteMessage($this->message, $this->chat->id))
+            ->withFakeQueueInteractions()
+            ->handle();
+
+        Event::assertDispatched(
+            MessageEvent::class,
+            fn (MessageEvent $event) => $event->eventName === 'MessageDeleted',
+        );
+
+        expect($this->message->refresh()->content)->toBeNull();
+    });
+
+    test('can undo message deletion within 5 seconds', function () {
+        actingAs($this->user)
+            ->deleteJson(route('chats.messages.destroy', [
+                'chat' => $this->chat,
+                'message' => $this->message,
+            ]))
+            ->assertStatus(200);
+
+        travelTo(now()->addSeconds(3));
+
+        actingAs($this->user)
+            ->putJson(route('chats.messages.restore', [
+                'chat' => $this->chat,
+                'message' => $this->message,
+            ]))
+            ->assertStatus(200);
+
+        travelTo(now()->addSeconds(5));
+
+        Event::assertNotDispatched(MessageEvent::class);
+
+        expect($this->message->refresh()->trashed())->toBeFalse();
+        expect($this->message->content)->not->toBeNull();
+    });
+
+    test('cannot undo message deletion if >= 5 seconds have passed', function () {
+        actingAs($this->user)
+            ->deleteJson(route('chats.messages.destroy', [
+                'chat' => $this->chat,
+                'message' => $this->message,
+            ]))
+            ->assertStatus(200);
+
+        travelTo(now()->addSeconds(6));
+
+        actingAs($this->user)
+            ->putJson(route('chats.messages.restore', [
+                'chat' => $this->chat,
+                'message' => $this->message,
+            ]))
+            ->assertStatus(403);
+
+        Event::assertNotDispatched(MessageEvent::class);
+
+        expect($this->message->refresh()->trashed())->toBeTrue();
+
+        (new DeleteMessage($this->message, $this->chat->id))
+            ->withFakeQueueInteractions()
+            ->handle();
+
+        expect($this->message->content)->toBeNull();
     });
 });
