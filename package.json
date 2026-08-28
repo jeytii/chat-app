@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
+        "build": "rm -f public/hot && vite build",
         "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
         "lint": "eslint . --fix",

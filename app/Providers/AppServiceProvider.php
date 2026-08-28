@@ -20,7 +20,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        DevCommands::except('logs');
+        $devExceptions = ['logs'];
+
+        if (config('app.env') === 'staging') {
+            $devExceptions[] = 'vite';
+        }
+
+        DevCommands::except(...$devExceptions);
     }
 
     /**
