@@ -41,7 +41,7 @@ export function UserMenuContent() {
                 >
                     {themes.map((theme, index, items) => (
                         <Fragment key={theme.value}>
-                            <ToggleGroupItem value={theme.value} className='flex-1 cursor-pointer first:rounded-tl-sm! first:rounded-bl-none last:rounded-tr-sm! last:rounded-br-none data-[state=on]:bg-sidebar-accent data-[state=on]:[&>svg]:text-sidebar-accent-foreground!'>
+                            <ToggleGroupItem value={theme.value} className='flex-1 cursor-pointer first:rounded-tl-sm! first:rounded-bl-none last:rounded-tr-sm! last:rounded-br-none data-[state=on]:[&>svg]:text-sidebar-accent-foreground!'>
                                 <theme.icon size={16} />
                             </ToggleGroupItem>
 

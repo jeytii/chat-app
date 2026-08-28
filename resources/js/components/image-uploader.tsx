@@ -35,8 +35,6 @@ export function ImageUploader({ src }: { src: string }) {
         if (isBelowMinimum) {
             URL.revokeObjectURL(img.src)
         } else {
-            modal.current?.classList.add('animate-in', 'fade-in-0', 'zoom-in-95')
-
             setImage(file)
 
             preview.current = temporaryUrl
@@ -71,35 +69,30 @@ export function ImageUploader({ src }: { src: string }) {
     }
 
     function cancel() {
-        modal.current?.classList.replace('animate-in', 'animate-out')
-        modal.current?.classList.replace('fade-in-0', 'fade-out-0')
-        modal.current?.classList.replace('zoom-in-95', 'zoom-out-95')
+        if (image && preview.current) {
+            URL.revokeObjectURL(preview.current)
+            preview.current = null
+            setImage(null)
+        }
 
-        setTimeout(() => {
-            if (image && preview.current) {
-                URL.revokeObjectURL(preview.current)
-                preview.current = null
-                setImage(null)
-            }
+        reset()
 
-            reset()
+        modal.current?.close()
 
-            modal.current?.close()
-
-            modal.current?.classList.remove('animate-out', 'fade-out-0', 'zoom-out-95')
-
-            document.body.classList.remove('overflow-hidden')
-        }, 120)
+        document.body.classList.remove('overflow-hidden')
     }
 
     return (
         <>
-            <div className='flex items-center gap-2'>
+            <div className='flex items-center gap-4'>
                 <div className='relative inline-block min-h-30 min-w-30'>
                     <Photo src={src} className='size-30' skeletonClassName='size-30' />
-
-                    <Button type='button' size='icon-sm' className='absolute right-0 bottom-0 px-0'>
-                        <label className='flex size-full items-center justify-center rounded-full'>
+                </div>
+                <div className='space-y-2'>
+                    <p className='text-sm text-muted-foreground'><b>Dimensions</b>: at least 200x200</p>
+                    <p className='text-sm text-muted-foreground'><b>Formats</b>: JPG, PNG, WEBP</p>
+                    <Button type='button' size='sm'>
+                        <label className='flex size-full items-center justify-center gap-2 rounded-full'>
                             <input
                                 type='file'
                                 name='image'
@@ -107,13 +100,11 @@ export function ImageUploader({ src }: { src: string }) {
                                 className='hidden'
                                 onChange={upload}
                             />
+
                             <Upload />
+                            <span>Upload</span>
                         </label>
                     </Button>
-                </div>
-                <div className='space-y-1'>
-                    <p className='text-sm text-muted-foreground'><b>Dimensions</b>: at least 200x200</p>
-                    <p className='text-sm text-muted-foreground'><b>Formats</b>: JPG, PNG, WEBP</p>
                 </div>
             </div>
 

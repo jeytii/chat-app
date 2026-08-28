@@ -50,19 +50,19 @@ export default function Home() {
             {(isLoading || !data) ? (
                 <section className='mx-auto max-w-2xl space-y-4 p-4'>
                     <Skeleton className='h-6 w-20' />
-                    <Skeleton className='h-[83px] w-full' />
-                    <Skeleton className='h-[83px] w-full' />
-                    <Skeleton className='h-[83px] w-full' />
-                    <Skeleton className='h-[83px] w-full' />
-                    <Skeleton className='h-[83px] w-full' />
-                    <Skeleton className='h-[83px] w-full' />
+                    <Skeleton className='h-20.75 w-full' />
+                    <Skeleton className='h-20.75 w-full' />
+                    <Skeleton className='h-20.75 w-full' />
+                    <Skeleton className='h-20.75 w-full' />
+                    <Skeleton className='h-20.75 w-full' />
+                    <Skeleton className='h-20.75 w-full' />
                 </section>
             ) : (
                 <section className='mx-auto max-w-2xl space-y-4 p-4'>
                     <h1 className='space-x-2'>
-                        <span>Contacts</span>
+                        <span className='font-semibold'>Contacts</span>
                         <span>&#8226;</span>
-                        <span>{data.length}</span>
+                        <span className='font-semibold'>{data.length}</span>
                     </h1>
 
                     {data.map(chat => <Contact key={chat.id} chat={chat} isOutsideSidebar />)}

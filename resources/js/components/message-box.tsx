@@ -84,19 +84,17 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
     }, [revokeImagePreview])
 
     useEffect(() => {
-        if (editId) {
-            setTimeout(() => {
-                textarea.current?.focus()
-            }, 500)
-        }
-    }, [editId])
-
-    useEffect(() => {
         const keydownCancel = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
+            if (event.key === 'Escape' && (editId || reference)) {
                 event.preventDefault()
                 clear()
             }
+        }
+
+        if (editId || reference) {
+            setTimeout(() => {
+                textarea.current?.focus()
+            }, 200)
         }
 
         document.addEventListener('keydown', keydownCancel)
@@ -104,7 +102,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
         return () => {
             document.removeEventListener('keydown', keydownCancel)
         }
-    }, [clear])
+    }, [editId, reference, clear])
 
     const { mutate: create, isPending: isCreating } = useMutation<AxiosResponse<Message>, Error, CreationPayload, { id: string }>({
         mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
@@ -143,6 +141,8 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
             set('reference', null)
             set('content', null)
 
+            textarea.current?.focus()
+
             return { id: itemId }
         },
         onSuccess({ data }, payload, context) {
@@ -175,8 +175,10 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                 },
             },
         ),
-        onMutate(payload, { client }) {
-            client.cancelQueries({ queryKey: ['messages', chatId] })
+        async onMutate(payload, { client }) {
+            await client.cancelQueries({ queryKey: ['messages', chatId] })
+
+            textarea.current?.focus()
         },
         onSuccess({ data }, { id }, context, { client }) {
             alter(chatId, id, data)
@@ -326,7 +328,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                     value={content || ''}
                     placeholder='Write a message'
                     disabled={isUpdating}
-                    className='min-h-auto px-4'
+                    className='px-4'
                     onKeyDown={handleSubmit}
                     onChange={handleMessage}
                 />

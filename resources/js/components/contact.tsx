@@ -95,7 +95,7 @@ export default function Contact({ chat, isOutsideSidebar = false }: { chat: Chat
                         </div>
 
                         <div className='space-y-1'>
-                            <h1 className='truncate font-bold'>{chat.user.name}</h1>
+                            <h1 className='truncate font-semibold'>{chat.user.name}</h1>
 
                             {chat.is_online ? (
                                 <p className='text-xs text-green-600 dark:text-green-400'>Online</p>
@@ -115,18 +115,28 @@ export default function Contact({ chat, isOutsideSidebar = false }: { chat: Chat
                 size='lg'
                 isActive={chatId === chat.id}
                 asChild
-                className='data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
+                className='h-auto! data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
             >
                 <Link href={`/chats/${chat.id}`} replace onClick={preventDefault}>
                     <div className='relative'>
-                        <Photo src={chat.user.image_url as string} alt={chat.user.name} />
+                        <div className={cn(
+                            'rounded-full',
+                            { 'border-2 border-primary p-1': chat.has_new_message },
+                        )}>
+                            <Photo
+                                src={chat.user.image_url as string}
+                                alt={chat.user.name}
+                                className={chat.has_new_message ? 'size-7' : 'size-10'}
+                                skeletonClassName={chat.has_new_message ? 'size-7' : 'size-10'}
+                            />
+                        </div>
 
                         {chat.is_online && (
                             <span className='absolute right-px bottom-px size-2.5 rounded-full border border-primary bg-green-700' />
                         )}
                     </div>
                     <div className='overflow-hidden'>
-                        <h5 className='truncate'>{chat.user.name}</h5>
+                        <h5 className='truncate font-semibold'>{chat.user.name}</h5>
                         <p className='truncate text-xs text-muted-foreground'>{chat.user.username}</p>
                     </div>
                 </Link>

@@ -21,7 +21,10 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
     return (
         <QueryClientProvider client={queryClient}>
             <Main>{children}</Main>
-            <ReactQueryDevtools position='right' buttonPosition='bottom-left' />
+
+            {import.meta.env.MODE !== 'staging' && (
+                <ReactQueryDevtools position='right' buttonPosition='bottom-left' />
+            )}
         </QueryClientProvider>
     )
 }

@@ -256,7 +256,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 <ContextMenuTrigger>
                     <Bubble
                         align={message.from_self ? 'end' : 'start'}
-                        variant={message.from_self ? 'default' : 'muted'}
+                        variant={message.from_self ? 'tinted' : 'muted'}
                         className='responsive-message'
                     >
                         {!!message.content && (
@@ -276,7 +276,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     </Bubble>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
-                    <ContextMenuItem>
+                    <ContextMenuItem className='bg-transparent! p-0!'>
                         <EmojiPicker
                             reactionsDefaultOpen
                             allowExpandReactions={false}
@@ -320,7 +320,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                         </>
                     ) : (
                         <ContextMenuItem asChild>
-                            <Button className='w-full justify-start' variant='ghost' onClick={edit}>
+                            <Button className='w-full justify-start' variant='ghost' onClick={reply}>
                                 <Reply />
                                 <span>Reply</span>
                             </Button>
