@@ -16,6 +16,8 @@
                         document.documentElement.classList.add('dark');
                     }
                 }
+
+                document.documentElement.setAttribute('data-scheme', localStorage.getItem('color-scheme') || 'default')
             })();
         </script>
 

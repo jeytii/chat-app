@@ -1,5 +1,6 @@
 import { Form, Head, usePage } from '@inertiajs/react'
-import { useRef } from 'react'
+import { CheckCircle2 } from 'lucide-react'
+import { ChangeEvent, useRef, useState } from 'react'
 
 // import DeleteUser from '@/components/delete-user'
 import Heading from '@/components/heading'
@@ -11,11 +12,56 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { cn } from '@/lib/utils'
+
+const colors = [
+    {
+        label: 'Default',
+        value: 'default',
+        classes: {
+            primary: 'bg-[oklch(0.6723_0.1606_244.9955)] dark:bg-[oklch(0.6692_0.1607_245.0110)]',
+            accent: 'bg-[oklch(0.9392_0.0166_250.8453)] dark:bg-[oklch(0.1928_0.0331_242.5459)]',
+        },
+    },
+    {
+        label: 'Mono',
+        value: 'mono',
+        classes: {
+            primary: 'bg-[oklch(0.5555_0_0)] dark:bg-[oklch(0.5555_0_0)]',
+            accent: 'bg-[oklch(0.9702_0_0)] dark:bg-[oklch(0.3715_0_0)]',
+        },
+    },
+    {
+        label: 'Sage',
+        value: 'sage',
+        classes: {
+            primary: 'bg-[oklch(0.6333_0.0309_154.9039)] dark:bg-[oklch(0.6333_0.0309_154.9039)]',
+            accent: 'bg-[oklch(0.8242_0.0221_136.6092)] dark:bg-[oklch(0.3709_0.0248_153.9823)]',
+        },
+    },
+    {
+        label: 'Graphite',
+        value: 'graphite',
+        classes: {
+            primary: 'bg-[oklch(0.4891_0_0)] dark:bg-[oklch(0.7058_0_0)]',
+            accent: 'bg-[oklch(0.8078_0_0)] dark:bg-[oklch(0.3715_0_0)]',
+        },
+    },
+]
 
 export default function Profile() {
     const { user } = usePage().props.auth
+    const [colorScheme, setColorScheme] = useState<string>(localStorage.getItem('color-scheme') || 'default')
     const passwordInput = useRef<HTMLInputElement>(null)
     const currentPasswordInput = useRef<HTMLInputElement>(null)
+
+    function changeColorScheme(event: ChangeEvent<HTMLInputElement>) {
+        const { value } = event.target
+
+        setColorScheme(value)
+        document.documentElement.setAttribute('data-scheme', value)
+        localStorage.setItem('color-scheme', value)
+    }
 
     return (
         <>
@@ -118,6 +164,37 @@ export default function Profile() {
                             </>
                         )}
                     </Form>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardContent className='space-y-6'>
+                    <Heading variant='small' title='Color scheme' />
+
+                    <div className='flex gap-8'>
+                        {colors.map(color => (
+                            <label key={color.value} className='flex-1 space-y-1'>
+                                <div className='relative flex cursor-pointer overflow-hidden rounded-[8px] border-2'>
+                                    <span className={cn('h-8 w-full', color.classes.primary)} />
+                                    <span className={cn('h-8 w-full', color.classes.accent)} />
+
+                                    {colorScheme === color.value && (
+                                        <CheckCircle2 className='absolute top-1/2 left-1/2 -translate-1/2' />
+                                    )}
+                                </div>
+
+                                <h6 className='text-center text-xs md:text-sm'>{color.label}</h6>
+
+                                <input
+                                    type='radio'
+                                    name='scheme'
+                                    value={color.value}
+                                    className='hidden'
+                                    onChange={changeColorScheme}
+                                />
+                            </label>
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
 
