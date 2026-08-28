@@ -9,7 +9,7 @@
 
 @theme {
     --font-sans:
-        'DM Sans', ui-sans-serif, system-ui, sans-serif,
+        'Lato', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -432,10 +432,6 @@ aside.EmojiPickerReact {
     .epr-category-nav {
         @apply hidden;
     }
-}
-
-.responsive-message {
-    @apply max-w-[70vw]! md:max-w-[50vw]! lg:max-w-180!;
 }
 
 @keyframes blink {

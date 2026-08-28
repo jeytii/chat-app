@@ -4,7 +4,7 @@ import { type MouseEvent, useEffect, useRef } from 'react'
 
 import Photo from '@/components/photo'
 import { Card, CardContent } from '@/components/ui/card'
-import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
+import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
 import useMessage from '@/hooks/use-message'
 import { cn } from '@/lib/utils'
 import type { Chat, Message } from '@/types/models'
@@ -18,6 +18,7 @@ type MessageEditedData = Message & { chat_id: string }
 
 export default function Contact({ chat, isOutsideSidebar = false }: { chat: Chat; isOutsideSidebar?: boolean }) {
     const { auth, chat_id: chatId } = usePage<{ chat_id: string }>().props
+    const { setOpenMobile } = useSidebar()
     const queryClient = useQueryClient()
     const { insert, alter, remove } = useMessage()
 
@@ -117,7 +118,12 @@ export default function Contact({ chat, isOutsideSidebar = false }: { chat: Chat
                 asChild
                 className='h-auto! data-[active=false]:hover:bg-transparent data-[active=false]:hover:text-sidebar-foreground'
             >
-                <Link href={`/chats/${chat.id}`} replace onClick={preventDefault}>
+                <Link
+                    href={`/chats/${chat.id}`}
+                    replace
+                    onClick={preventDefault}
+                    onSuccess={setOpenMobile.bind(null, false)}
+                >
                     <div className='relative'>
                         <div className={cn(
                             'rounded-full',

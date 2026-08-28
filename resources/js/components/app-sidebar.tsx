@@ -14,12 +14,14 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Chat } from '@/types/models'
 
 export default function AppSidebar() {
     const { name } = usePage().props
+    const { setOpenMobile } = useSidebar()
 
     const { data, isLoading } = useQuery<Chat[]>({
         queryKey: ['chats'],
@@ -32,7 +34,12 @@ export default function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size='lg' asChild>
-                            <Link href='/' replace className='gap-3'>
+                            <Link
+                                href='/'
+                                replace
+                                className='gap-3'
+                                onClick={setOpenMobile.bind(null, false)}
+                            >
                                 <AppLogo className='size-6!' />
                                 <h1 className='truncate text-sm leading-tight font-semibold'>{name}</h1>
                             </Link>

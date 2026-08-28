@@ -169,7 +169,7 @@ export default function Profile() {
 
             <Card>
                 <CardContent className='space-y-6'>
-                    <Heading variant='small' title='Color scheme' />
+                    <Heading variant='small' title='Theme' />
 
                     <div className='flex gap-8'>
                         {colors.map(color => (
@@ -238,7 +238,6 @@ export default function Profile() {
                                         name='current_password'
                                         className='mt-1 block w-full'
                                         autoComplete='current-password'
-                                        placeholder='Current password'
                                     />
 
                                     <InputError message={errors.current_password} />
@@ -253,7 +252,6 @@ export default function Profile() {
                                         name='password'
                                         className='mt-1 block w-full'
                                         autoComplete='new-password'
-                                        placeholder='New password'
                                     />
 
                                     <InputError message={errors.password} />
@@ -269,7 +267,6 @@ export default function Profile() {
                                         name='password_confirmation'
                                         className='mt-1 block w-full'
                                         autoComplete='new-password'
-                                        placeholder='Confirm password'
                                     />
 
                                     <InputError

@@ -94,7 +94,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
         if (editId || reference) {
             setTimeout(() => {
                 textarea.current?.focus()
-            }, 200)
+            }, 400)
         }
 
         document.addEventListener('keydown', keydownCancel)

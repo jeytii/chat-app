@@ -7,14 +7,14 @@ import { bunny } from 'laravel-vite-plugin/fonts'
 import { defineConfig, loadEnv, type UserConfig } from 'vite'
 
 export default defineConfig(({ mode }) => {
-    const assetUrl = loadEnv(mode, process.cwd()).ASSET_URL
+    const assetUrl = loadEnv(mode, process.cwd()).VITE_ASSET_URL
     const config: UserConfig = {
         plugins: [
             laravel({
                 input: ['resources/css/app.css', 'resources/js/app.tsx'],
                 refresh: true,
                 fonts: [
-                    bunny('DM Sans', {
+                    bunny('Lato', {
                         weights: [400, 500, 600],
                     }),
                 ],

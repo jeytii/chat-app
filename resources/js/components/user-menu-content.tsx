@@ -4,11 +4,14 @@ import { Fragment } from 'react'
 
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
+import { useSidebar } from '@/components/ui/sidebar'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { type Appearance, useAppearance } from '@/hooks/use-appearance'
 
 export function UserMenuContent() {
     const { appearance, updateAppearance } = useAppearance()
+    const { setOpenMobile } = useSidebar()
+
     const cleanup = () => {
         // Remove pointer-events style from body...
         document.body.style.removeProperty('pointer-events')
@@ -57,6 +60,7 @@ export function UserMenuContent() {
                     href='/settings'
                     prefetch
                     onClick={cleanup}
+                    onSuccess={setOpenMobile.bind(null, false)}
                 >
                     <Settings className='mr-2' />
                     Settings

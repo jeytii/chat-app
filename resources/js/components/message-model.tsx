@@ -225,7 +225,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
 
     return (
         <MessageContent className='gap-1'>
-            <MessageHeader className='px-1'>
+            <MessageHeader className='px-1 select-none'>
                 {(!message.is_fake && firstInAMinute) && (
                     <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>
                         <span>{date}</span>
@@ -239,8 +239,8 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
             </MessageHeader>
 
             {!!message.reference && (
-                <Card size='sm' className='responsive-message p-0'>
-                    <CardContent className='relative flex items-center gap-2 px-4 py-(--card-spacing) before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""]'>
+                <Card size='sm' className='w-fit max-w-[70vw]! rounded-[8px]! p-0 md:max-w-[50vw]! lg:max-w-180!'>
+                    <CardContent className='relative flex items-center gap-2 px-4 py-1 before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""]'>
                         {!!message.reference.image_url && (
                             <img src={message.reference.image_url} alt='Attachment' className='block max-h-12 max-w-12 rounded-xs' />
                         )}
@@ -257,13 +257,13 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                     <Bubble
                         align={message.from_self ? 'end' : 'start'}
                         variant={message.from_self ? 'tinted' : 'muted'}
-                        className='responsive-message'
+                        className='max-w-[70vw]! md:max-w-[50vw]! lg:max-w-180!'
                     >
                         {!!message.content && (
                             <BubbleContent
                                 dangerouslySetInnerHTML={{ __html: message.content }}
                                 className={cn(
-                                    'space-y-2 overflow-auto!',
+                                    'space-y-2 overflow-auto! rounded-[8px] py-1 [&_*:not(a[href])]:select-none',
                                     { 'ml-auto': message.from_self },
                                     { 'opacity-60': message.is_fake },
                                 )}
