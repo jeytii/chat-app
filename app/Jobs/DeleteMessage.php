@@ -2,10 +2,10 @@
 
 namespace App\Jobs;
 
-use App\Events\MessageEvent;
 use App\Models\Message;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Storage;
 
 class DeleteMessage implements ShouldQueue
@@ -39,11 +39,20 @@ class DeleteMessage implements ShouldQueue
                 Storage::delete($image);
             }
 
-            broadcast(new MessageEvent(
-                'MessageDeleted',
-                $this->chatId,
-                $this->message->only('id'),
-            ))->toOthers();
+            Broadcast::private("chat.{$this->chatId}")
+                ->as('MessageDeleted')
+                ->with([
+                    'chat_id' => $this->chatId,
+                    'id' => $this->message->id,
+                ])
+                ->toOthers()
+                ->sendNow();
+
+            Broadcast::presence("room.{$this->chatId}")
+                ->as('MessageDeleted')
+                ->with($this->message->only('id'))
+                ->toOthers()
+                ->sendNow();
         }
     }
 }

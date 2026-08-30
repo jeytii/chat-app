@@ -4,6 +4,7 @@ use App\Events\MessageEvent;
 use App\Jobs\DeleteMessage;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Broadcasting\AnonymousEvent;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
@@ -372,10 +373,9 @@ describe('DELETE', function () {
             ->withFakeQueueInteractions()
             ->handle();
 
-        Event::assertDispatched(
-            MessageEvent::class,
-            fn (MessageEvent $event) => $event->eventName === 'MessageDeleted',
-        );
+        Event::assertDispatchedTimes(AnonymousEvent::class, 2);
+
+        Event::assertDispatched(AnonymousEvent::class, fn (AnonymousEvent $event) => $event->broadcastAs() === 'MessageDeleted');
 
         expect($this->message->refresh()->content)->toBeNull();
     });
@@ -399,7 +399,7 @@ describe('DELETE', function () {
 
         travelTo(now()->addSeconds(5));
 
-        Event::assertNotDispatched(MessageEvent::class);
+        Event::assertNotDispatched(AnonymousEvent::class);
 
         expect($this->message->refresh()->trashed())->toBeFalse();
         expect($this->message->content)->not->toBeNull();
@@ -422,7 +422,7 @@ describe('DELETE', function () {
             ]))
             ->assertStatus(403);
 
-        Event::assertNotDispatched(MessageEvent::class);
+        Event::assertNotDispatched(AnonymousEvent::class);
 
         expect($this->message->refresh()->trashed())->toBeTrue();
 
