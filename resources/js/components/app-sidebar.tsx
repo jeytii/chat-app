@@ -1,9 +1,11 @@
 import { Link, usePage } from '@inertiajs/react'
 import { useQuery } from '@tanstack/react-query'
+import { ChevronsUpDown } from 'lucide-react'
 
 import AppLogo from '@/components/app-logo'
 import Contact from '@/components/contact'
-import { NavUser } from '@/components/nav-user'
+import Photo from '@/components/photo'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import {
     Sidebar,
     SidebarContent,
@@ -17,11 +19,14 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { UserMenuContent } from '@/components/user-menu-content'
+import { useIsMobile } from '@/hooks/use-mobile'
 import type { Chat } from '@/types/models'
 
 export default function AppSidebar() {
-    const { name } = usePage().props
-    const { setOpenMobile } = useSidebar()
+    const { name, auth } = usePage().props
+    const { state, setOpenMobile } = useSidebar()
+    const isMobile = useIsMobile()
 
     const { data, isLoading } = useQuery<Chat[]>({
         queryKey: ['chats'],
@@ -62,9 +67,45 @@ export default function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter>
-                <NavUser />
-            </SidebarFooter>
+            {!!auth.user && (
+                <SidebarFooter>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <SidebarMenuButton
+                                        size='lg'
+                                        className='group data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+                                        data-test='sidebar-menu-button'
+                                    >
+                                        <Photo
+                                            src={auth.user.image_url as string}
+                                            alt={auth.user.name}
+                                            className='size-8'
+                                            skeletonClassName='size-8'
+                                        />
+                                        <div className='grid flex-1 text-left text-sm leading-tight'>
+                                            <span className='truncate font-medium'>{auth.user.name}</span>
+                                            <span className='truncate text-xs text-muted-foreground'>
+                                                {auth.user.username}
+                                            </span>
+                                        </div>
+
+                                        <ChevronsUpDown className='ml-auto size-4' />
+                                    </SidebarMenuButton>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    className='w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg'
+                                    align='end'
+                                    side={isMobile ? 'bottom' : (state === 'collapsed' ? 'left' : 'bottom')}
+                                >
+                                    <UserMenuContent />
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarFooter>
+            )}
         </Sidebar>
     )
 }
