@@ -4,5 +4,6 @@ minimumReleaseAgeExclude:
   - eslint@10.6.0
   - eslint-plugin-simple-import-sort@14.0.0
   - axios@1.19.0
+  - lucide-react@1.37.0
 publicHoistPattern:
   - '@inertiajs/core'
