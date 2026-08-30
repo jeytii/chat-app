@@ -388,7 +388,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                         size='icon-xs'
                         disabled={isUpdating}
                     >
-                        <label>
+                        <label className='flex size-full items-center justify-center rounded-full'>
                             <Image />
                             <input
                                 type='file'

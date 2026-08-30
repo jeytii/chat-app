@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils'
 
 const colors = [
     {
-        label: 'Default',
         value: 'default',
         classes: {
             primary: 'bg-[oklch(0.6723_0.1606_244.9955)] dark:bg-[oklch(0.6692_0.1607_245.0110)]',
@@ -24,7 +23,6 @@ const colors = [
         },
     },
     {
-        label: 'Mono',
         value: 'mono',
         classes: {
             primary: 'bg-[oklch(0.5555_0_0)] dark:bg-[oklch(0.5555_0_0)]',
@@ -32,7 +30,6 @@ const colors = [
         },
     },
     {
-        label: 'Sage',
         value: 'sage',
         classes: {
             primary: 'bg-[oklch(0.6333_0.0309_154.9039)] dark:bg-[oklch(0.6333_0.0309_154.9039)]',
@@ -40,7 +37,6 @@ const colors = [
         },
     },
     {
-        label: 'Graphite',
         value: 'graphite',
         classes: {
             primary: 'bg-[oklch(0.4891_0_0)] dark:bg-[oklch(0.7058_0_0)]',
@@ -179,11 +175,9 @@ export default function Profile() {
                                     <span className={cn('h-8 w-full', color.classes.accent)} />
 
                                     {colorScheme === color.value && (
-                                        <CheckCircle2 className='absolute top-1/2 left-1/2 -translate-1/2' />
+                                        <CheckCircle2 className='absolute top-1/2 left-1/2 -translate-1/2 fill-secondary text-secondary-foreground' />
                                     )}
                                 </div>
-
-                                <h6 className='text-center text-xs md:text-sm'>{color.label}</h6>
 
                                 <input
                                     type='radio'

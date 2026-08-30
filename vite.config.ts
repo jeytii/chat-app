@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
         ],
     }
 
-    if (mode === 'development' && assetUrl) {
+    if (mode === 'development' && assetUrl.startsWith('https://')) {
         config.server = {
             host: '0.0.0.0',
             cors: true,

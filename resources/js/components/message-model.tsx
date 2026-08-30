@@ -204,7 +204,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
         return (
             <MessageContent>
                 <Bubble align={message.from_self ? 'end' : 'start'} variant='outline'>
-                    <BubbleContent className='flex items-center gap-2'>
+                    <BubbleContent className='flex items-center gap-2 rounded-[8px] py-1'>
                         <p className='italic'>Deleted message</p>
 
                         {(message.from_self && canStopDebounce) && (

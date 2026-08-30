@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
@@ -38,6 +39,10 @@ class User extends Authenticatable
     {
         static::updated(function (self $model): void {
             cache()->forget("auth-user:{$model->id}");
+
+            if ($model->wasChanged('image') && $model->getOriginal('image')) {
+                Storage::disk('public')->delete($model->getOriginal('image'));
+            }
         });
     }
 
