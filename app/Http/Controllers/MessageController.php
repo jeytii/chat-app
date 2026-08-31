@@ -14,11 +14,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Image;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -208,14 +206,6 @@ class MessageController extends Controller
         broadcast(new MessageReaction($chat->id, $message->id, $broadcastData))->toOthers();
 
         return ['success' => true];
-    }
-
-    #[Authorize('viewImage', ['message', 'chat'])]
-    public function viewImage(Request $request, Chat $chat, Message $message): Response
-    {
-        return Image::fromStorage($message->image)
-            ->toResponse($request)
-            ->header('Cache-Control', 'private, max-age=86400, immutable');
     }
 
     private function applyAttachmentLimit(string $userId): void

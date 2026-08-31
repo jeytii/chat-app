@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChatController;
-use App\Http\Controllers\GifController;
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -19,16 +19,21 @@ Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
             ->name('.restore');
         Route::post('chats/{chat}/messages/{message}/react', 'react')
             ->name('.react');
-        Route::get('chats/{chat}/image/{message:image}', 'viewImage')
-            ->name('.image');
     });
     Route::apiResource('chats.messages', MessageController::class)
         ->except('show')
         ->scoped()
         ->middlewareFor('index', 'json');
 
-    Route::get('gifs', GifController::class)
-        ->middleware('json');
+    Route::controller(ImageController::class)->group(function () {
+        Route::get('photo/{image}', 'profilePhoto')
+            ->name('profile-photo');
+        Route::get('attachment/{chat}/{message:image}', 'attachment')
+            ->can('viewImage', ['message', 'chat'])
+            ->name('attachment');
+        Route::get('gifs', 'gifs')
+            ->middleware('json');
+    });
 
     Route::controller(SettingsController::class)->name('settings.')->group(function () {
         Route::inertia('settings', 'settings')

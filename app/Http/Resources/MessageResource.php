@@ -70,7 +70,7 @@ class MessageResource extends JsonResource
 
         $path = explode('/', $file);
 
-        return route('chats.messages.image', [
+        return route('attachment', [
             'chat' => $this->chat_id,
             'message' => end($path),
         ]);

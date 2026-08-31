@@ -2,15 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Chat;
+use App\Models\Message;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Image;
 
-class GifController extends Controller
+class ImageController extends Controller
 {
+    public function profilePhoto(Request $request, string $filename): Response
+    {
+        return Image::fromStorage("profile_photos/{$filename}")
+            ->toResponse($request)
+            ->header('Cache-Control', 'max-age=86400, immutable');
+    }
+
+    public function attachment(Request $request, Chat $chat, Message $message): Response
+    {
+        return Image::fromStorage($message->image)
+            ->toResponse($request)
+            ->header('Cache-Control', 'private, max-age=86400, immutable');
+    }
+
     /**
      * @return array<string, mixed>
      */
-    public function __invoke(Request $request): array
+    public function gifs(Request $request): array
     {
         $query = $request->query('q');
         $cacheKey = $query ?? 'trending';
