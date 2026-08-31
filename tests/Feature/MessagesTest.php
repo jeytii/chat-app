@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Broadcasting\AnonymousEvent;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -22,6 +23,10 @@ beforeEach(function () {
     $this->chat->users()->attach($this->otherUser);
 });
 
+afterAll(function () {
+    Cache::clear();
+});
+
 test('can correctly fetch paginated messages', function () {
     Message::factory(30)
         ->for($this->chat)
@@ -34,7 +39,7 @@ test('can correctly fetch paginated messages', function () {
     // First fetch
     $firstFetch = actingAs($this->user)
         ->get(route('chats.messages.index', $this->chat))
-        ->assertOk()
+        ->assertStatus(200)
         ->assertJsonCount(20, 'items')
         ->assertJsonStructure([
             'items' => [
@@ -56,7 +61,7 @@ test('can correctly fetch paginated messages', function () {
             'chat' => $this->chat,
             'cursor' => $firstFetchNextCursor,
         ]))
-        ->assertOk()
+        ->assertStatus(200)
         ->assertJsonCount(10, 'items');
 
     expect($secondFetch->json('next_cursor'))->toBeNull();
@@ -134,6 +139,34 @@ describe('CREATE', function () {
             MessageEvent::class,
             fn (MessageEvent $event) => $event->eventName === 'MessageSent',
         );
+    });
+
+    test('can attach a standard image to a message only 5 times every 5 hours', function () {
+        Storage::fake();
+
+        $http = actingAs($this->user);
+
+        collect(range(1, 5))->each(function () use ($http) {
+            $http->postJson(route('chats.messages.store', $this->chat), [
+                'image' => UploadedFile::fake()->image('image.png'),
+            ])->assertStatus(201);
+        });
+
+        $http->postJson(route('chats.messages.store', $this->chat), [
+            'image' => UploadedFile::fake()->image('image.png'),
+        ])->assertStatus(429);
+
+        travelTo(now()->addHour());
+
+        $http->postJson(route('chats.messages.store', $this->chat), [
+            'image' => UploadedFile::fake()->image('image.png'),
+        ])->assertStatus(429);
+
+        travelTo(now()->addHours(4));
+
+        $http->postJson(route('chats.messages.store', $this->chat), [
+            'image' => UploadedFile::fake()->image('image.png'),
+        ])->assertStatus(201);
     });
 
     test('cannot send a message without text content or attachment', function () {
@@ -334,6 +367,52 @@ describe('UPDATE', function () {
         expect($message->content)->toBe($currentContent);
 
         Event::assertNotDispatched(MessageEvent::class);
+    });
+
+    test('can attach a standard image to a message only 5 times every 5 hours', function () {
+        Storage::fake();
+
+        $message = Message::factory()
+            ->for($this->chat)
+            ->for($this->user, 'sender')
+            ->withImage($this->chat->id)
+            ->create();
+
+        $http = actingAs($this->user);
+        $url = route('chats.messages.update', [
+            'chat' => $this->chat,
+            'message' => $message,
+        ]);
+
+        collect(range(1, 5))->each(function () use ($http, $url) {
+            $http->putJson($url, [
+                'image' => UploadedFile::fake()->image('image.png'),
+            ])->assertStatus(200);
+        });
+
+        $http->putJson($url, [
+            'image' => UploadedFile::fake()->image('image.png'),
+        ])->assertStatus(429);
+
+        $http->putJson($url, [
+            'content' => 'Lorem ipsum',
+        ])->assertStatus(200);
+
+        travelTo(now()->addHour());
+
+        $http->putJson($url, [
+            'image' => UploadedFile::fake()->image('image.png'),
+        ])->assertStatus(429);
+
+        $http->putJson($url, [
+            'content' => 'Hello world',
+        ])->assertStatus(200);
+
+        travelTo(now()->addHours(4));
+
+        $http->putJson($url, [
+            'image' => UploadedFile::fake()->image('image.png'),
+        ])->assertStatus(200);
     });
 });
 

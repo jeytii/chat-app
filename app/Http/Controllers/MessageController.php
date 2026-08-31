@@ -9,6 +9,8 @@ use App\Http\Resources\MessageResource;
 use App\Jobs\DeleteMessage;
 use App\Models\Chat;
 use App\Models\Message;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,6 +19,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Image;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class MessageController extends Controller
@@ -28,6 +31,11 @@ class MessageController extends Controller
     public function index(Chat $chat): array
     {
         $messages = $chat->messages()
+            ->when(
+                /** @phpstan-ignore-next-line */
+                $chat->users()->find(auth()->id())->pivot->cleared_at,
+                fn (Builder $query, CarbonImmutable $date) => $query->where('created_at', '>', $date)
+            )
             ->withTrashed()
             ->latest()
             ->with([
@@ -60,6 +68,8 @@ class MessageController extends Controller
         $image = $request->safe()->file('image');
 
         if ($image) {
+            $this->applyAttachmentLimit($user->id);
+
             $filename = Str::random(40).'.'.$image->extension();
 
             $payload['image'] = "chats/{$chat->id}/{$filename}";
@@ -94,9 +104,11 @@ class MessageController extends Controller
         $payload = $request->validated();
 
         /** @var UploadedFile|string|null */
-        $image = $payload['image'];
+        $image = $request->safe()->file('image');
 
-        if ($request->hasFile('image')) {
+        if ($image) {
+            $this->applyAttachmentLimit($request->user()->id);
+
             $filename = Str::random(40).'.'.$image->extension();
 
             $payload['image'] = "chats/{$chat->id}/{$filename}";
@@ -104,7 +116,7 @@ class MessageController extends Controller
 
         $message->update($payload);
 
-        if ($message->wasChanged('image') && $request->hasFile('image')) {
+        if ($message->wasChanged('image') && $image) {
             $paths = explode('/', $message->image);
 
             $image->storeAs("chats/{$chat->id}", end($paths));
@@ -204,5 +216,24 @@ class MessageController extends Controller
         return Image::fromStorage($message->image)
             ->toResponse($request)
             ->header('Cache-Control', 'private, max-age=86400, immutable');
+    }
+
+    private function applyAttachmentLimit(string $userId): void
+    {
+        $canProceed = RateLimiter::attempt(
+            "can-attach-image:{$userId}",
+            5,
+            fn () => null,
+            60 * 60 * 5, // 5 hours
+        );
+
+        if (! $canProceed) {
+            inertia()->flash('toast', [
+                'type' => 'success',
+                'message' => __('You can only attach a standard image 3 times every 3 hours.'),
+            ]);
+
+            abort(429);
+        }
     }
 }
