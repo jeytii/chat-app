@@ -41,7 +41,7 @@ class User extends Authenticatable
             cache()->forget("auth-user:{$model->id}");
 
             if ($model->wasChanged('image') && $model->getOriginal('image')) {
-                Storage::disk('public')->delete($model->getOriginal('image'));
+                Storage::delete($model->getOriginal('image'));
             }
         });
     }

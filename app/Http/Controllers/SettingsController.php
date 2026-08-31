@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Image\Image;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class SettingsController extends Controller
@@ -52,28 +51,24 @@ class SettingsController extends Controller
             'crop.y' => ['required', 'numeric'],
         ]);
 
-        /** @var User */
-        $user = $request->user();
-        $dir = "profile_photos/{$user->id}";
-        $filename = Str::random(40).'.webp';
+        $image = $request->image('image');
+        $width = ($image->width() * $data['crop']['width']) / 100;
+        $height = ($image->height() * $data['crop']['height']) / 100;
+        $x = ($image->width() * $data['crop']['x']) / 100;
+        $y = ($image->height() * $data['crop']['y']) / 100;
 
-        if ($user->update(['image' => "{$dir}/{$filename}"])) {
-            $image = $request->image('image');
+        $filename = $image->crop($width, $height, $x, $y)
+            ->when(
+                fn (Image $img) => $img->mimeType() !== 'image/webp',
+                fn (Image $img) => $img->toWebp(),
+            )
+            ->store('profile_photos');
 
-            $width = ($image->width() * $data['crop']['width']) / 100;
-            $height = ($image->height() * $data['crop']['height']) / 100;
-            $x = ($image->width() * $data['crop']['x']) / 100;
-            $y = ($image->height() * $data['crop']['y']) / 100;
-
-            $image->crop($width, $height, $x, $y)
-                ->when(
-                    fn (Image $img) => $img->mimeType() !== 'image/webp',
-                    fn (Image $img) => $img->toWebp(),
-                )
-                ->storeAs($dir, $filename, 'public');
-
-            inertia()->flash('toast', ['type' => 'success', 'message' => __('Profile picture updated.')]);
+        if ($filename) {
+            $request->user()->update(['image' => $filename]);
         }
+
+        inertia()->flash('toast', ['type' => 'success', 'message' => __('Profile picture updated.')]);
 
         return back();
     }

@@ -72,7 +72,7 @@ test('cannot update profile photo if the format is not JPG/PNG/WEBP', function (
 });
 
 test('can update profile photo', function () {
-    Storage::fake('public');
+    Storage::fake();
 
     $user = User::factory()->create();
     $originalWidth = 1280;
@@ -97,9 +97,9 @@ test('can update profile photo', function () {
 
     expect(is_null($path))->toBeFalse();
 
-    Storage::disk('public')->assertExists($path);
+    Storage::assertExists($path);
 
-    $image = Image::fromStorage($path, 'public');
+    $image = Image::fromStorage($path);
 
     expect($image->width())->toBe(($originalWidth * $cropWidth) / 100); // Must be {$cropWidth}% of $originalWidth
     expect($image->height())->toBe(($originalHeight * $cropHeight) / 100); // Must be {$cropHeight}% of $originalHeight
