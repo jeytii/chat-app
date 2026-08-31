@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\WantsJson;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,11 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->encryptCookies(except: ['appearance']);
-
-        if (env('APP_ENV') === 'staging') {
-            $middleware->trustProxies('*');
-        }
+        $middleware->encryptCookies(except: ['appearance'])
+            ->trustProxies('*')
+            ->alias([
+                'json' => WantsJson::class,
+            ]);
 
         $middleware->web(append: [
             HandleAppearance::class,

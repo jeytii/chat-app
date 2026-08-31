@@ -12,8 +12,6 @@ class GifController extends Controller
      */
     public function __invoke(Request $request): array
     {
-        abort_unless($request->wantsJson(), 404);
-
         $query = $request->query('q');
         $cacheKey = $query ?? 'trending';
 

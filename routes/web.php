@@ -6,11 +6,12 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
     Route::inertia('/', 'home')->name('home');
 
     Route::apiResource('chats', ChatController::class)
-        ->only(['index', 'show']);
+        ->only(['index', 'show'])
+        ->middlewareFor('index', 'json');
 
     Route::controller(MessageController::class)->name('chats.messages')->scopeBindings()->group(function () {
         Route::put('chats/{chat}/messages/{message}/restore', 'restore')
@@ -23,9 +24,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     Route::apiResource('chats.messages', MessageController::class)
         ->except('show')
-        ->scoped();
+        ->scoped()
+        ->middlewareFor('index', 'json');
 
-    Route::get('gifs', GifController::class);
+    Route::get('gifs', GifController::class)
+        ->middleware('json');
 
     Route::controller(SettingsController::class)->name('settings.')->group(function () {
         Route::inertia('settings', 'settings')

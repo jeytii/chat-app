@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ChatResource;
 use App\Models\Chat;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -16,15 +17,15 @@ class ChatController extends Controller
 {
     public function index(Request $request): ResourceCollection
     {
-        abort_if($request->header('Sec-Fetch-Mode') === 'navigate', 404);
+        /** @var User */
+        $user = $request->user();
 
-        $authId = auth()->id();
-        $chats = Chat::query()
-            ->whereRelation('users', 'users.id', $authId)
-            ->with('users', fn (Relation $query) => $query->whereNot('users.id', $authId))
+        $chats = $user->chats()
+            ->where('hidden', false)
+            ->with('users', fn (Relation $query) => $query->whereNot('users.id', $user->id))
             ->withCount([
                 'messages as unseen_messages_count' => fn (Builder $query) => (
-                    $query->whereNot('sender_id', $authId)->whereNull('seen_at')
+                    $query->whereNot('sender_id', $user->id)->whereNull('seen_at')
                 ),
             ])
             ->get();
