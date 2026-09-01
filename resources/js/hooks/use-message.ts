@@ -61,26 +61,33 @@ export default function useMessage() {
         ))
     }
 
-    const remove = (chatId: string, id: string) => {
+    const remove = (chatId: string, id: string, markAsDeleted: boolean = true) => {
         queryClient.setQueryData<InfiniteData<MessageResponse>>(['messages', chatId], current => (
             !current ? current : {
                 ...current,
-                pages: current.pages.map(page => ({
-                    ...page,
-                    items: page.items.map(item => (
-                        item.id === id
-                            ? {
-                                ...item,
-                                reference: null,
-                                raw_content: null,
-                                content: null,
-                                gif: null,
-                                image_url: null,
-                                deleted: true,
-                            }
-                            : item
-                    )),
-                })),
+                pages: current.pages.map((page, index, pages) => {
+                    let items: Message[] = []
+
+                    if (markAsDeleted) {
+                        items = page.items.map(item => (
+                            item.id === id
+                                ? {
+                                    ...item,
+                                    reference: null,
+                                    raw_content: null,
+                                    content: null,
+                                    gif: null,
+                                    image_url: null,
+                                    deleted: true,
+                                }
+                                : item
+                        ))
+                    } else if (index === pages.length - 1) {
+                        items = page.items.filter(item => item.id !== id)
+                    }
+
+                    return { ...page, items }
+                }),
             }
         ))
     }
