@@ -14,11 +14,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 
 class MessageController extends Controller
 {
@@ -63,14 +61,11 @@ class MessageController extends Controller
     {
         $payload = $request->validated();
         $user = $request->user();
-        $image = $request->safe()->file('image');
 
-        if ($image) {
+        if ($image = data_get($payload, 'image')) {
             $this->applyAttachmentLimit($user->id);
 
-            $filename = Str::random(40).'.'.$image->extension();
-
-            $payload['image'] = "chats/{$chat->id}/{$filename}";
+            $payload['image'] = $image->store("chats/{$chat->id}");
         }
 
         $message = $chat->messages()
@@ -80,12 +75,6 @@ class MessageController extends Controller
                 'seen_at' => $request->boolean('seen') ? now() : null,
             ])
             ->toResource();
-
-        if ($image) {
-            $path = explode('/', $payload['image']);
-
-            $image->storeAs("chats/{$chat->id}", end($path));
-        }
 
         broadcast(new MessageEvent(
             'MessageSent',
@@ -101,24 +90,13 @@ class MessageController extends Controller
     {
         $payload = $request->validated();
 
-        /** @var UploadedFile|string|null */
-        $image = $request->safe()->file('image');
-
-        if ($image) {
+        if ($image = $request->safe()->file('image')) {
             $this->applyAttachmentLimit($request->user()->id);
 
-            $filename = Str::random(40).'.'.$image->extension();
-
-            $payload['image'] = "chats/{$chat->id}/{$filename}";
+            $payload['image'] = $image->store("chats/{$chat->id}");
         }
 
         $message->update($payload);
-
-        if ($message->wasChanged('image') && $image) {
-            $paths = explode('/', $message->image);
-
-            $image->storeAs("chats/{$chat->id}", end($paths));
-        }
 
         if ($message->wasChanged()) {
             broadcast(new MessageEvent(
@@ -217,13 +195,6 @@ class MessageController extends Controller
             60 * 60 * 5, // 5 hours
         );
 
-        if (! $canProceed) {
-            inertia()->flash('toast', [
-                'type' => 'success',
-                'message' => __('You can only attach a standard image 3 times every 3 hours.'),
-            ]);
-
-            abort(429);
-        }
+        abort_unless($canProceed, 429, __('You can only attach a standard image 3 times every 3 hours.'));
     }
 }

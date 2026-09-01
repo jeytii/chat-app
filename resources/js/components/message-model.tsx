@@ -63,6 +63,12 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
 
             return { message }
         },
+        onError(error, payload, context) {
+            if (context?.message && canStopDebounce) {
+                stopDebounce()
+                alter(chatId, payload.message.id, context.message)
+            }
+        },
         onSettled(data, error, payload, context, { client }) {
             client.invalidateQueries({
                 queryKey: ['messages', chatId],
@@ -173,6 +179,10 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     function react({ emoji, unified: name }: EmojiClickData) {
+        if (message.is_fake) {
+            return
+        }
+
         const reaction = message.reactions.find(reaction => reaction.name === name)
 
         reactToMessage({
@@ -225,18 +235,20 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
 
     return (
         <MessageContent className='gap-1'>
-            <MessageHeader className='px-1 select-none'>
-                {(!message.is_fake && firstInAMinute) && (
-                    <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>
-                        <span>{date}</span>
-                        {message.edited && <span>(edited)</span>}
-                    </p>
-                )}
+            {!message.is_fake && (
+                <MessageHeader className='px-1 select-none'>
+                    {firstInAMinute && (
+                        <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>
+                            <span>{date}</span>
+                            {message.edited && <span>(edited)</span>}
+                        </p>
+                    )}
 
-                {(!message.is_fake && !firstInAMinute && message.edited) && (
-                    <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>edited</p>
-                )}
-            </MessageHeader>
+                    {(!firstInAMinute && message.edited) && (
+                        <p className='space-x-1 text-xs text-muted-foreground group-data-[align=end]/message:text-right'>edited</p>
+                    )}
+                </MessageHeader>
+            )}
 
             {!!message.reference && (
                 <Card size='sm' className='w-fit max-w-[70vw]! rounded-[8px]! p-0 md:max-w-[50vw]! lg:max-w-180!'>
@@ -253,7 +265,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
             )}
 
             <ContextMenu>
-                <ContextMenuTrigger>
+                <ContextMenuTrigger disabled={message.from_self && message.is_fake}>
                     <Bubble
                         align={message.from_self ? 'end' : 'start'}
                         variant={message.from_self ? 'tinted' : 'muted'}

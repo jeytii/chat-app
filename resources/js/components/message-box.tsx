@@ -1,11 +1,12 @@
 import { usePage } from '@inertiajs/react'
 import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query'
-import axios, { type AxiosResponse } from 'axios'
+import axios, { type AxiosError, type AxiosResponse } from 'axios'
 import EmojiPicker, { type EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
 import { Popover as PopoverPrimitive } from 'radix-ui'
 import { type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent, type RefObject, type SubmitEvent, useEffect, useMemo, useRef } from 'react'
 import { Remarkable } from 'remarkable'
+import { toast } from 'sonner'
 import { useShallow } from 'zustand/react/shallow'
 
 import GifPicker from '@/components/gif-picker'
@@ -29,6 +30,11 @@ type CreationPayload = {
     seen: boolean;
 }
 
+type CreationContext = {
+    id: string;
+    fakeImage: string | null;
+}
+
 type UpdatePayload = {
     id: string;
     reference_id: string | null;
@@ -39,7 +45,7 @@ type UpdatePayload = {
 
 export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[]> }) {
     const { chat_id: chatId } = usePage<{ chat_id: string }>().props
-    const { insert, alter } = useMessage()
+    const { insert, alter, remove } = useMessage()
     const throttle = useThrottle(1000)
     const queryClient = useQueryClient()
     const { appearance } = useAppearance()
@@ -104,7 +110,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
         }
     }, [editId, reference, clear])
 
-    const { mutate: create, isPending: isCreating } = useMutation<AxiosResponse<Message>, Error, CreationPayload, { id: string }>({
+    const { mutate: create, isPending: isCreating, reset } = useMutation<AxiosResponse<Message>, AxiosError<{ message: string }>, CreationPayload, CreationContext>({
         mutationFn: data => axios.post(`/chats/${chatId}/messages`, data, {
             headers: {
                 'Content-Type': 'multipart/form-data',
@@ -115,6 +121,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
             await client.cancelQueries({ queryKey: ['messages', chatId] })
 
             const itemId = Math.floor(Math.random() * 1000000000).toString()
+            const fakeImage = payload.image ? URL.createObjectURL(payload.image as File) : null
 
             insert(chatId, {
                 id: itemId,
@@ -129,7 +136,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                     ? new Remarkable({ html: false, breaks: true }).render(payload.content)
                     : null,
                 gif: gif?.sm || null,
-                image_url: imagePreview,
+                image_url: fakeImage,
                 from_self: true,
                 reactions: [],
                 date: new Date().toLocaleString(),
@@ -138,12 +145,11 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                 is_fake: true,
             })
 
-            set('reference', null)
-            set('content', null)
+            clear()
 
             textarea.current?.focus()
 
-            return { id: itemId }
+            return { id: itemId, fakeImage }
         },
         onSuccess({ data }, payload, context) {
             alter(chatId, context.id, {
@@ -153,18 +159,35 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                 seen: undefined,
                 is_fake: undefined,
             })
-
-            removeUpload()
         },
-        onSettled(data, error, payload, context, { client }) {
-            client.invalidateQueries({
+        onError({ response }, payload, context) {
+            const message = response?.status === 429
+                ? response.data.message
+                : 'Something went wrong'
+
+            if (context) {
+                remove(chatId, context.id, false)
+            }
+
+            toast.error(message, {
+                className: 'right-5! w-[calc(100%-30px)]! sm:w-[calc(100%-40px)]! md:right-1/2! md:w-auto! md:translate-x-[calc(50%+8rem)]',
+            })
+        },
+        async onSettled(data, error, payload, context, { client }) {
+            if (context?.fakeImage) {
+                URL.revokeObjectURL(context.fakeImage)
+            }
+
+            await client.invalidateQueries({
                 queryKey: ['messages', chatId],
                 refetchType: 'none',
             })
+
+            reset()
         },
     })
 
-    const { mutate: update, isPending: isUpdating } = useMutation<AxiosResponse<Message>, Error, UpdatePayload>({
+    const { mutate: update, isPending: isUpdating } = useMutation<AxiosResponse<Message>, AxiosError<{ message: string }>, UpdatePayload>({
         mutationFn: ({ id, ...payload }) => axios.post(
             `/chats/${chatId}/messages/${id}`,
             { _method: 'PATCH', ...payload },
@@ -180,11 +203,20 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
 
             textarea.current?.focus()
         },
-        onSuccess({ data }, { id }, context, { client }) {
+        onSuccess({ data }, { id }) {
             alter(chatId, id, data)
-
             clear()
+        },
+        onError({ response }) {
+            const message = response?.status === 429
+                ? response.data.message
+                : 'Something went wrong'
 
+            toast.error(message, {
+                className: 'right-5! w-[calc(100%-30px)]! sm:w-[calc(100%-40px)]! md:right-1/2! md:w-auto! md:translate-x-[calc(50%+8rem)]',
+            })
+        },
+        onSettled(data, error, payload, context, { client }) {
             client.invalidateQueries({
                 queryKey: ['messages', chatId],
                 refetchType: 'none',
