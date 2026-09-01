@@ -1,10 +1,15 @@
+import { router } from '@inertiajs/react'
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { useEffect } from 'react'
+import { type CSSProperties, useEffect } from 'react'
+import { toast, Toaster } from 'sonner'
 
 import AppSidebar from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { useAppearance } from '@/hooks/use-appearance'
 import { useCurrentUrl } from '@/hooks/use-current-url'
+import type { FlashToast } from '@/types'
 import { Chat } from '@/types/models'
 
 const queryClient = new QueryClient({
@@ -18,9 +23,53 @@ const queryClient = new QueryClient({
 })
 
 export default function AppLayout({ children }: { children: React.ReactNode; }) {
+    const { currentUrl } = useCurrentUrl()
+    const { appearance } = useAppearance()
+
+    useEffect(() => {
+        router.on('navigate', () => {
+            toast.dismiss()
+        })
+
+        router.on('flash', event => {
+            const flash = (event as CustomEvent).detail?.flash
+            const data = flash?.toast as FlashToast | undefined
+
+            if (!data) {
+                return
+            }
+
+            toast[data.type](data.message)
+        })
+    }, [])
+
     return (
         <QueryClientProvider client={queryClient}>
-            <Main>{children}</Main>
+            <TooltipProvider delayDuration={0}>
+                <Main currentUrl={currentUrl}>{children}</Main>
+
+                <Toaster
+                    theme={appearance}
+                    className='toaster group'
+                    position='top-right'
+                    icons={{
+                        success: null,
+                        error: null,
+                    }}
+                    visibleToasts={1}
+                    offset={currentUrl === '/settings' ? undefined : { top: '84px', right: '0' }}
+                    mobileOffset={currentUrl === '/settings' ? undefined : { top: '84px', right: '0' }}
+                    richColors
+                    style={
+                        {
+                            '--width': currentUrl === '/settings' ? '356px' : '100%',
+                            '--normal-bg': 'var(--popover)',
+                            '--normal-text': 'var(--popover-foreground)',
+                            '--normal-border': 'var(--border)',
+                        } as CSSProperties
+                    }
+                />
+            </TooltipProvider>
 
             {import.meta.env.MODE !== 'staging' && (
                 <ReactQueryDevtools position='right' buttonPosition='bottom-left' />
@@ -29,8 +78,7 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
     )
 }
 
-function Main({ children }: { children: React.ReactNode }) {
-    const { currentUrl } = useCurrentUrl()
+function Main({ currentUrl, children }: { currentUrl: string, children: React.ReactNode }) {
     const queryClient = useQueryClient()
 
     useEffect(() => {
