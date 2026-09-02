@@ -6,7 +6,6 @@ use App\Events\MessageEvent;
 use App\Events\MessageReaction;
 use App\Http\Requests\MessageRequest;
 use App\Http\Resources\MessageResource;
-use App\Jobs\DeleteMessage;
 use App\Models\Chat;
 use App\Models\Message;
 use Carbon\CarbonImmutable;
@@ -15,8 +14,10 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 
 class MessageController extends Controller
 {
@@ -119,7 +120,8 @@ class MessageController extends Controller
     public function destroy(Chat $chat, Message $message): array
     {
         if ($message->delete()) {
-            DeleteMessage::dispatch($message, $chat->id)->delay(5);
+            // Grant 5-second grace period to undo deletion
+            dispatch(fn () => $this->markMessageAsDeleted($message))->delay(5);
         }
 
         return ['success' => true];
@@ -196,5 +198,38 @@ class MessageController extends Controller
         );
 
         abort_unless($canProceed, 429, __('You can only attach a standard image 3 times every 3 hours.'));
+    }
+
+    private function markMessageAsDeleted(Message $message): void
+    {
+        if (! $message->trashed()) {
+            return;
+        }
+
+        if ($image = $message->image) {
+            Storage::delete($image);
+        }
+
+        $message->update([
+            'reference_id' => null,
+            'content' => null,
+            'image' => null,
+            'gif' => null,
+        ]);
+
+        Broadcast::private("chat.{$message->chat_id}")
+            ->as('MessageDeleted')
+            ->with([
+                'chat_id' => $message->chat_id,
+                'id' => $message->id,
+            ])
+            ->toOthers()
+            ->sendNow();
+
+        Broadcast::presence("room.{$message->chat_id}")
+            ->as('MessageDeleted')
+            ->with($message->only('id'))
+            ->toOthers()
+            ->sendNow();
     }
 }

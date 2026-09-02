@@ -1,12 +1,12 @@
 <?php
 
 use App\Events\MessageEvent;
-use App\Jobs\DeleteMessage;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Broadcasting\AnonymousEvent;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Queue\CallQueuedClosure;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -441,16 +441,13 @@ describe('DELETE', function () {
 
         Event::assertNotDispatched(MessageEvent::class);
 
-        Queue::assertPushed(
-            DeleteMessage::class,
-            fn (DeleteMessage $job) => $job->delay === 5,
-        );
+        Queue::assertClosurePushed(function (CallQueuedClosure $job) {
+            $job->handle(app());
+
+            return $job->delay === 5;
+        });
 
         travelTo(now()->addSeconds(5));
-
-        (new DeleteMessage($this->message, $this->chat->id))
-            ->withFakeQueueInteractions()
-            ->handle();
 
         Event::assertDispatchedTimes(AnonymousEvent::class, 2);
 
@@ -492,7 +489,17 @@ describe('DELETE', function () {
             ]))
             ->assertStatus(200);
 
+        Queue::assertClosurePushed(function (CallQueuedClosure $job) {
+            $job->handle(app());
+
+            return $job->delay === 5;
+        });
+
         travelTo(now()->addSeconds(6));
+
+        Event::assertDispatchedTimes(AnonymousEvent::class, 2);
+
+        Event::assertDispatched(AnonymousEvent::class, fn (AnonymousEvent $event) => $event->broadcastAs() === 'MessageDeleted');
 
         actingAs($this->user)
             ->putJson(route('chats.messages.restore', [
@@ -501,14 +508,9 @@ describe('DELETE', function () {
             ]))
             ->assertStatus(403);
 
-        Event::assertNotDispatched(AnonymousEvent::class);
+        $message = $this->message->refresh();
 
-        expect($this->message->refresh()->trashed())->toBeTrue();
-
-        (new DeleteMessage($this->message, $this->chat->id))
-            ->withFakeQueueInteractions()
-            ->handle();
-
-        expect($this->message->content)->toBeNull();
+        expect($message->trashed())->toBeTrue();
+        expect($message->content)->toBeNull();
     });
 });
