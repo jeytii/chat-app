@@ -53,6 +53,8 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
                     className='toaster group'
                     position='top-right'
                     icons={{
+                        loading: null,
+                        info: null,
                         success: null,
                         error: null,
                     }}
@@ -60,6 +62,9 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
                     offset={currentUrl === '/settings' ? undefined : { top: '84px', right: '0' }}
                     mobileOffset={currentUrl === '/settings' ? undefined : { top: '84px', right: '0' }}
                     richColors
+                    toastOptions={{
+                        className: 'py-2!',
+                    }}
                     style={
                         {
                             '--width': currentUrl === '/settings' ? '356px' : '100%',

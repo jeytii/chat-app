@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 import MessageBox from '@/components/message-box'
 import Messages, { Placeholder as MessagesPlaceholder } from '@/components/messages'
@@ -20,6 +21,8 @@ export default function Chat() {
             ? true
             : document.visibilityState === 'visible'
     ))
+    const reconnectingMessage = useRef<string | number>(null)
+    const failedMessage = useRef<string | number>(null)
 
     const { data, isLoading } = useQuery<ChatType[]>({
         queryKey: ['chats'],
@@ -37,14 +40,40 @@ export default function Chat() {
         }
 
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
+            const isVisible = document.visibilityState === 'visible'
+
+            if (isVisible) {
                 markMessagesAsSeen()
             }
 
-            setIsViewing(document.visibilityState === 'visible')
+            setIsViewing(isVisible)
         }
 
         markMessagesAsSeen()
+
+        window.Echo.connector.onConnectionChange(event => {
+            if (event === 'failed') {
+                failedMessage.current = toast.error('Connection failed.', {
+                    duration: Infinity,
+                    dismissible: false,
+                    className: 'right-5! w-[calc(100%-30px)]! sm:w-[calc(100%-40px)]! md:right-1/2! md:w-auto! md:translate-x-[calc(50%+8rem)]',
+                })
+            } else if (event === 'connecting' || event === 'reconnecting') {
+                reconnectingMessage.current = toast.loading('Reconnecting...', {
+                    duration: Infinity,
+                    dismissible: false,
+                    className: 'right-5! w-[calc(100%-30px)]! sm:w-[calc(100%-40px)]! md:right-1/2! md:w-auto! md:translate-x-[calc(50%+8rem)]',
+                })
+            } else {
+                if (reconnectingMessage.current) {
+                    toast.dismiss(reconnectingMessage.current)
+                }
+
+                if (failedMessage.current) {
+                    toast.dismiss(failedMessage.current)
+                }
+            }
+        })
 
         document.addEventListener('visibilitychange', handleVisibilityChange)
 

@@ -64,7 +64,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
     const set = useStore(state => state.set)
     const revokeImagePreview = useStore(state => state.revokeImagePreview)
     const clear = useStore(state => state.clear)
-
+    const hasNoConnection = () => ['connecting', 'reconnecting', 'failed'].includes(window.Echo.connectionStatus())
     const attachment = useMemo(() => {
         if (gif?.sm) {
             return gif.sm
@@ -273,6 +273,10 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
     }
 
     function selectGif(gif: { md: string; sm: string }) {
+        if (isUpdating) {
+            return
+        }
+
         revokeImagePreview()
         set('image', null)
         set('gif', gif)
@@ -304,7 +308,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
     function send(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
 
-        if ((!content?.trim().length && !image && !gif) || isUpdating) {
+        if ((!content?.trim().length && !image && !gif) || isUpdating || hasNoConnection()) {
             return
         }
 
@@ -386,7 +390,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
 
                 <InputGroupAddon align='block-end'>
                     <Popover>
-                        <PopoverTrigger asChild className='data-[state=open]:text-accent-foreground'>
+                        <PopoverTrigger asChild disabled={isUpdating} className='data-[state=open]:text-accent-foreground'>
                             <InputGroupButton
                                 type='button'
                                 variant='ghost'
@@ -432,7 +436,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                         </label>
                     </InputGroupButton>
                     <Popover>
-                        <PopoverTrigger asChild className='data-[state=open]:text-accent-foreground'>
+                        <PopoverTrigger asChild disabled={isUpdating} className='data-[state=open]:text-accent-foreground'>
                             <InputGroupButton
                                 type='button'
                                 variant='ghost'

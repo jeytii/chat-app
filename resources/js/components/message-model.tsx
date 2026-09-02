@@ -32,8 +32,6 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     const { alter, remove } = useMessage()
     const { debounce, stopDebounce, canStopDebounce } = useDebounce(5000)
     const { appearance } = useAppearance()
-    const reactionsCount = message.reactions.reduce((total, message) => total + message.total, 0)
-    const reactions = message.reactions.filter(reaction => reaction.total)
 
     const { editId, reference } = useStore(useShallow(state => ({
         editId: state.editId,
@@ -43,6 +41,10 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     const set = useStore(state => state.set)
     const revokeImagePreview = useStore(state => state.revokeImagePreview)
     const clear = useStore(state => state.clear)
+
+    const hasNoConnection = () => ['connecting', 'reconnecting', 'failed'].includes(window.Echo.connectionStatus())
+    const reactionsCount = message.reactions.reduce((total, message) => total + message.total, 0)
+    const reactions = message.reactions.filter(reaction => reaction.total)
 
     const { mutate: destroy, context: destroyContext, reset: resetDestroy } = useMutation<AxiosResponse, Error, { message: Message }, { message: Message }>({
         mutationFn: () => axios.delete(`/chats/${chatId}/messages/${message.id}`, {
@@ -129,7 +131,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     })
 
     function edit() {
-        if ((!message.from_self && !message.is_fake) || reference) {
+        if ((!message.from_self && !message.is_fake) || reference || hasNoConnection()) {
             return
         }
 
@@ -147,7 +149,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     async function deleteMessage() {
-        if ((!message.from_self && !message.is_fake) || reference) {
+        if ((!message.from_self && !message.is_fake) || reference || hasNoConnection()) {
             return
         }
 
@@ -155,6 +157,10 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     function undoDelete() {
+        if (hasNoConnection()) {
+            return
+        }
+
         const deletedMessage = destroyContext?.message
 
         if (
@@ -170,7 +176,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     function reply() {
-        if (message.is_fake || reference) {
+        if (message.is_fake || reference || hasNoConnection()) {
             return
         }
 
