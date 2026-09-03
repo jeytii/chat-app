@@ -64,7 +64,7 @@ class MessageController extends Controller
         $user = $request->user();
 
         if ($image = data_get($payload, 'image')) {
-            $this->applyAttachmentLimit($user->id);
+            $this->limitAttachmentUpload("attachment-upload:{$user->id}");
 
             $payload['image'] = $image->store("chats/{$chat->id}");
         }
@@ -92,7 +92,7 @@ class MessageController extends Controller
         $payload = $request->validated();
 
         if ($image = $request->safe()->file('image')) {
-            $this->applyAttachmentLimit($request->user()->id);
+            $this->limitAttachmentUpload("attachment-upload:{$request->user()->id}");
 
             $payload['image'] = $image->store("chats/{$chat->id}");
         }
@@ -188,16 +188,17 @@ class MessageController extends Controller
         return ['success' => true];
     }
 
-    private function applyAttachmentLimit(string $userId): void
+    private function limitAttachmentUpload(string $key): void
     {
-        $canProceed = RateLimiter::attempt(
-            "can-attach-image:{$userId}",
-            5,
-            fn () => null,
-            60 * 60 * 5, // 5 hours
+        abort_if(
+            RateLimiter::tooManyAttempts($key, 5),
+            429,
+            __('You can only upload an attachment 5 times a day.'),
         );
 
-        abort_unless($canProceed, 429, __('You can only attach a standard image 3 times every 3 hours.'));
+        $decay = now()->endOfDay() |> now()->diffInSeconds(...) |> round(...);
+
+        RateLimiter::increment($key, (int) $decay);
     }
 
     private function markMessageAsDeleted(Message $message): void

@@ -3,6 +3,7 @@
 use App\Events\MessageEvent;
 use App\Models\Message;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Broadcasting\AnonymousEvent;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\UploadedFile;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\travelTo;
+use function Spatie\PestPluginTestTime\testTime;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -141,32 +143,61 @@ describe('CREATE', function () {
         );
     });
 
-    test('can attach a standard image to a message only 5 times every 5 hours', function () {
+    test('can only upload an attachment 5 times a day', function () {
         Storage::fake();
 
         $http = actingAs($this->user);
+        $currentDateTime = Carbon::parse('today 7pm');
+        $tonight = testTime()->freeze($currentDateTime);
 
-        collect(range(1, 5))->each(function () use ($http) {
+        collect(range(1, 5))->each(function ($counter) use ($http, $tonight) {
+            if ($counter !== 1) {
+                $tonight->addHour();
+            }
+
+            // 7pm, 8pm, 9pm, 10pm, and 11pm
             $http->postJson(route('chats.messages.store', $this->chat), [
                 'image' => UploadedFile::fake()->image('image.png'),
             ])->assertStatus(201);
         });
 
+        $tonight->addMinutes(10);
+
+        // 11:10pm
         $http->postJson(route('chats.messages.store', $this->chat), [
             'image' => UploadedFile::fake()->image('image.png'),
         ])->assertStatus(429);
 
-        travelTo(now()->addHour());
+        $nextDay = testTime()->freeze($currentDateTime->tomorrow());
 
+        collect(range(1, 5))->each(function ($counter) use ($http, $nextDay) {
+            if (in_array($counter, [2, 3])) {
+                $nextDay->addHour();
+            }
+
+            if ($counter >= 4) {
+                $nextDay->addHours(3);
+            }
+
+            // Next day 12am, 1am, 2am, 5am, and 8am
+            $http->postJson(route('chats.messages.store', $this->chat), [
+                'image' => UploadedFile::fake()->image('image.png'),
+            ])->assertStatus(201);
+        });
+
+        $nextDay->addHour();
+
+        // Next day 9am
         $http->postJson(route('chats.messages.store', $this->chat), [
             'image' => UploadedFile::fake()->image('image.png'),
         ])->assertStatus(429);
 
-        travelTo(now()->addHours(4));
+        $nextDay->setTime(23, 55);
 
+        // Next day 11:55pm
         $http->postJson(route('chats.messages.store', $this->chat), [
             'image' => UploadedFile::fake()->image('image.png'),
-        ])->assertStatus(201);
+        ])->assertStatus(429);
     });
 
     test('cannot send a message without text content or attachment', function () {
@@ -379,17 +410,27 @@ describe('UPDATE', function () {
             ->create();
 
         $http = actingAs($this->user);
+        $currentDateTime = Carbon::parse('today 7pm');
+        $tonight = testTime()->freeze($currentDateTime);
         $url = route('chats.messages.update', [
             'chat' => $this->chat,
             'message' => $message,
         ]);
 
-        collect(range(1, 5))->each(function () use ($http, $url) {
+        collect(range(1, 5))->each(function ($counter) use ($http, $tonight, $url) {
+            if ($counter !== 1) {
+                $tonight->addHour();
+            }
+
+            // 7pm, 8pm, 9pm, 10pm, and 11pm
             $http->putJson($url, [
                 'image' => UploadedFile::fake()->image('image.png'),
             ])->assertStatus(200);
         });
 
+        $tonight->addMinutes(10);
+
+        // 11:10pm
         $http->putJson($url, [
             'image' => UploadedFile::fake()->image('image.png'),
         ])->assertStatus(429);
@@ -398,8 +439,26 @@ describe('UPDATE', function () {
             'content' => 'Lorem ipsum',
         ])->assertStatus(200);
 
-        travelTo(now()->addHour());
+        $nextDay = testTime()->freeze($currentDateTime->tomorrow());
 
+        collect(range(1, 5))->each(function ($counter) use ($http, $url, $nextDay) {
+            if (in_array($counter, [2, 3])) {
+                $nextDay->addHour();
+            }
+
+            if ($counter >= 4) {
+                $nextDay->addHours(3);
+            }
+
+            // Next day 12am, 1am, 2am, 5am, and 8am
+            $http->putJson($url, [
+                'image' => UploadedFile::fake()->image('image.png'),
+            ])->assertStatus(200);
+        });
+
+        $nextDay->addHour();
+
+        // Next day 9am
         $http->putJson($url, [
             'image' => UploadedFile::fake()->image('image.png'),
         ])->assertStatus(429);
@@ -408,10 +467,15 @@ describe('UPDATE', function () {
             'content' => 'Hello world',
         ])->assertStatus(200);
 
-        travelTo(now()->addHours(4));
+        $nextDay->setTime(23, 55);
 
+        // Next day 11:55pm
         $http->putJson($url, [
             'image' => UploadedFile::fake()->image('image.png'),
+        ])->assertStatus(429);
+
+        $http->putJson($url, [
+            'content' => 'Hello world',
         ])->assertStatus(200);
     });
 });
