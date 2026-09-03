@@ -5,7 +5,6 @@ import { Edit, Reply, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
-import { Attachment } from '@/components/ui/attachment'
 import { Badge } from '@/components/ui/badge'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Button } from '@/components/ui/button'
@@ -240,7 +239,14 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
     }
 
     return (
-        <MessageContent className='gap-1'>
+        <MessageContent className={cn(
+            'w-auto gap-1',
+            {
+                'animate-slide-left': message.is_fake,
+                'animate-slide-right': !message.from_self && message.recently_sent,
+            },
+        )}>
+            {/* ========== TIME ========== */}
             {!message.is_fake && (
                 <MessageHeader className='px-1 select-none'>
                     {firstInAMinute && (
@@ -256,6 +262,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 </MessageHeader>
             )}
 
+            {/* ========== MESSAGE REPLYING TO ========== */}
             {!!message.reference && (
                 <Card size='sm' className='w-fit max-w-[70vw]! rounded-[8px]! p-0 md:max-w-[50vw]! lg:max-w-180!'>
                     <CardContent className='relative flex items-center gap-2 px-4 py-1 before:absolute before:top-0 before:left-0 before:block before:h-full before:w-1 before:bg-primary before:content-[""]'>
@@ -277,6 +284,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                         variant={message.from_self ? 'tinted' : 'muted'}
                         className='max-w-[70vw]! md:max-w-[50vw]! lg:max-w-180!'
                     >
+                        {/* ========== MESSAGE ========== */}
                         {!!message.content && (
                             <BubbleContent
                                 dangerouslySetInnerHTML={{ __html: message.content }}
@@ -288,11 +296,35 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                             />
                         )}
 
+                        {/* ========== ATTACHMENT ========== */}
                         {(!!message.gif || !!message.image_url) && (
-                            <Media message={message} />
+                            <div className={cn('w-fit', { 'ml-auto': message.from_self })}>
+                                {message.gif ? (
+                                    <img
+                                        src={message.gif}
+                                        className='block h-auto max-h-60 w-full rounded-md object-cover lg:max-h-100 lg:max-w-120'
+                                        alt='GIF'
+                                    />
+                                ) : (
+                                    <Dialog>
+                                        <DialogTrigger>
+                                            <img
+                                                src={message.image_url as string}
+                                                className='block h-auto max-h-60 w-full cursor-pointer rounded-md object-cover lg:max-h-100 lg:max-w-120'
+                                                alt='Attachment'
+                                            />
+                                        </DialogTrigger>
+                                        <DialogContent className='w-auto! max-w-full! p-0 sm:max-w-full! [&>button]:top-2 [&>button]:right-2 [&>button]:rounded-full [&>button]:bg-background [&>button]:p-1'>
+                                            <img src={message.image_url as string} className='block max-h-[90vh] max-w-[90vw] rounded-lg' />
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+                            </div>
                         )}
                     </Bubble>
                 </ContextMenuTrigger>
+
+                {/* ========== MENU ========== */}
                 <ContextMenuContent>
                     <ContextMenuItem className='bg-transparent! p-0!'>
                         <EmojiPicker
@@ -312,24 +344,25 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                             skinTonesDisabled
                             lazyLoadEmojis
                             onReactionClick={react}
+                            className='h-[35px]! rounded-none! bg-transparent!'
                         />
                     </ContextMenuItem>
 
                     {message.from_self ? (
                         <>
-                            <ContextMenuItem asChild>
+                            <ContextMenuItem asChild className='text-xs md:text-sm'>
                                 <Button className='w-full justify-start' variant='ghost' onClick={reply}>
                                     <Reply />
                                     <span>Reply</span>
                                 </Button>
                             </ContextMenuItem>
-                            <ContextMenuItem asChild>
+                            <ContextMenuItem asChild className='text-xs md:text-sm'>
                                 <Button className='w-full justify-start' variant='ghost' onClick={edit}>
                                     <Edit />
                                     <span>Edit</span>
                                 </Button>
                             </ContextMenuItem>
-                            <ContextMenuItem asChild>
+                            <ContextMenuItem asChild className='text-xs md:text-sm'>
                                 <Button className='w-full justify-start hover:text-destructive!' variant='ghost' onClick={deleteMessage}>
                                     <Trash2 />
                                     <span>Delete</span>
@@ -337,7 +370,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                             </ContextMenuItem>
                         </>
                     ) : (
-                        <ContextMenuItem asChild>
+                        <ContextMenuItem asChild className='text-xs md:text-sm'>
                             <Button className='w-full justify-start' variant='ghost' onClick={reply}>
                                 <Reply />
                                 <span>Reply</span>
@@ -347,6 +380,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 </ContextMenuContent>
             </ContextMenu>
 
+            {/* ========== REACTIONS ========== */}
             {!!reactionsCount && (
                 <MessageFooter className='px-0'>
                     <Badge variant='outline' className='px-2 py-1'>
@@ -359,38 +393,5 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                 </MessageFooter>
             )}
         </MessageContent>
-    )
-}
-
-function Media({ message }: { message: Message }) {
-    if (message.gif) {
-        return (
-            <div className={cn('flex', { 'justify-end': message.from_self })}>
-                <img
-                    src={message.gif}
-                    className='block h-auto max-h-60 w-full rounded-md object-cover lg:max-h-100 lg:max-w-120'
-                    alt='GIF'
-                />
-            </div>
-        )
-    }
-
-    return (
-        <div className={cn('flex', { 'justify-end': message.from_self })}>
-            <Dialog>
-                <DialogTrigger>
-                    <Attachment orientation='vertical' className='w-full cursor-pointer'>
-                        <img
-                            src={message.image_url as string}
-                            className='block h-auto max-h-60 w-full rounded-md object-cover lg:max-h-100 lg:max-w-120'
-                            alt='Attachment'
-                        />
-                    </Attachment>
-                </DialogTrigger>
-                <DialogContent className='w-auto! max-w-full! p-0 sm:max-w-full! [&>button]:top-2 [&>button]:right-2 [&>button]:rounded-full [&>button]:bg-background [&>button]:p-1'>
-                    <img src={message.image_url as string} className='block max-h-[90vh] max-w-[90vw] rounded-lg' />
-                </DialogContent>
-            </Dialog>
-        </div>
     )
 }

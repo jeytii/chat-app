@@ -34,6 +34,7 @@ export type Message = {
     edited?: boolean;
     deleted?: boolean;
     is_fake?: boolean;
+    recently_sent?: boolean;
 }
 
 export type Reaction = {

@@ -124,6 +124,7 @@ export default function Messages({ onlineIds, isViewing }: { onlineIds: RefObjec
                     ...message,
                     from_self: senderEmail === auth.user.email,
                     seen,
+                    recently_sent: true,
                 })
 
                 if (!isViewingRef.current) {
@@ -204,7 +205,7 @@ export default function Messages({ onlineIds, isViewing }: { onlineIds: RefObjec
     }
 
     return (
-        <MessageScrollerContent className='justify-end gap-2 p-4'>
+        <MessageScrollerContent className='justify-end gap-1 p-4'>
             {isFetchingPreviousPage && <p className='py-2 text-center text-muted-foreground'>Loading...</p>}
 
             {data.pages.map((message, index, messages) => (

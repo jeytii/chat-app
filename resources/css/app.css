@@ -66,6 +66,25 @@
     --radius-xl: calc(var(--radius) + 4px);
 
     --spacing: 0.25rem;
+
+	--animate-blink: blink 900ms linear infinite;
+	--animate-slide-left: slide-left 100ms ease-in;
+	--animate-slide-right: slide-right 100ms ease-in;
+
+	@keyframes blink {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@keyframes slide-left {
+		from { transform: translateX(100%); }
+		to { transform: translateX(0); }
+	}
+
+	@keyframes slide-right {
+		from { transform: translateX(-100%); }
+		to { transform: translateX(0); }
+	}
 }
 
 :root {
@@ -420,21 +439,19 @@
 }
 
 aside.EmojiPickerReact {
-    --epr-emoji-size: 25px;
     --epr-search-input-height: 35px;
     --epr-picker-border-color: transparent;
     --epr-category-label-bg-color: transparent;
 
     &:has([aria-label="Reactions"]) {
-        background: transparent;
+        --epr-emoji-size: 20px;
+
+        @media (width >= 768px) {
+            --epr-emoji-size: 25px;
+        }
     }
 
     .epr-category-nav {
         @apply hidden;
     }
-}
-
-@keyframes blink {
-    from { opacity: 0; }
-    to { opacity: 1; }
 }
