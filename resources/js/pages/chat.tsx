@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { ConnectionStatus } from 'laravel-echo'
 import { useEffect, useRef, useState } from 'react'
-import { toast } from 'sonner'
 
 import MessageBox from '@/components/message-box'
 import Messages, { Placeholder as MessagesPlaceholder } from '@/components/messages'
@@ -10,19 +10,18 @@ import PresenceIndicator from '@/components/presence-indicator'
 import { MessageScroller, MessageScrollerButton, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 import type { Chat as ChatType } from '@/types/models'
+
 
 export default function Chat() {
     const id = usePage<{ chat_id: string }>().props.chat_id
     const queryClient = useQueryClient()
     const onlineIds = useRef<string[]>([])
+    const [toast, setToast] = useState<{ status: ConnectionStatus; message: string; } | null>(null)
     const [isViewing, setIsViewing] = useState<boolean>(() => (
-        typeof document === 'undefined'
-            ? true
-            : document.visibilityState === 'visible'
+        typeof document === 'undefined' ? true : document.visibilityState === 'visible'
     ))
-    const reconnectingMessage = useRef<string | number>(null)
-    const failedMessage = useRef<string | number>(null)
 
     const { data, isLoading } = useQuery<ChatType[]>({
         queryKey: ['chats'],
@@ -49,31 +48,27 @@ export default function Chat() {
             setIsViewing(isVisible)
         }
 
-        markMessagesAsSeen()
-
-        window.Echo.connector.onConnectionChange(event => {
-            if (event === 'failed') {
-                failedMessage.current = toast.error('Connection failed.', {
-                    duration: Infinity,
-                    dismissible: false,
-                    className: 'right-5! w-[calc(100%-30px)]! sm:w-[calc(100%-40px)]! md:right-1/2! md:w-auto! md:translate-x-[calc(50%+8rem)]',
+        const setConnectionStatus = (status: ConnectionStatus) => {
+            if (status === 'failed') {
+                setToast({
+                    status,
+                    message: 'Connection failed.',
                 })
-            } else if (event === 'connecting' || event === 'reconnecting') {
-                reconnectingMessage.current = toast.loading('Reconnecting...', {
-                    duration: Infinity,
-                    dismissible: false,
-                    className: 'right-5! w-[calc(100%-30px)]! sm:w-[calc(100%-40px)]! md:right-1/2! md:w-auto! md:translate-x-[calc(50%+8rem)]',
+            } else if (status === 'connecting' || status === 'reconnecting') {
+                setToast({
+                    status,
+                    message: 'Reconnecting...',
                 })
             } else {
-                if (reconnectingMessage.current) {
-                    toast.dismiss(reconnectingMessage.current)
-                }
-
-                if (failedMessage.current) {
-                    toast.dismiss(failedMessage.current)
-                }
+                setToast(null)
             }
-        })
+        }
+
+        markMessagesAsSeen()
+
+        setConnectionStatus(window.Echo.connectionStatus())
+
+        window.Echo.connector.onConnectionChange(setConnectionStatus)
 
         document.addEventListener('visibilitychange', handleVisibilityChange)
 
@@ -110,7 +105,7 @@ export default function Chat() {
 
             <MessageScrollerProvider scrollEdgeThreshold={200} autoScroll>
                 {/* ===== HEADER ===== */}
-                <header className='z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4 dark:border-input/60'>
+                <header className='relative z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4 dark:border-input/60'>
                     <div className='flex items-center gap-2'>
                         <SidebarTrigger className='-ml-1' />
 
@@ -122,6 +117,28 @@ export default function Chat() {
                             </div>
                         </div>
                     </div>
+
+                    {!!toast && (
+                        <div className='absolute inset-x-0 top-full z-5 p-4'>
+                            <div className={cn(
+                                'mx-auto w-fit rounded-sm border bg-background',
+                                {
+                                    'border-border/70': ['connecting', 'reconnecting'].includes(toast.status),
+                                    'border-destructive/50': toast.status === 'failed',
+                                },
+                            )}>
+                                <h1 className={cn(
+                                    'rounded-sm px-4 py-2 text-sm',
+                                    {
+                                        'text-foreground/80': ['connecting', 'reconnecting'].includes(toast.status),
+                                        'bg-destructive/20 text-destructive-foreground/80': toast.status === 'failed',
+                                    },
+                                )}>
+                                    {toast.message}
+                                </h1>
+                            </div>
+                        </div>
+                    )}
                 </header>
 
                 {/* ===== MESSAGES ===== */}
@@ -133,7 +150,7 @@ export default function Chat() {
                 </MessageScroller>
 
                 {/* ===== MESSAGE BOX ===== */}
-                <MessageBox onlineIds={onlineIds} />
+                <MessageBox onlineIds={onlineIds} setToast={setToast} />
             </MessageScrollerProvider>
         </>
     )

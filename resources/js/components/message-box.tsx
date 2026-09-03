@@ -2,11 +2,11 @@ import { usePage } from '@inertiajs/react'
 import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios, { type AxiosError, type AxiosResponse } from 'axios'
 import EmojiPicker, { type EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react'
+import type { ConnectionStatus } from 'laravel-echo'
 import { Image, SendHorizonal, Smile, X } from 'lucide-react'
 import { Popover as PopoverPrimitive } from 'radix-ui'
-import { type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent, type RefObject, type SubmitEvent, useEffect, useMemo, useRef } from 'react'
+import { type ChangeEvent, type Dispatch, type KeyboardEvent as ReactKeyboardEvent, type RefObject, type SetStateAction, type SubmitEvent, useEffect, useMemo, useRef } from 'react'
 import { Remarkable } from 'remarkable'
-import { toast } from 'sonner'
 import { useShallow } from 'zustand/react/shallow'
 
 import GifPicker from '@/components/gif-picker'
@@ -21,6 +21,11 @@ import useMessage from '@/hooks/use-message'
 import useStore from '@/hooks/useStore'
 import { cn } from '@/lib/utils'
 import type { Message, MessageResponse } from '@/types/models'
+
+type Props = {
+    onlineIds: RefObject<string[]>;
+    setToast: Dispatch<SetStateAction<{ status: ConnectionStatus; message: string; } | null>>;
+}
 
 type CreationPayload = {
     reference_id: string | null;
@@ -43,7 +48,7 @@ type UpdatePayload = {
     gif: string | null;
 }
 
-export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[]> }) {
+export default function MessageBox({ onlineIds, setToast }: Props) {
     const { chat_id: chatId } = usePage<{ chat_id: string }>().props
     const { insert, alter, remove } = useMessage()
     const throttle = useThrottle(1000)
@@ -169,9 +174,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                 remove(chatId, context.id, false)
             }
 
-            toast.error(message, {
-                className: 'right-5! w-[calc(100%-30px)]! sm:w-[calc(100%-40px)]! md:right-1/2! md:w-auto! md:translate-x-[calc(50%+8rem)]',
-            })
+            setToast({ status: 'failed', message })
         },
         async onSettled(data, error, payload, context, { client }) {
             if (context?.fakeImage) {
@@ -208,12 +211,11 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
             clear()
         },
         onError({ response }) {
-            const message = response?.status === 429
-                ? response.data.message
-                : 'Something went wrong'
-
-            toast.error(message, {
-                className: 'right-5! w-[calc(100%-30px)]! sm:w-[calc(100%-40px)]! md:right-1/2! md:w-auto! md:translate-x-[calc(50%+8rem)]',
+            setToast({
+                status: 'failed',
+                message: response?.status === 429
+                    ? response.data.message
+                    : 'Something went wrong',
             })
         },
         onSettled(data, error, payload, context, { client }) {

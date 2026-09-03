@@ -455,3 +455,7 @@ aside.EmojiPickerReact {
         @apply hidden;
     }
 }
+
+[data-sonner-toaster] {
+    z-index: 10 !important;
+}
