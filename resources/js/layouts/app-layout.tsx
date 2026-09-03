@@ -1,5 +1,5 @@
-import { router } from '@inertiajs/react'
-import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
+import { router, usePage } from '@inertiajs/react'
+import { type InfiniteData, QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { type CSSProperties, useEffect } from 'react'
 import { toast, Toaster } from 'sonner'
@@ -9,8 +9,9 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppearance } from '@/hooks/use-appearance'
 import { useCurrentUrl } from '@/hooks/use-current-url'
+import useNotifications from '@/hooks/use-notifications'
 import type { FlashToast } from '@/types'
-import { Chat } from '@/types/models'
+import type { Chat, Notification } from '@/types/models'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -27,10 +28,6 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
     const { appearance } = useAppearance()
 
     useEffect(() => {
-        router.on('navigate', () => {
-            toast.dismiss()
-        })
-
         router.on('flash', event => {
             const flash = (event as CustomEvent).detail?.flash
             const data = flash?.toast as FlashToast | undefined
@@ -59,15 +56,12 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
                         error: null,
                     }}
                     visibleToasts={1}
-                    offset={currentUrl === '/settings' ? undefined : { top: '84px', right: '0' }}
-                    mobileOffset={currentUrl === '/settings' ? undefined : { top: '84px', right: '0' }}
                     richColors
                     toastOptions={{
                         className: 'py-2!',
                     }}
                     style={
                         {
-                            '--width': currentUrl === '/settings' ? '356px' : '100%',
                             '--normal-bg': 'var(--popover)',
                             '--normal-text': 'var(--popover-foreground)',
                             '--normal-border': 'var(--border)',
@@ -84,7 +78,52 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
 }
 
 function Main({ currentUrl, children }: { currentUrl: string, children: React.ReactNode }) {
+    const { user } = usePage().props.auth
     const queryClient = useQueryClient()
+
+    useNotifications()
+
+    useEffect(() => {
+        window.Echo.private(`App.Models.User.${user.id}`)
+            .notification((notification: Notification) => {
+                const newNotification = {
+                    id: notification.id,
+                    user_id: notification.user_id,
+                    name: notification.name,
+                    image_url: notification.image_url,
+                    read_at: null,
+                }
+
+                queryClient.setQueryData<InfiniteData<{ items: Notification[]; next_cursor: string | null }>>(['notifications'], current => {
+                    if (!current) {
+                        return current
+                    }
+
+                    // Insert new item into a new page if the latest one has reached the pagination count
+                    if (current.pages[0].items.length >= 10) {
+                        return {
+                            pageParams: [null, ...current.pageParams],
+                            pages: [...current.pages, {
+                                items: [newNotification],
+                                next_cursor: null,
+                            }],
+                        }
+                    }
+
+                    // Else, push it into the latest page
+                    return {
+                        ...current,
+                        pages: current.pages.map((page, index) => (
+                            index ? page : { ...page, items: [newNotification, ...page.items] }
+                        )),
+                    }
+                })
+            })
+
+        return () => {
+            window.Echo.leave(`App.Models.User.${user.id}`)
+        }
+    }, [user.id, queryClient])
 
     useEffect(() => {
         window.Echo.join('online')

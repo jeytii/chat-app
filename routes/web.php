@@ -3,6 +3,7 @@
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,12 @@ Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
             ->name('attachment');
         Route::get('gifs', 'gifs')
             ->middleware('json');
+    });
+
+    Route::controller(NotificationController::class)->group(function () {
+        Route::get('notifications', 'index')
+            ->middleware('json');
+        Route::post('notifications', 'read');
     });
 
     Route::controller(SettingsController::class)->name('settings.')->group(function () {

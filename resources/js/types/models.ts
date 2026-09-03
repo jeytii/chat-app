@@ -48,3 +48,16 @@ export type MessageResponse = {
     items: Message[];
     next_cursor: string | null;
 }
+
+export type Notification = {
+    id: string;
+    user_id: string;
+    name: string;
+    image_url: string | null;
+    read_at: string | null;
+}
+
+export type NotificationResponse = {
+    items: Notification[];
+    next_cursor: string | null;
+}
