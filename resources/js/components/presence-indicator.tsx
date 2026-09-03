@@ -29,9 +29,9 @@ export default function PresenceIndicator({ chatId, isOnline }: { chatId: string
             <div className='flex items-end gap-1'>
                 <p className='text-xs text-primary'>Typing</p>
                 <div className='relative bottom-1 flex gap-1'>
-                    <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_300ms] rounded-full bg-primary' />
-                    <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_600ms] rounded-full bg-primary' />
-                    <span className='block size-[3.5px] animate-[blink_900ms_infinite_linear_900ms] rounded-full bg-primary' />
+                    <span className='block size-[3.5px] animate-blink rounded-full bg-primary [animation-delay:300ms]' />
+                    <span className='block size-[3.5px] animate-blink rounded-full bg-primary [animation-delay:600ms]' />
+                    <span className='block size-[3.5px] animate-blink rounded-full bg-primary [animation-delay:900ms]' />
                 </div>
             </div>
         )

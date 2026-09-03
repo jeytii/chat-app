@@ -372,7 +372,7 @@ export default function MessageBox({ onlineIds }: { onlineIds: RefObject<string[
                 {(!!attachment && !isCreating) && (
                     <div className='w-full px-4 pt-3'>
                         <div className='relative inline-block'>
-                            <img src={attachment} className='block max-h-20 max-w-20 rounded' />
+                            <img src={attachment} className='block max-h-20 max-w-20 rounded-xs' />
 
                             <Button
                                 type='button'

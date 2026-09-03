@@ -5,7 +5,7 @@
     "scripts": {
         "build": "rm -f public/hot && vite build",
         "build:ssr": "vite build && vite build --ssr",
-        "dev": "vite",
+        "dev": "rm -rf public/build && vite",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
         "types:check": "tsc --noEmit"
