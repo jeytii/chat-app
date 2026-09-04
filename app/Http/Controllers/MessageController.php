@@ -16,7 +16,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 
 class MessageController extends Controller
@@ -64,8 +63,6 @@ class MessageController extends Controller
         $user = $request->user();
 
         if ($image = data_get($payload, 'image')) {
-            $this->limitAttachmentUpload("attachment-upload:{$user->id}");
-
             $payload['image'] = $image->store("chats/{$chat->id}");
         }
 
@@ -92,8 +89,6 @@ class MessageController extends Controller
         $payload = $request->validated();
 
         if ($image = $request->safe()->file('image')) {
-            $this->limitAttachmentUpload("attachment-upload:{$request->user()->id}");
-
             $payload['image'] = $image->store("chats/{$chat->id}");
         }
 
@@ -186,19 +181,6 @@ class MessageController extends Controller
         broadcast(new MessageReaction($chat->id, $message->id, $broadcastData))->toOthers();
 
         return ['success' => true];
-    }
-
-    private function limitAttachmentUpload(string $key): void
-    {
-        abort_if(
-            RateLimiter::tooManyAttempts($key, 5),
-            429,
-            __('You can only upload an attachment 5 times a day.'),
-        );
-
-        $decay = now()->endOfDay() |> now()->diffInSeconds(...) |> round(...);
-
-        RateLimiter::increment($key, (int) $decay);
     }
 
     private function markMessageAsDeleted(Message $message): void

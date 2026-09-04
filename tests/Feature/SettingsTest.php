@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Image;
@@ -8,20 +9,24 @@ use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseMissing;
+use function Spatie\PestPluginTestTime\testTime;
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+});
 
 test('settings page is displayed', function () {
-    actingAs(User::factory()->create())
+    actingAs($this->user)
         ->get(route('settings.index'))
         ->assertOk();
 });
 
 test('profile information can be updated and user is still verified', function () {
-    $user = User::factory()->create();
-    $oldData = $user->only(['name', 'username']);
+    $oldData = $this->user->only(['name', 'username']);
     $newName = 'Test User';
     $newUsername = 'testuser';
 
-    actingAs($user)
+    actingAs($this->user)
         ->patch(route('settings.profile'), [
             'name' => $newName,
             'username' => $newUsername,
@@ -30,15 +35,13 @@ test('profile information can be updated and user is still verified', function (
 
     assertDatabaseMissing('users', $oldData);
 
-    expect($user->name)->toBe($newName);
-    expect($user->username)->toBe($newUsername);
-    expect($user->hasVerifiedEmail())->toBeTrue();
+    expect($this->user->name)->toBe($newName);
+    expect($this->user->username)->toBe($newUsername);
+    expect($this->user->hasVerifiedEmail())->toBeTrue();
 });
 
 test('cannot update profile photo if the dimensions are smaller than 200x200', function () {
-    $user = User::factory()->create();
-
-    actingAs($user)
+    actingAs($this->user)
         ->put(route('settings.profile-photo'), [
             'image' => UploadedFile::fake()->image('image.jpg', 100, 100),
             'crop' => [
@@ -50,13 +53,11 @@ test('cannot update profile photo if the dimensions are smaller than 200x200', f
         ])
         ->assertRedirectBackWithErrors(['image']);
 
-    expect($user->refresh()->image)->toBeNull();
+    expect($this->user->refresh()->image)->toBeNull();
 });
 
 test('cannot update profile photo if the format is not JPG/PNG/WEBP', function () {
-    $user = User::factory()->create();
-
-    actingAs($user)
+    actingAs($this->user)
         ->put(route('settings.profile-photo'), [
             'image' => UploadedFile::fake()->image('image.gif', 200, 200),
             'crop' => [
@@ -68,20 +69,19 @@ test('cannot update profile photo if the format is not JPG/PNG/WEBP', function (
         ])
         ->assertRedirectBackWithErrors(['image']);
 
-    expect($user->refresh()->image)->toBeNull();
+    expect($this->user->refresh()->image)->toBeNull();
 });
 
 test('can update profile photo', function () {
     Storage::fake();
 
-    $user = User::factory()->create();
     $originalWidth = 1280;
     $originalHeight = 720;
     $cropWidth = 20;
     $cropHeight = 20;
     $file = UploadedFile::fake()->image('image.jpg', $originalWidth, $originalHeight);
 
-    actingAs($user)
+    actingAs($this->user)
         ->put(route('settings.profile-photo'), [
             'image' => $file,
             'crop' => [
@@ -93,7 +93,7 @@ test('can update profile photo', function () {
         ])
         ->assertRedirectBackWithoutErrors();
 
-    $path = $user->refresh()->image;
+    $path = $this->user->refresh()->image;
 
     expect(is_null($path))->toBeFalse();
 
@@ -106,10 +106,80 @@ test('can update profile photo', function () {
     expect($image->mimeType())->toBe('image/webp');
 });
 
-test('password can be updated', function () {
-    $user = User::factory()->create();
+test('can only update the profile photo 2 times a day', function () {
+    Storage::fake();
 
-    actingAs($user)
+    $tonight = testTime()->freeze(Carbon::parse('today 7pm'));
+
+    foreach (range(1, 2) as $counter) {
+        if ($counter === 2) {
+            $tonight->addHour();
+        }
+
+        actingAs($this->user)
+            ->put(route('settings.profile-photo'), [
+                'image' => UploadedFile::fake()->image('image.jpg'),
+                'crop' => [
+                    'width' => 400,
+                    'height' => 400,
+                    'x' => 0,
+                    'y' => 0,
+                ],
+            ])
+            ->assertStatus(302);
+    }
+
+    $tonight->addHour();
+
+    actingAs($this->user)
+        ->put(route('settings.profile-photo'), [
+            'image' => UploadedFile::fake()->image('image.jpg'),
+            'crop' => [
+                'width' => 400,
+                'height' => 400,
+                'x' => 0,
+                'y' => 0,
+            ],
+        ])
+        ->assertStatus(429);
+
+    testTime()->freeze($tonight->tomorrow());
+
+    foreach (range(1, 2) as $counter) {
+        if ($counter === 2) {
+            $tonight->addHour();
+        }
+
+        actingAs($this->user)
+            ->put(route('settings.profile-photo'), [
+                'image' => UploadedFile::fake()->image('image.jpg'),
+                'crop' => [
+                    'width' => 400,
+                    'height' => 400,
+                    'x' => 0,
+                    'y' => 0,
+                ],
+            ])
+            ->assertStatus(302);
+    }
+
+    $tonight->addHour();
+
+    actingAs($this->user)
+        ->put(route('settings.profile-photo'), [
+            'image' => UploadedFile::fake()->image('image.jpg'),
+            'crop' => [
+                'width' => 400,
+                'height' => 400,
+                'x' => 0,
+                'y' => 0,
+            ],
+        ])
+        ->assertStatus(429);
+});
+
+test('password can be updated', function () {
+    actingAs($this->user)
         ->put(route('settings.password'), [
             'current_password' => 'password',
             'password' => 'new-password',
@@ -117,11 +187,11 @@ test('password can be updated', function () {
         ])
         ->assertRedirectBackWithoutErrors();
 
-    expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
+    expect(Hash::check('new-password', $this->user->refresh()->password))->toBeTrue();
 });
 
 test('correct password must be provided to update password', function () {
-    actingAs(User::factory()->create())
+    actingAs($this->user)
         ->put(route('settings.password'), [
             'current_password' => 'wrong-password',
             'password' => 'new-password',

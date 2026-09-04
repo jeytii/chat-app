@@ -24,7 +24,8 @@ Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
     Route::apiResource('chats.messages', MessageController::class)
         ->except('show')
         ->scoped()
-        ->middlewareFor('index', 'json');
+        ->middlewareFor('index', 'json')
+        ->middlewareFor(['store', 'update'], 'limited:attachment-upload,5');
 
     Route::controller(ImageController::class)->group(function () {
         Route::get('photo/{image}', 'profilePhoto')
@@ -50,6 +51,7 @@ Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
             ->name('profile');
 
         Route::put('settings/profile-photo', 'updateProfilePhoto')
+            ->middleware('limited:profile-photo-upload,2')
             ->name('profile-photo');
 
         Route::put('settings/password', 'updatePassword')
