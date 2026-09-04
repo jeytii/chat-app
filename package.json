@@ -39,6 +39,7 @@
         "@radix-ui/react-toggle-group": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.8",
         "@shadcn/react": "^0.3",
+        "@siberiacancode/reactuse": "^1.0.17",
         "@tailwindcss/vite": "^4.3",
         "@tanstack/react-query": "^5.102",
         "@tanstack/react-query-devtools": "^5.102",
