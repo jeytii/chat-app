@@ -1,6 +1,6 @@
 import { Form, Head, usePage } from '@inertiajs/react'
-import { CheckCircle2 } from 'lucide-react'
-import { ChangeEvent, useRef, useState } from 'react'
+import { CheckCircle2, type LucideIcon, Monitor, Moon, Sun } from 'lucide-react'
+import { ChangeEvent, Fragment, useRef, useState } from 'react'
 
 // import DeleteUser from '@/components/delete-user'
 import Heading from '@/components/heading'
@@ -11,8 +11,17 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { type Appearance, useAppearance } from '@/hooks/use-appearance'
 import { cn } from '@/lib/utils'
+
+const themes: { value: Appearance; label: string; icon: LucideIcon }[] = [
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'dark', label: 'Dark', icon: Moon },
+    { value: 'system', label: 'Auto', icon: Monitor },
+]
 
 const colors = [
     {
@@ -47,6 +56,7 @@ const colors = [
 
 export default function Profile() {
     const { user } = usePage().props.auth
+    const { appearance, updateAppearance } = useAppearance()
     const [colorScheme, setColorScheme] = useState<string>(localStorage.getItem('color-scheme') || 'default')
     const passwordInput = useRef<HTMLInputElement>(null)
     const currentPasswordInput = useRef<HTMLInputElement>(null)
@@ -166,6 +176,31 @@ export default function Profile() {
             <Card>
                 <CardContent className='space-y-6'>
                     <Heading variant='small' title='Theme' />
+
+                    <ToggleGroup
+                        value={appearance}
+                        type='single'
+                        size='lg'
+                        className='w-full'
+                        onValueChange={updateAppearance}
+                    >
+                        {themes.map((theme, index, items) => (
+                            <Fragment key={theme.value}>
+                                <ToggleGroupItem value={theme.value} variant='outline' className='flex-1 cursor-pointer'>
+                                    <theme.icon size={16} />
+                                    <span>{theme.label}</span>
+                                </ToggleGroupItem>
+
+                                {(index < items.length - 1) && <Separator orientation='vertical' />}
+                            </Fragment>
+                        ))}
+                    </ToggleGroup>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardContent className='space-y-6'>
+                    <Heading variant='small' title='Color scheme' />
 
                     <div className='flex gap-8'>
                         {colors.map(color => (
