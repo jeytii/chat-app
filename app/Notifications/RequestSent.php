@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class AddedToContacts extends Notification implements ShouldQueue
+class RequestSent extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -37,7 +37,6 @@ class AddedToContacts extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'user_id' => $this->user->id,
             'name' => $this->user->name,
             'image_url' => $this->user->image
                 ? route('profile-photo', explode('/', $this->user->image)[1])
