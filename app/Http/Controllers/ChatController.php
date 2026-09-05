@@ -22,6 +22,7 @@ class ChatController extends Controller
 
         $chats = $user->chats()
             ->where('hidden', false)
+            ->orderByPivotDesc('created_at')
             ->with('users', fn (Relation $query) => $query->whereNot('users.id', $user->id))
             ->withCount([
                 'messages as unseen_messages_count' => fn (Builder $query) => (
