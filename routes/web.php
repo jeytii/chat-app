@@ -40,7 +40,8 @@ Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
     Route::controller(NotificationController::class)->group(function () {
         Route::get('notifications', 'index')
             ->middleware('json');
-        Route::post('notifications', 'read');
+        Route::put('notifications/{id}/read', 'read');
+        Route::post('notifications/peek', 'peek');
     });
 
     Route::controller(SettingsController::class)->name('settings.')->group(function () {

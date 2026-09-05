@@ -50,7 +50,7 @@ class HandleInertiaRequests extends Middleware
                     ]
                     : null,
                 'has_new_notifications' => auth()->check()
-                    ? $user->unreadNotifications()->exists()
+                    ? $user->notifications()->where('peeked', false)->exists()
                     : false,
             ],
         ];

@@ -51,7 +51,6 @@ export type MessageResponse = {
 
 export type Notification = {
     id: string;
-    user_id: string;
     name: string;
     image_url: string | null;
     read_at: string | null;

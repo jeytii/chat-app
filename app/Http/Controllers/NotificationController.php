@@ -24,9 +24,21 @@ class NotificationController extends Controller
     /**
      * @return array<string, bool>
      */
-    public function read(Request $request): array
+    public function read(Request $request, string $id): array
     {
-        $request->user()->unreadNotifications()->update(['read_at' => now()]);
+        $notification = $request->user()->notifications()->where('id', $id)->firstOrFail();
+
+        $notification->update(['read_at' => now()]);
+
+        return ['success' => true];
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    public function peek(Request $request): array
+    {
+        $request->user()->notifications()->where('peeked', false)->update(['peeked' => true]);
 
         return ['success' => true];
     }

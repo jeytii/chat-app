@@ -9,9 +9,8 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppearance } from '@/hooks/use-appearance'
 import { useCurrentUrl } from '@/hooks/use-current-url'
-import useNotifications from '@/hooks/use-notifications'
 import type { FlashToast } from '@/types'
-import type { Chat, Notification } from '@/types/models'
+import type { Chat, Notification, NotificationResponse } from '@/types/models'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -81,20 +80,19 @@ function Main({ currentUrl, children }: { currentUrl: string, children: React.Re
     const { user } = usePage().props.auth
     const queryClient = useQueryClient()
 
-    useNotifications()
-
     useEffect(() => {
         window.Echo.private(`App.Models.User.${user.id}`)
             .notification((notification: Notification) => {
                 const newNotification = {
                     id: notification.id,
-                    user_id: notification.user_id,
                     name: notification.name,
                     image_url: notification.image_url,
                     read_at: null,
                 }
 
-                queryClient.setQueryData<InfiniteData<{ items: Notification[]; next_cursor: string | null }>>(['notifications'], current => {
+                router.replaceProp('auth.has_new_notifications', true)
+
+                queryClient.setQueryData<InfiniteData<NotificationResponse>>(['notifications'], current => {
                     if (!current) {
                         return current
                     }
