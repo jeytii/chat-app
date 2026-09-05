@@ -1,4 +1,5 @@
 export type User = {
+    id: string;
     name: string;
     email: string;
     username: string;
@@ -7,7 +8,7 @@ export type User = {
 
 export type Chat = {
     id: string;
-    user: Omit<User, 'id'>;
+    user: User;
     is_online?: boolean;
     has_new_message?: boolean;
 }
@@ -53,6 +54,7 @@ export type Notification = {
     id: string;
     name: string;
     image_url: string | null;
+    tab?: 'chats' | 'received-requests' | 'sent-requests';
     read_at: string | null;
 }
 

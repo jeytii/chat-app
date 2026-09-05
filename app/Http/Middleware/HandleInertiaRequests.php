@@ -44,10 +44,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => auth()->check()
-                    ? [
-                        ...$user->toResource()->toArray($request),
-                        'id' => $user->id,
-                    ]
+                    ? $user->toResource()
                     : null,
                 'has_new_notifications' => auth()->check()
                     ? $user->notifications()->where('peeked', false)->exists()
