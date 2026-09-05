@@ -86,4 +86,22 @@ class User extends Authenticatable
         return $this->belongsToMany(Message::class, 'reactions', 'user_id', 'message_id')
             ->withPivot(['name', 'emoji']);
     }
+
+    /**
+     * @return BelongsToMany<self, $this>
+     */
+    public function sentRequests(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'requests', 'sender_id', 'receiver_id')
+            ->withPivot('created_at');
+    }
+
+    /**
+     * @return BelongsToMany<self, $this>
+     */
+    public function receivedRequests(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'requests', 'receiver_id', 'sender_id')
+            ->withPivot('created_at');
+    }
 }

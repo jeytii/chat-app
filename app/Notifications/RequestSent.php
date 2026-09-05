@@ -37,10 +37,12 @@ class RequestSent extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
+            'user_id' => $this->user->id,
             'name' => $this->user->name,
             'image_url' => $this->user->image
                 ? route('profile-photo', explode('/', $this->user->image)[1])
                 : null,
+            'tab' => 'received-requests',
         ];
     }
 }

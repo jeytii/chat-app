@@ -10,7 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppearance } from '@/hooks/use-appearance'
 import { useCurrentUrl } from '@/hooks/use-current-url'
 import type { FlashToast } from '@/types'
-import type { Chat, Notification, NotificationResponse } from '@/types/models'
+import type { Chat, Notification, NotificationResponse, User } from '@/types/models'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -82,11 +82,12 @@ function Main({ currentUrl, children }: { currentUrl: string, children: React.Re
 
     useEffect(() => {
         window.Echo.private(`App.Models.User.${user.id}`)
-            .notification((notification: Notification) => {
+            .notification((notification: Notification & { user_id: string }) => {
                 const newNotification = {
                     id: notification.id,
                     name: notification.name,
                     image_url: notification.image_url,
+                    tab: notification.tab,
                     read_at: null,
                 }
 
@@ -116,6 +117,23 @@ function Main({ currentUrl, children }: { currentUrl: string, children: React.Re
                         )),
                     }
                 })
+
+                if (['received-requests', 'sent-requests'].includes(notification.tab || 'chats')) {
+                    queryClient.setQueryData<Pick<User, 'id' | 'name' | 'image_url'>[]>([notification.tab], current => {
+                        if (!current) {
+                            return current
+                        }
+
+                        return [
+                            {
+                                id: notification.user_id,
+                                name: notification.name,
+                                image_url: notification.image_url,
+                            },
+                            ...current,
+                        ]
+                    })
+                }
             })
 
         return () => {

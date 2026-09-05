@@ -20,6 +20,12 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('requests', function (Blueprint $table) {
+            $table->foreignUuid('sender_id')->constrained('users');
+            $table->foreignUuid('receiver_id')->constrained('users');
+            $table->timestamp('created_at')->useCurrent();
+        });
+
         Schema::create('reactions', function (Blueprint $table) {
             $table->foreignUuid('message_id')->constrained();
             $table->foreignUuid('user_id')->constrained();
@@ -34,6 +40,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('chat_user');
+        Schema::dropIfExists('requests');
         Schema::dropIfExists('reactions');
     }
 };

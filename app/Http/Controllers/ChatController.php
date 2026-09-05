@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\ChatResource;
 use App\Models\Chat;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,12 +14,13 @@ use Inertia\Response;
 
 class ChatController extends Controller
 {
+    #[Authorize('viewAny', Chat::class)]
     public function index(Request $request): ResourceCollection
     {
         /** @var User */
         $user = $request->user();
 
-        $chats = $user->chats()
+        return $user->chats()
             ->where('hidden', false)
             ->orderByPivotDesc('created_at')
             ->with('users', fn (Relation $query) => $query->whereNot('users.id', $user->id))
@@ -29,9 +29,8 @@ class ChatController extends Controller
                     $query->whereNot('sender_id', $user->id)->whereNull('seen_at')
                 ),
             ])
-            ->get();
-
-        return ChatResource::collection($chats);
+            ->get()
+            ->toResourceCollection();
     }
 
     #[Authorize('view', 'chat')]
@@ -46,5 +45,25 @@ class ChatController extends Controller
         return inertia('chat', [
             'chat_id' => $chat->id,
         ]);
+    }
+
+    #[Authorize('viewAny', Chat::class)]
+    public function sentRequests(Request $request): ResourceCollection
+    {
+        return $request->user()
+            ->sentRequests()
+            ->orderByPivotDesc('created_at')
+            ->get()
+            ->toResourceCollection();
+    }
+
+    #[Authorize('viewAny', Chat::class)]
+    public function receivedRequests(Request $request): ResourceCollection
+    {
+        return $request->user()
+            ->receivedRequests()
+            ->orderByPivotDesc('created_at')
+            ->get()
+            ->toResourceCollection();
     }
 }

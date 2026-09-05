@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
@@ -8,8 +9,12 @@ use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
-    Route::inertia('/', 'home')->name('home');
+    Route::get('/', HomeController::class)->name('home');
 
+    Route::controller(ChatController::class)->group(function () {
+        Route::get('chats/sent-requests', 'sentRequests');
+        Route::get('chats/received-requests', 'receivedRequests');
+    });
     Route::apiResource('chats', ChatController::class)
         ->only(['index', 'show'])
         ->middlewareFor('index', 'json');

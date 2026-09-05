@@ -16,7 +16,7 @@ import type { Notification, NotificationResponse } from '@/types/models'
 type HttpResponse = {
     items: {
         id: string;
-        data: Pick<Notification, 'name' | 'image_url'>;
+        data: Pick<Notification, 'name' | 'image_url' | 'tab'>;
         read_at: string | null;
     }[];
     next_cursor: string | null;
@@ -158,6 +158,7 @@ function Content() {
                     <Link
                         key={notification.id}
                         href='/'
+                        data={{ tab: notification.tab }}
                         onClick={stopPropagation}
                         onSuccess={markAsRead.bind(null, notification)}
                         className={cn(
