@@ -16,7 +16,7 @@ import type { Notification, NotificationResponse } from '@/types/models'
 type HttpResponse = {
     items: {
         id: string;
-        data: Pick<Notification, 'name' | 'image_url' | 'tab'>;
+        data: Omit<Notification, 'id' | 'read_at'>;
         read_at: string | null;
     }[];
     next_cursor: string | null;
@@ -39,7 +39,7 @@ export default function Notifications({ className }: { className?: string }) {
                     variant='ghost'
                     size='icon-sm'
                     className={cn(
-                        'relative ml-auto data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:hover:bg-accent! data-[state=open]:hover:text-accent-foreground!',
+                        'relative data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:hover:bg-accent! data-[state=open]:hover:text-accent-foreground!',
                         className,
                     )}
                 >
@@ -93,29 +93,17 @@ function Content() {
         hasMore: hasNextPage,
     })
 
-    function markAsRead(notification: Notification) {
+    async function markAsRead(notification: Notification) {
         if (notification.read_at) {
             return
         }
 
-        queryClient.setQueryData<InfiniteData<NotificationResponse>>(['notifications'], current => {
-            if (!current) {
-                return current
-            }
+        await axios.put(`/notifications/${notification.id}/read`)
 
-            return {
-                ...current,
-                pages: current.pages.map(page => ({
-                    ...page,
-                    items: page.items.map(item => ({
-                        ...item,
-                        read_at: item.id === notification.id ? new Date().toDateString() : item.read_at,
-                    })),
-                })),
-            }
+        queryClient.invalidateQueries({
+            queryKey: ['notifications'],
+            refetchType: 'all',
         })
-
-        axios.put(`/notifications/${notification.id}/read`)
     }
 
     function stopPropagation(event: MouseEvent) {
@@ -157,8 +145,8 @@ function Content() {
                 {notifications.pages.map(notification => (
                     <Link
                         key={notification.id}
-                        href='/'
-                        data={{ tab: notification.tab }}
+                        href={notification.chat_id ? `/chats/${notification.chat_id}` : '/'}
+                        data={{ tab: notification.user_id ? 'received-requests' : undefined }}
                         onClick={stopPropagation}
                         onSuccess={markAsRead.bind(null, notification)}
                         className={cn(
@@ -172,8 +160,11 @@ function Content() {
                             className='size-12'
                             skeletonClassName='size-12'
                         />
-                        <p className='line-clamp-2 text-sm'>
-                            <b>{notification.name}</b> <span className='text-foreground/90'>wants to connect with you.</span>
+                        <p className='line-clamp-2 space-x-1 text-sm'>
+                            <b>{notification.name}</b>
+                            <span className='text-foreground/90'>
+                                {notification.user_id ? 'wants to connect with you.' : 'accepted your request.'}
+                            </span>
                         </p>
                     </Link>
                 ))}

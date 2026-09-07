@@ -52,9 +52,10 @@ export type MessageResponse = {
 
 export type Notification = {
     id: string;
+    user_id?: string;
+    chat_id?: string;
     name: string;
     image_url: string | null;
-    tab?: 'chats' | 'received-requests' | 'sent-requests';
     read_at: string | null;
 }
 

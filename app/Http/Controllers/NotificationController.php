@@ -13,7 +13,10 @@ class NotificationController extends Controller
      */
     public function index(Request $request): array
     {
-        $notifications = $request->user()->notifications()->cursorPaginate(10);
+        $notifications = $request->user()
+            ->notifications()
+            ->latest()
+            ->cursorPaginate(10);
 
         return [
             'items' => $notifications->select(['id', 'data', 'read_at']),
