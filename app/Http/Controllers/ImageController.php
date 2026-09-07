@@ -6,6 +6,7 @@ use App\Models\Chat;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Image;
 
@@ -18,6 +19,7 @@ class ImageController extends Controller
             ->header('Cache-Control', 'max-age=86400, immutable');
     }
 
+    #[Authorize('viewImage', ['message', 'chat'])]
     public function attachment(Request $request, Chat $chat, Message $message): Response
     {
         return Image::fromStorage($message->image)

@@ -14,7 +14,6 @@ use Inertia\Response;
 
 class ChatController extends Controller
 {
-    #[Authorize('viewAny', Chat::class)]
     public function index(Request $request): ResourceCollection
     {
         /** @var User */
@@ -45,25 +44,5 @@ class ChatController extends Controller
         return inertia('chat', [
             'chat_id' => $chat->id,
         ]);
-    }
-
-    #[Authorize('viewAny', Chat::class)]
-    public function sentRequests(Request $request): ResourceCollection
-    {
-        return $request->user()
-            ->sentRequests()
-            ->orderByPivotDesc('created_at')
-            ->get()
-            ->toResourceCollection();
-    }
-
-    #[Authorize('viewAny', Chat::class)]
-    public function receivedRequests(Request $request): ResourceCollection
-    {
-        return $request->user()
-            ->receivedRequests()
-            ->orderByPivotDesc('created_at')
-            ->get()
-            ->toResourceCollection();
     }
 }
