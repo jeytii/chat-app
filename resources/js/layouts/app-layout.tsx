@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react'
-import { type InfiniteData, QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { type CSSProperties, useEffect } from 'react'
 import { toast, Toaster } from 'sonner'
@@ -10,7 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppearance } from '@/hooks/use-appearance'
 import { useCurrentUrl } from '@/hooks/use-current-url'
 import type { FlashToast } from '@/types'
-import type { Chat, Notification, NotificationResponse, User } from '@/types/models'
+import type { Chat, User } from '@/types/models'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -82,53 +82,31 @@ function Main({ currentUrl, children }: { currentUrl: string, children: React.Re
 
     useEffect(() => {
         window.Echo.private(`App.Models.User.${user.id}`)
-            .notification((notification: Notification & { user_id: string }) => {
-                const newNotification = {
-                    id: notification.id,
-                    name: notification.name,
-                    image_url: notification.image_url,
-                    tab: notification.tab,
-                    read_at: null,
+            .notification(async (data: { chat_id?: string; user: User }) => {
+                const promises = [queryClient.invalidateQueries({ queryKey: ['notifications'] })]
+
+                if (data.chat_id) {
+                    promises.push(queryClient.invalidateQueries({ queryKey: ['sent-requests'] }))
+                } else {
+                    promises.push(queryClient.invalidateQueries({ queryKey: ['received-requests'] }))
                 }
+
+                await Promise.all(promises)
 
                 router.replaceProp('auth.has_new_notifications', true)
 
-                queryClient.setQueryData<InfiniteData<NotificationResponse>>(['notifications'], current => {
-                    if (!current) {
-                        return current
-                    }
-
-                    // Insert new item into a new page if the latest one has reached the pagination count
-                    if (current.pages[0].items.length >= 10) {
-                        return {
-                            pageParams: [null, ...current.pageParams],
-                            pages: [...current.pages, {
-                                items: [newNotification],
-                                next_cursor: null,
-                            }],
-                        }
-                    }
-
-                    // Else, push it into the latest page
-                    return {
-                        ...current,
-                        pages: current.pages.map((page, index) => (
-                            index ? page : { ...page, items: [newNotification, ...page.items] }
-                        )),
-                    }
-                })
-
-                if (['received-requests', 'sent-requests'].includes(notification.tab || 'chats')) {
-                    queryClient.setQueryData<Pick<User, 'id' | 'name' | 'image_url'>[]>([notification.tab], current => {
+                if (data.chat_id) {
+                    queryClient.setQueryData<Chat[]>(['chats'], current => {
                         if (!current) {
                             return current
                         }
 
                         return [
                             {
-                                id: notification.user_id,
-                                name: notification.name,
-                                image_url: notification.image_url,
+                                id: data.chat_id as string,
+                                user: data.user,
+                                has_new_message: false,
+                                is_online: true,
                             },
                             ...current,
                         ]

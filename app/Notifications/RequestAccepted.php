@@ -2,22 +2,23 @@
 
 namespace App\Notifications;
 
+use App\Models\Chat;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
-class RequestSent extends Notification implements ShouldQueue
+class RequestAccepted extends Notification implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(protected User $user)
+    public function __construct(protected Chat $chat, protected User $user)
     {
-        //
+        $this->afterCommit();
     }
 
     /**
@@ -31,14 +32,12 @@ class RequestSent extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toDatabase(object $notifiable): array
     {
         return [
-            'user_id' => $this->user->id,
+            'chat_id' => $this->chat->id,
             'name' => $this->user->name,
             'image_url' => $this->user->image
                 ? route('profile-photo', explode('/', $this->user->image)[1])
@@ -49,6 +48,7 @@ class RequestSent extends Notification implements ShouldQueue
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage([
+            'chat_id' => $this->chat->id,
             'user' => $this->user->toResource(),
         ]);
     }

@@ -1,5 +1,8 @@
 import { Link, usePage } from '@inertiajs/react'
-import { ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
+import { Search, UserMinus, UserPlus } from 'lucide-react'
+import { type ChangeEvent, ReactNode, useState } from 'react'
 
 import AppLogo from '@/components/app-logo'
 import Contact from '@/components/contact'
@@ -7,23 +10,32 @@ import Notifications from '@/components/notifications'
 import Photo from '@/components/photo'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { UserMenuContent } from '@/components/user-menu-content'
 import useChats from '@/hooks/use-chats'
-import type { Chat, Notification, User } from '@/types/models'
+import { useDebounce } from '@/hooks/use-limit'
+import type { Chat, User } from '@/types/models'
 
-type Props = {
-    tab: Notification['tab'];
-    chats_count: number;
-    sent_requests_count: number;
-    received_requests_count: number;
+type TabKey = 'chats' | 'sent-requests' | 'received-requests'
+
+type TabProps<T> = {
+    queryKey: TabKey;
+    emptyMessage?: string;
+    children: (data: T[]) => ReactNode;
 }
 
-export default function Home({ tab = 'chats', ...props }: Props) {
+type UserRequest = Pick<User, 'id' | 'name' | 'image_url'>
+
+export default function Home({ tab = 'chats' }: { tab: TabKey }) {
     const { name, auth } = usePage().props
+    const { data: chats } = useChats<Chat>('chats')
+    const { data: receivedRequests } = useChats<UserRequest>('received-requests')
+    const { data: sentRequests } = useChats<UserRequest>('sent-requests')
 
     return (
         <div>
@@ -32,6 +44,17 @@ export default function Home({ tab = 'chats', ...props }: Props) {
                     <AppLogo className='size-6!' />
                     <h1 className='truncate text-sm leading-tight font-semibold'>{name}</h1>
                 </Link>
+
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant='ghost' size='icon-sm' className='relative ml-auto data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:hover:bg-accent! data-[state=open]:hover:text-accent-foreground!'>
+                            <Search />
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className='p-0'>
+                        <SearchResults />
+                    </DialogContent>
+                </Dialog>
 
                 <Notifications />
 
@@ -61,21 +84,21 @@ export default function Home({ tab = 'chats', ...props }: Props) {
                     <TabsList className='h-auto! w-full'>
                         <TabsTrigger value='chats' className='cursor-pointer py-2 text-xs sm:text-sm'>
                             <span className='font-semibold'>Contacts</span>
-                            {!!props.chats_count && <span>({props.chats_count})</span>}
+                            {!!chats?.length && <span>({chats.length})</span>}
                         </TabsTrigger>
                         <TabsTrigger value='received-requests' className='cursor-pointer py-2 text-xs sm:text-sm'>
                             <span className='font-semibold'>Received requests</span>
-                            {!!props.received_requests_count && <span>({props.received_requests_count})</span>}
+                            {!!receivedRequests?.length && <span>({receivedRequests.length})</span>}
                         </TabsTrigger>
                         <TabsTrigger value='sent-requests' className='cursor-pointer py-2 text-xs sm:text-sm'>
                             <span className='font-semibold'>Sent requests</span>
-                            {!!props.sent_requests_count && <span>({props.sent_requests_count})</span>}
+                            {!!sentRequests?.length && <span>({sentRequests.length})</span>}
                         </TabsTrigger>
                     </TabsList>
 
                     {/* CONTACTS */}
                     <TabsContent value='chats'>
-                        <Tab<Chat> tab='chats' emptyMessage="You haven't added anyone to your contacts yet.">
+                        <Tab<Chat> queryKey='chats' emptyMessage="You haven't added anyone to your contacts yet.">
                             {data => (
                                 <div className='space-y-4'>
                                     {data.map(chat => <Contact key={chat.id} chat={chat} isOutsideSidebar />)}
@@ -86,10 +109,10 @@ export default function Home({ tab = 'chats', ...props }: Props) {
 
                     {/* RECEIVED REQUESTS */}
                     <TabsContent value='received-requests'>
-                        <Tab<Pick<User, 'id' | 'name' | 'image_url'>> tab='received-requests'>
+                        <Tab<UserRequest> queryKey='received-requests'>
                             {data => (
                                 <div className='space-y-4'>
-                                    {data.map(user => <AppUser key={user.id} user={user} tab='received-requests' />)}
+                                    {data.map(user => <AppUser key={user.id} user={user} isRequesting />)}
                                 </div>
                             )}
                         </Tab>
@@ -97,10 +120,10 @@ export default function Home({ tab = 'chats', ...props }: Props) {
 
                     {/* SENT REQUESTS */}
                     <TabsContent value='sent-requests'>
-                        <Tab<Pick<User, 'id' | 'name' | 'image_url'>> tab='sent-requests'>
+                        <Tab<UserRequest> queryKey='sent-requests'>
                             {data => (
                                 <div className='space-y-4'>
-                                    {data.map(user => <AppUser key={user.id} user={user} tab='sent-requests' />)}
+                                    {data.map(user => <AppUser key={user.id} user={user} />)}
                                 </div>
                             )}
                         </Tab>
@@ -111,12 +134,107 @@ export default function Home({ tab = 'chats', ...props }: Props) {
     )
 }
 
-function Tab<T>({
-    tab,
-    emptyMessage = 'You\'re all caught up.',
-    children,
-}: { tab: Notification['tab']; emptyMessage?: string; children: (data: T[]) => ReactNode }) {
-    const { data, isLoading } = useChats<T>(tab)
+function SearchResults() {
+    const [results, setResults] = useState<User[]>([])
+    const { debounce } = useDebounce()
+
+    function search(event: ChangeEvent<HTMLInputElement>) {
+        const { value } = event.target
+
+        debounce(async () => {
+            if (value.length) {
+                const response = await fetch(`/users?name=${value}`)
+                const users = await response.json()
+
+                setResults(users)
+            } else {
+                setResults([])
+            }
+        })
+    }
+
+    return (
+        <div className='space-y-4'>
+            <div className='px-4 pt-4'>
+                <Input placeholder='Search...' onChange={search} />
+            </div>
+
+            {results.length ? (
+                <div className='max-h-[50vh] space-y-4 overflow-y-auto px-4 pb-4'>
+                    {results.map(result => <SearchResult key={result.id} result={result} />)}
+                </div>
+            ) : (
+                <div className='pb-4'>
+                    <p className='text-center text-sm text-muted-foreground'>Results will appear here.</p>
+                </div>
+            )}
+        </div>
+    )
+}
+
+function SearchResult({ result }: { result: User }) {
+    const [added, setAdded] = useState<boolean>(false)
+    const { debounce, canStopDebounce, stopDebounce } = useDebounce(1000)
+    const queryClient = useQueryClient()
+
+    function add() {
+        setAdded(true)
+
+        debounce(async () => {
+            await axios.post(`/requests/${result.id}/add`)
+            await queryClient.invalidateQueries({ queryKey: ['sent-requests'] })
+        })
+    }
+
+    function decline() {
+        setAdded(false)
+
+        if (canStopDebounce) {
+            stopDebounce()
+        } else {
+            axios.delete(`/requests/${result.id}/cancel`)
+        }
+    }
+
+    return (
+        <div key={result.id} className='flex items-center gap-3'>
+            <Photo
+                src={result.image_url || undefined}
+                alt={result.name}
+                className='size-10'
+                skeletonClassName='size-10'
+            />
+
+            <div className='space-y-1'>
+                <h1 className='truncate text-sm font-semibold'>{result.name}</h1>
+                <h6 className='text-xs'>{result.username}</h6>
+            </div>
+
+            {added ? (
+                <Button
+                    variant='ghost'
+                    size='icon-sm'
+                    className='ml-auto hover:text-[initial]'
+                    onClick={decline}
+                >
+                    <UserMinus />
+                </Button>
+            ) : (
+                <Button
+                    variant='ghost'
+                    size='icon-sm'
+                    className='ml-auto text-accent-foreground/80 dark:hover:bg-accent'
+                    onClick={add}
+                >
+                    <UserPlus />
+                </Button>
+            )}
+        </div>
+    )
+}
+
+function Tab<T>({ queryKey, emptyMessage = 'You\'re all caught up.', children }: TabProps<T>) {
+    const { data, isLoading } = useChats<T>(queryKey)
 
     if (isLoading || !data) {
         return (
@@ -138,28 +256,90 @@ function Tab<T>({
     return children(data)
 }
 
-function AppUser({ tab, user }: { tab: Notification['tab']; user: Pick<User, 'id' | 'name' | 'image_url'> }) {
+function AppUser({ user, isRequesting = false }: { user: UserRequest; isRequesting?: boolean }) {
+    const queryClient = useQueryClient()
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+
+    async function accept() {
+        setIsLoading(true)
+
+        try {
+            const { data: chat } = await axios.post<Chat>(`/requests/${user.id}/accept`)
+
+            queryClient.setQueryData<Chat[]>(['chats'], current => (
+                current ? [chat, ...current] : current
+            ))
+
+            queryClient.invalidateQueries({ queryKey: ['received-requests'] })
+        } catch (e) {
+            console.log(e)
+            setIsLoading(false)
+        }
+    }
+
+    async function decline() {
+        setIsLoading(true)
+
+        try {
+            await axios.delete(`/requests/${user.id}/decline`)
+            await queryClient.invalidateQueries({ queryKey: ['received-requests'] })
+        } catch (e) {
+            console.log(e)
+            setIsLoading(false)
+        }
+    }
+
+    async function cancel() {
+        setIsLoading(true)
+
+        try {
+            await axios.delete(`/requests/${user.id}/cancel`)
+            await queryClient.invalidateQueries({ queryKey: ['sent-requests'] })
+        } catch (e) {
+            console.log(e)
+            setIsLoading(false)
+        }
+    }
+
     return (
         <Card>
             <CardContent className='flex items-center gap-3'>
-                <div className='rounded-full'>
-                    <Photo
-                        src={user.image_url || undefined}
-                        alt='Image'
-                        className='size-13'
-                        skeletonClassName='size-13'
-                    />
-                </div>
+                <Photo
+                    src={user.image_url || undefined}
+                    alt='Image'
+                    className='size-13'
+                    skeletonClassName='size-13'
+                />
 
                 <div className='space-y-2'>
                     <h1 className='truncate font-semibold'>{user.name}</h1>
-                    {tab === 'received-requests' ? (
+                    {isRequesting ? (
                         <div className='space-x-2'>
-                            <Button size='xs'>Accept</Button>
-                            <Button variant='outline' size='xs'>Decline</Button>
+                            <Button
+                                size='xs'
+                                disabled={isLoading}
+                                onClick={accept}
+                            >
+                                Accept
+                            </Button>
+                            <Button
+                                variant='outline'
+                                size='xs'
+                                disabled={isLoading}
+                                onClick={decline}
+                            >
+                                Decline
+                            </Button>
                         </div>
                     ) : (
-                        <Button variant='destructive' size='xs'>Cancel</Button>
+                        <Button
+                            variant='destructive'
+                            size='xs'
+                            disabled={isLoading}
+                            onClick={cancel}
+                        >
+                            Cancel
+                        </Button>
                     )}
                 </div>
             </CardContent>
