@@ -35,8 +35,8 @@ Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
     Route::controller(RequestController::class)->group(function () {
         Route::get('requests/sent', 'getSent');
         Route::get('requests/received', 'getReceived');
-        Route::post('requests/{user}/add', 'add');
-        Route::post('requests/{user}/accept', 'accept');
+        Route::post('requests/{user}/add', 'add')->name('requests.add');
+        Route::post('requests/{user}/accept', 'accept')->name('requests.accept');
         Route::delete('requests/{user}/decline', 'decline');
         Route::delete('requests/{user}/cancel', 'cancel');
     });

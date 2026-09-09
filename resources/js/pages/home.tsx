@@ -1,8 +1,9 @@
-import { Link, usePage } from '@inertiajs/react'
+import { Link, router, usePage } from '@inertiajs/react'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Search, UserMinus, UserPlus } from 'lucide-react'
-import { type ChangeEvent, ReactNode, useState } from 'react'
+import { type ChangeEvent, Fragment, ReactNode, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 import AppLogo from '@/components/app-logo'
 import Contact from '@/components/contact'
@@ -21,6 +22,13 @@ import useChats from '@/hooks/use-chats'
 import { useDebounce } from '@/hooks/use-limit'
 import type { Chat, User } from '@/types/models'
 
+type Props = {
+    tab: TabKey;
+    chatsCount: number;
+    receivedRequestsCount: number;
+    sentRequestsCount: number;
+}
+
 type TabKey = 'chats' | 'sent-requests' | 'received-requests'
 
 type TabProps<T> = {
@@ -31,11 +39,8 @@ type TabProps<T> = {
 
 type UserRequest = Pick<User, 'id' | 'name' | 'image_url'>
 
-export default function Home({ tab = 'chats' }: { tab: TabKey }) {
+export default function Home({ tab = 'chats', chatsCount, receivedRequestsCount, sentRequestsCount }: Props) {
     const { name, auth } = usePage().props
-    const { data: chats } = useChats<Chat>('chats')
-    const { data: receivedRequests } = useChats<UserRequest>('received-requests')
-    const { data: sentRequests } = useChats<UserRequest>('sent-requests')
 
     return (
         <div>
@@ -51,8 +56,8 @@ export default function Home({ tab = 'chats' }: { tab: TabKey }) {
                             <Search />
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className='p-0'>
-                        <SearchResults />
+                    <DialogContent className='top-[10%] translate-y-0 overflow-hidden p-0 [&>button]:top-[21px] [&>button]:right-5 [&>button]:rounded-full'>
+                        <SearchBox />
                     </DialogContent>
                 </Dialog>
 
@@ -84,15 +89,15 @@ export default function Home({ tab = 'chats' }: { tab: TabKey }) {
                     <TabsList className='h-auto! w-full'>
                         <TabsTrigger value='chats' className='cursor-pointer py-2 text-xs sm:text-sm'>
                             <span className='font-semibold'>Contacts</span>
-                            {!!chats?.length && <span>({chats.length})</span>}
+                            {!!chatsCount && <span>({chatsCount})</span>}
                         </TabsTrigger>
                         <TabsTrigger value='received-requests' className='cursor-pointer py-2 text-xs sm:text-sm'>
                             <span className='font-semibold'>Received requests</span>
-                            {!!receivedRequests?.length && <span>({receivedRequests.length})</span>}
+                            {!!receivedRequestsCount && <span>({receivedRequestsCount})</span>}
                         </TabsTrigger>
                         <TabsTrigger value='sent-requests' className='cursor-pointer py-2 text-xs sm:text-sm'>
                             <span className='font-semibold'>Sent requests</span>
-                            {!!sentRequests?.length && <span>({sentRequests.length})</span>}
+                            {!!sentRequestsCount && <span>({sentRequestsCount})</span>}
                         </TabsTrigger>
                     </TabsList>
 
@@ -134,59 +139,77 @@ export default function Home({ tab = 'chats' }: { tab: TabKey }) {
     )
 }
 
-function SearchResults() {
-    const [results, setResults] = useState<User[]>([])
+function SearchBox() {
+    const [results, setResults] = useState<(User & { request_sent: boolean; is_added: boolean })[]>([])
     const { debounce } = useDebounce()
 
-    function search(event: ChangeEvent<HTMLInputElement>) {
-        const { value } = event.target
-
-        debounce(async () => {
-            if (value.length) {
-                const response = await fetch(`/users?name=${value}`)
-                const users = await response.json()
-
-                setResults(users)
-            } else {
-                setResults([])
-            }
-        })
+    function getUsers(name: string = '') {
+        fetch(`/users?name=${name}`)
+            .then(response => response.json())
+            .then(users => setResults(users))
     }
+
+    function search(event: ChangeEvent<HTMLInputElement>) {
+        debounce(getUsers.bind(null, event.target.value))
+    }
+
+    useEffect(() => {
+        getUsers()
+    }, [])
 
     return (
         <div className='space-y-4'>
-            <div className='px-4 pt-4'>
-                <Input placeholder='Search...' onChange={search} />
+            <div className='space-y-2 px-4 pt-4'>
+                <h2>Search</h2>
+                <Input placeholder='Enter a name or username...' onChange={search} />
             </div>
 
             {results.length ? (
-                <div className='max-h-[50vh] space-y-4 overflow-y-auto px-4 pb-4'>
+                <div className='max-h-[50vh] overflow-y-auto'>
                     {results.map(result => <SearchResult key={result.id} result={result} />)}
                 </div>
             ) : (
                 <div className='pb-4'>
-                    <p className='text-center text-sm text-muted-foreground'>Results will appear here.</p>
+                    <p className='text-center text-sm text-muted-foreground'>No records found.</p>
                 </div>
             )}
         </div>
     )
 }
 
-function SearchResult({ result }: { result: User }) {
-    const [added, setAdded] = useState<boolean>(false)
+function SearchResult({ result }: { result: User & { request_sent: boolean; is_added: boolean } }) {
+    const [added, setAdded] = useState<boolean>(result.request_sent)
     const { debounce, canStopDebounce, stopDebounce } = useDebounce(1000)
     const queryClient = useQueryClient()
 
     function add() {
+        if (result.is_added) {
+            return
+        }
+
         setAdded(true)
 
         debounce(async () => {
-            await axios.post(`/requests/${result.id}/add`)
-            await queryClient.invalidateQueries({ queryKey: ['sent-requests'] })
+            try {
+                await axios.post(`/requests/${result.id}/add`)
+                await queryClient.invalidateQueries({ queryKey: ['sent-requests'] })
+                router.reload({ only: ['sentRequestsCount'] })
+            } catch (e) {
+                console.log(e)
+
+                toast.error('Something went wrong', {
+                    position: 'bottom-right',
+                    closeButton: true,
+                })
+            }
         })
     }
 
-    function decline() {
+    function cancel() {
+        if (result.is_added) {
+            return
+        }
+
         setAdded(false)
 
         if (canStopDebounce) {
@@ -197,7 +220,7 @@ function SearchResult({ result }: { result: User }) {
     }
 
     return (
-        <div key={result.id} className='flex items-center gap-3'>
+        <div className='flex items-center gap-3 px-4 py-2 hover:bg-card'>
             <Photo
                 src={result.image_url || undefined}
                 alt={result.name}
@@ -207,27 +230,31 @@ function SearchResult({ result }: { result: User }) {
 
             <div className='space-y-1'>
                 <h1 className='truncate text-sm font-semibold'>{result.name}</h1>
-                <h6 className='text-xs'>{result.username}</h6>
+                <h6 className='text-xs text-foreground/80'>{result.username}</h6>
             </div>
 
-            {added ? (
-                <Button
-                    variant='ghost'
-                    size='icon-sm'
-                    className='ml-auto hover:text-[initial]'
-                    onClick={decline}
-                >
-                    <UserMinus />
-                </Button>
-            ) : (
-                <Button
-                    variant='ghost'
-                    size='icon-sm'
-                    className='ml-auto text-accent-foreground/80 dark:hover:bg-accent'
-                    onClick={add}
-                >
-                    <UserPlus />
-                </Button>
+            {!result.is_added && (
+                <Fragment>
+                    {added ? (
+                        <Button
+                            variant='ghost'
+                            size='icon-sm'
+                            className='ml-auto hover:text-[initial]'
+                            onClick={cancel}
+                        >
+                            <UserMinus />
+                        </Button>
+                    ) : (
+                        <Button
+                            variant='ghost'
+                            size='icon-sm'
+                            className='ml-auto text-accent-foreground/80 dark:hover:bg-accent'
+                            onClick={add}
+                        >
+                            <UserPlus />
+                        </Button>
+                    )}
+                </Fragment>
             )}
         </div>
     )
@@ -270,10 +297,17 @@ function AppUser({ user, isRequesting = false }: { user: UserRequest; isRequesti
                 current ? [chat, ...current] : current
             ))
 
-            queryClient.invalidateQueries({ queryKey: ['received-requests'] })
+            await queryClient.invalidateQueries({ queryKey: ['received-requests'] })
+            router.reload({ only: ['receivedRequestsCount'] })
         } catch (e) {
             console.log(e)
+
             setIsLoading(false)
+
+            toast.error('Something went wrong', {
+                position: 'bottom-right',
+                closeButton: true,
+            })
         }
     }
 
@@ -283,9 +317,16 @@ function AppUser({ user, isRequesting = false }: { user: UserRequest; isRequesti
         try {
             await axios.delete(`/requests/${user.id}/decline`)
             await queryClient.invalidateQueries({ queryKey: ['received-requests'] })
+            router.reload({ only: ['receivedRequestsCount'] })
         } catch (e) {
             console.log(e)
+
             setIsLoading(false)
+
+            toast.error('Something went wrong', {
+                position: 'bottom-right',
+                closeButton: true,
+            })
         }
     }
 
@@ -295,9 +336,16 @@ function AppUser({ user, isRequesting = false }: { user: UserRequest; isRequesti
         try {
             await axios.delete(`/requests/${user.id}/cancel`)
             await queryClient.invalidateQueries({ queryKey: ['sent-requests'] })
+            router.reload({ only: ['sentRequestsCount'] })
         } catch (e) {
             console.log(e)
+
             setIsLoading(false)
+
+            toast.error('Something went wrong', {
+                position: 'bottom-right',
+                closeButton: true,
+            })
         }
     }
 

@@ -20,6 +20,8 @@ class UserResource extends JsonResource
     {
         return [
             ...$this->only(['id', 'name', 'email', 'username']),
+            'request_sent' => $this->whenHas('request_sent'),
+            'is_added' => $this->whenHas('is_added'),
             'image_url' => $this->image ? route('profile-photo', explode('/', $this->image)[1]) : null,
         ];
     }

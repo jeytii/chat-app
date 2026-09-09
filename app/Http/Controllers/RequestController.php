@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ConnectionRequest;
 use App\Models\Chat;
 use App\Models\User;
 use App\Notifications\RequestAccepted;
@@ -9,7 +10,6 @@ use App\Notifications\RequestSent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
@@ -38,8 +38,7 @@ class RequestController extends Controller
     /**
      * @return array<string, bool>
      */
-    #[Authorize('sendRequest', 'user')]
-    public function add(Request $request, User $user): array
+    public function add(ConnectionRequest $request, User $user): array
     {
         /** @var User */
         $authUser = $request->user();
@@ -54,8 +53,7 @@ class RequestController extends Controller
     /**
      * @return array<string, string|JsonResource|bool>
      */
-    #[Authorize('acceptRequest', 'user')]
-    public function accept(Request $request, User $user): array
+    public function accept(ConnectionRequest $request, User $user): array
     {
         /** @var User */
         $authUser = $request->user();

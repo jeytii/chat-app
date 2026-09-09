@@ -11,17 +11,22 @@ class UserController extends Controller
 {
     public function __invoke(Request $request): ResourceCollection
     {
-        ['name' => $name] = $request->validate([
-            'name' => 'required|string',
-        ]);
+        $userId = $request->user()->id;
+        $name = $request->string('name')->value();
 
-        return User::whereNot('id', $request->user()->id)
+        return User::whereNot('id', $userId)
             ->whereNotNull('email_verified_at')
-            ->where(fn (Builder $query) => (
-                $query->whereLike('name', "%{$name}%")
-                    ->orWhereLike('username', "%{$name}%")
+            ->when($name, fn (Builder $query) => (
+                $query->where(fn (Builder $query) => (
+                    $query->whereLike('name', "%{$name}%")->orWhereLike('username', "%{$name}%")
+                ))
             ))
             ->limit(20)
+            ->unless($name, fn (Builder $query) => $query->inRandomOrder())
+            ->withExists([
+                'receivedRequests as request_sent' => fn (Builder $query) => $query->where('id', $userId),
+                'chats as is_added' => fn (Builder $query) => $query->whereRelation('users', 'users.id', $userId),
+            ])
             ->get()
             ->toResourceCollection();
     }
