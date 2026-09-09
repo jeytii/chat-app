@@ -8,7 +8,6 @@ import type { MouseEvent } from 'react'
 import Photo from '@/components/photo'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import type { Notification, NotificationResponse } from '@/types/models'
@@ -140,7 +139,7 @@ function Content() {
     }
 
     return (
-        <ScrollArea className='max-w-70 min-w-56 rounded-b-md border bg-background sm:max-w-90'>
+        <div className='max-w-70 min-w-56 overflow-hidden rounded-b-md border bg-background sm:max-w-90'>
             <div ref={ref} className='max-h-86 divide-y overflow-y-auto sm:max-h-91'>
                 {notifications.pages.map(notification => (
                     <Link
@@ -179,6 +178,6 @@ function Content() {
                     </div>
                 )}
             </div>
-        </ScrollArea>
+        </div>
     )
 }
