@@ -72,15 +72,17 @@ class RequestController extends Controller
 
         $isOnline = false;
 
-        try {
-            $presence = Broadcast::driver('reverb')->getPusher()->get('/channels/presence-online/users');
+        if (config('app.env') !== 'testing') {
+            try {
+                $presence = Broadcast::driver('reverb')->getPusher()->get('/channels/presence-online/users');
 
-            $isOnline = (bool) Arr::where(
-                $presence->users,
-                fn (object $data) => $data->id === $user->id,
-            );
-        } catch (ApiErrorException $e) {
-            $isOnline = false;
+                $isOnline = (bool) Arr::where(
+                    $presence->users,
+                    fn (object $data) => $data->id === $user->id,
+                );
+            } catch (ApiErrorException $e) {
+                $isOnline = false;
+            }
         }
 
         return [

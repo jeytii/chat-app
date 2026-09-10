@@ -36,10 +36,15 @@ class ConnectionRequest extends FormRequest
         $this->lock = $lock;
     }
 
+    protected function failedAuthorization(): void
+    {
+        $this->lock?->release();
+
+        parent::failedAuthorization();
+    }
+
     protected function passedValidation(): void
     {
-        if ($this->lock) {
-            $this->lock->release();
-        }
+        $this->lock?->release();
     }
 }
