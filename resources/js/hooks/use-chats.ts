@@ -6,11 +6,7 @@ export default function useChats<T>(key: KeyName = 'chats') {
     return useQuery<T[]>({
         queryKey: [key],
         queryFn: async () => {
-            const url = {
-                'chats': '/chats',
-                'sent-requests': '/requests/sent',
-                'received-requests': '/requests/received',
-            }[key]
+            const url = key === 'chats' ? '/chats' : `/users/${key}`
 
             return (await fetch(url)).json()
         },

@@ -179,43 +179,41 @@ function SearchBox() {
 
 function SearchResult({ result }: { result: User & { request_sent: boolean; is_added: boolean } }) {
     const [added, setAdded] = useState<boolean>(result.request_sent)
-    const { debounce, canStopDebounce, stopDebounce } = useDebounce(1000)
+    const { debounce: debouncedAdd, canStopDebounce: canStopDebouncedAdd, stopDebounce: stopDebouncedAdd } = useDebounce(1000)
+    const { debounce: debouncedCancel, canStopDebounce: canStopDebouncedCancel, stopDebounce: stopDebouncedCancel } = useDebounce(1000)
     const queryClient = useQueryClient()
 
-    function add() {
+    function toggle(action: 'request' | 'cancel', isAdded: boolean, debounce: (action: CallableFunction) => void, canStopDebounce: boolean, stopDebounce: () => void) {
         if (result.is_added) {
             return
         }
 
-        setAdded(true)
-
-        debounce(async () => {
-            try {
-                await axios.post(`/requests/${result.id}/add`)
-                await queryClient.invalidateQueries({ queryKey: ['sent-requests'] })
-                router.reload({ only: ['sentRequestsCount'] })
-            } catch (e) {
-                console.log(e)
-
-                toast.error('Something went wrong', {
-                    position: 'bottom-right',
-                    closeButton: true,
-                })
-            }
-        })
-    }
-
-    function cancel() {
-        if (result.is_added) {
-            return
-        }
-
-        setAdded(false)
+        setAdded(isAdded)
 
         if (canStopDebounce) {
             stopDebounce()
         } else {
-            axios.delete(`/requests/${result.id}/cancel`)
+            debounce(async () => {
+                try {
+                    await axios({
+                        method: action === 'cancel' ? 'delete' : 'post',
+                        url: `/users/${result.id}/${action}`,
+                    })
+
+                    await queryClient.invalidateQueries({ queryKey: ['sent-requests'] })
+
+                    router.reload({ only: ['sentRequestsCount'] })
+                } catch (e) {
+                    console.log(e)
+
+                    setAdded(!isAdded)
+
+                    toast.error('Something went wrong', {
+                        position: 'bottom-right',
+                        closeButton: true,
+                    })
+                }
+            })
         }
     }
 
@@ -239,8 +237,8 @@ function SearchResult({ result }: { result: User & { request_sent: boolean; is_a
                         <Button
                             variant='ghost'
                             size='icon-sm'
-                            className='ml-auto hover:text-[initial]'
-                            onClick={cancel}
+                            className='ml-auto hover:text-foreground!'
+                            onClick={toggle.bind(null, 'cancel', false, debouncedCancel, canStopDebouncedAdd, stopDebouncedAdd)}
                         >
                             <UserMinus />
                         </Button>
@@ -249,7 +247,7 @@ function SearchResult({ result }: { result: User & { request_sent: boolean; is_a
                             variant='ghost'
                             size='icon-sm'
                             className='ml-auto text-accent-foreground/80 dark:hover:bg-accent'
-                            onClick={add}
+                            onClick={toggle.bind(null, 'request', true, debouncedAdd, canStopDebouncedCancel, stopDebouncedCancel)}
                         >
                             <UserPlus />
                         </Button>
@@ -291,7 +289,7 @@ function AppUser({ user, isRequesting = false }: { user: UserRequest; isRequesti
         setIsLoading(true)
 
         try {
-            const { data: chat } = await axios.post<Chat>(`/requests/${user.id}/accept`)
+            const { data: chat } = await axios.post<Chat>(`/users/${user.id}/acceptRequest`)
 
             queryClient.setQueryData<Chat[]>(['chats'], current => (
                 current ? [chat, ...current] : current
@@ -315,7 +313,7 @@ function AppUser({ user, isRequesting = false }: { user: UserRequest; isRequesti
         setIsLoading(true)
 
         try {
-            await axios.delete(`/requests/${user.id}/decline`)
+            await axios.delete(`/users/${user.id}/declineRequest`)
             await queryClient.invalidateQueries({ queryKey: ['received-requests'] })
             router.reload({ only: ['receivedRequestsCount'] })
         } catch (e) {
@@ -334,7 +332,7 @@ function AppUser({ user, isRequesting = false }: { user: UserRequest; isRequesti
         setIsLoading(true)
 
         try {
-            await axios.delete(`/requests/${user.id}/cancel`)
+            await axios.delete(`/users/${user.id}/cancelRequest`)
             await queryClient.invalidateQueries({ queryKey: ['sent-requests'] })
             router.reload({ only: ['sentRequestsCount'] })
         } catch (e) {

@@ -5,7 +5,6 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\RequestController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -30,15 +29,18 @@ Route::middleware(['auth', 'auth.session', 'verified'])->group(function () {
         ->middlewareFor('index', 'json')
         ->middlewareFor(['store', 'update'], 'limited:attachment-upload,5');
 
-    Route::get('users', UserController::class);
+    Route::controller(UserController::class)->group(function () {
+        Route::get('users', 'index');
+        Route::get('users/sent-requests', 'getSentRequests');
+        Route::get('users/received-requests', 'getReceivedRequests');
 
-    Route::controller(RequestController::class)->group(function () {
-        Route::get('requests/sent', 'getSent');
-        Route::get('requests/received', 'getReceived');
-        Route::post('requests/{user}/add', 'add')->name('requests.add');
-        Route::post('requests/{user}/accept', 'accept')->name('requests.accept');
-        Route::delete('requests/{user}/decline', 'decline');
-        Route::delete('requests/{user}/cancel', 'cancel');
+        Route::post('users/{user}/request', 'sendRequest')
+            ->name('users.request');
+        Route::post('users/{user}/accept', 'acceptRequest')
+            ->name('users.accept');
+
+        Route::delete('users/{user}/decline', 'declineRequest');
+        Route::delete('users/{user}/cancel', 'cancelRequest');
     });
 
     Route::controller(ImageController::class)->group(function () {

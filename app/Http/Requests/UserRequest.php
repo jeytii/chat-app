@@ -6,7 +6,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ConnectionRequest extends FormRequest
+class UserRequest extends FormRequest
 {
     protected ?Lock $lock = null;
 
@@ -18,14 +18,14 @@ class ConnectionRequest extends FormRequest
         $user = $this->user();
         $model = $this->route('user');
 
-        return $this->routeIs('requests.accept')
+        return $this->routeIs('users.accept')
             ? $user->can('acceptRequest', $model)
             : $user->can('sendRequest', $model);
     }
 
     protected function prepareForValidation(): void
     {
-        $prefix = $this->routeIs('requests.accept') ? 'accept-request' : 'request-connection';
+        $prefix = $this->routeIs('users.accept') ? 'accept-request' : 'request-connection';
 
         $lock = cache()->lock("{$prefix}:{$this->route('user')->id}:{$this->user()->id}", 3);
 

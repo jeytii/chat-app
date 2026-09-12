@@ -20,10 +20,10 @@ afterEach(function () {
     Cache::flush();
 });
 
-test('can handle spamming of the /requests/{user}/add endpoint', function () {
+test('can handle spamming of the users.request route', function () {
     $http = actingAs($this->user);
 
-    // Simulate a user spamming the requests.add endpoint within 3 seconds.
+    // Simulate a user spamming the endpoint within 3 seconds.
     foreach (range(1, 5) as $counter) {
         $lock = cache()->lock("request-connection:{$this->anotherUser->id}:{$this->user->id}", 3);
 
@@ -31,7 +31,7 @@ test('can handle spamming of the /requests/{user}/add endpoint', function () {
             $lock->get();
         }
 
-        $response = $http->post(route('requests.add', $this->anotherUser));
+        $response = $http->post(route('users.request', $this->anotherUser));
 
         if ($counter > 1) {
             $response->assertStatus(403);
@@ -44,7 +44,7 @@ test('can handle spamming of the /requests/{user}/add endpoint', function () {
 
     // Make another call after the lock has been released.
     // Should be prevented by the policy.
-    $http->post(route('requests.add', $this->anotherUser))
+    $http->post(route('users.request', $this->anotherUser))
         ->assertStatus(403);
 
     Notification::assertSentToTimes($this->anotherUser, RequestSent::class, 1);
@@ -52,12 +52,12 @@ test('can handle spamming of the /requests/{user}/add endpoint', function () {
     assertDatabaseCount('requests', 1);
 });
 
-test('can handle spamming of the /requests/{user}/accept endpoint', function () {
+test('can handle spamming of the users.accept route', function () {
     $this->user->receivedRequests()->attach($this->anotherUser);
 
     $http = actingAs($this->user);
 
-    // Simulate a user spamming the requests.add endpoint within 3 seconds.
+    // Simulate a user spamming the endpoint within 3 seconds.
     foreach (range(1, 5) as $counter) {
         $lock = cache()->lock("accept-request:{$this->anotherUser->id}:{$this->user->id}", 3);
 
@@ -65,7 +65,7 @@ test('can handle spamming of the /requests/{user}/accept endpoint', function () 
             $lock->get();
         }
 
-        $response = $http->post(route('requests.accept', $this->anotherUser));
+        $response = $http->post(route('users.accept', $this->anotherUser));
 
         if ($counter > 1) {
             $response->assertStatus(403);
@@ -78,7 +78,7 @@ test('can handle spamming of the /requests/{user}/accept endpoint', function () 
 
     // Make another call after the lock has been released.
     // Should be prevented by the policy.
-    $http->post(route('requests.accept', $this->anotherUser))
+    $http->post(route('users.accept', $this->anotherUser))
         ->assertStatus(403);
 
     Notification::assertSentToTimes($this->anotherUser, RequestAccepted::class, 1);
