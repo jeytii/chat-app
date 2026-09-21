@@ -13,18 +13,18 @@
         "inertiajs/inertia-laravel": "^3.3",
         "intervention/image": "^4.3",
         "laravel/fortify": "^1.39",
-        "laravel/framework": "^13.29",
+        "laravel/framework": "^13.32",
         "laravel/reverb": "^1.11",
         "laravel/tinker": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
-        "larastan/larastan": "^3.10",
+        "larastan/larastan": "^3.12",
         "laravel/pail": "^1.2",
-        "laravel/pint": "^1.30",
+        "laravel/pint": "^1.32",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.9",
-        "pestphp/pest": "^5.1",
+        "pestphp/pest": "^5.2",
         "pestphp/pest-plugin-laravel": "^5.0",
         "spatie/pest-plugin-test-time": "^2.3"
     },
