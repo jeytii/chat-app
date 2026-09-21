@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
+import { ContextMenu, ContextMenuContent, ContextMenuGroup, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { MessageContent, MessageFooter, MessageHeader } from '@/components/ui/message'
 import { useAppearance } from '@/hooks/use-appearance'
@@ -314,7 +314,7 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                                                 alt='Attachment'
                                             />
                                         </DialogTrigger>
-                                        <DialogContent className='w-auto! max-w-full! p-0 sm:max-w-full! [&>button]:top-2 [&>button]:right-2 [&>button]:rounded-full [&>button]:bg-background [&>button]:p-1'>
+                                        <DialogContent className='w-auto! max-w-full! p-0 sm:max-w-full! [&>button]:rounded-full [&>button]:bg-background [&>button]:p-1 [&>button]:hover:bg-background!'>
                                             <img src={message.image_url as string} className='block max-h-[90vh] max-w-[90vw] rounded-lg' />
                                         </DialogContent>
                                     </Dialog>
@@ -344,37 +344,31 @@ export default function MessageModel({ chatId, message, firstInAMinute }: Props)
                             skinTonesDisabled
                             lazyLoadEmojis
                             onReactionClick={react}
-                            className='h-[35px]! rounded-none! bg-transparent!'
+                            className='h-8.75! rounded-none! bg-transparent!'
                         />
                     </ContextMenuItem>
 
+                    <ContextMenuSeparator />
+
                     {message.from_self ? (
-                        <>
-                            <ContextMenuItem asChild className='text-xs md:text-sm'>
-                                <Button className='w-full justify-start' variant='ghost' onClick={reply}>
-                                    <Reply />
-                                    <span>Reply</span>
-                                </Button>
-                            </ContextMenuItem>
-                            <ContextMenuItem asChild className='text-xs md:text-sm'>
-                                <Button className='w-full justify-start' variant='ghost' onClick={edit}>
-                                    <Edit />
-                                    <span>Edit</span>
-                                </Button>
-                            </ContextMenuItem>
-                            <ContextMenuItem asChild className='text-xs md:text-sm'>
-                                <Button className='w-full justify-start hover:text-destructive!' variant='ghost' onClick={deleteMessage}>
-                                    <Trash2 />
-                                    <span>Delete</span>
-                                </Button>
-                            </ContextMenuItem>
-                        </>
-                    ) : (
-                        <ContextMenuItem asChild className='text-xs md:text-sm'>
-                            <Button className='w-full justify-start' variant='ghost' onClick={reply}>
-                                <Reply />
+                        <ContextMenuGroup className='flex divide-x'>
+                            <ContextMenuItem className='flex-1 justify-center rounded-tl-xs rounded-r-xs py-2 text-xs' onClick={reply}>
+                                <Reply size={14} />
                                 <span>Reply</span>
-                            </Button>
+                            </ContextMenuItem>
+                            <ContextMenuItem className='flex-1 justify-center rounded-xs py-2 text-xs' onClick={edit}>
+                                <Edit size={14} />
+                                <span>Edit</span>
+                            </ContextMenuItem>
+                            <ContextMenuItem variant='destructive' className='flex-1 justify-center rounded-l-xs rounded-tr-xs py-2 text-xs' onClick={deleteMessage}>
+                                <Trash2 size={14} />
+                                <span>Delete</span>
+                            </ContextMenuItem>
+                        </ContextMenuGroup>
+                    ) : (
+                        <ContextMenuItem className='text-xs md:text-sm' onClick={reply}>
+                            <Reply size={14} />
+                            <span>Reply</span>
                         </ContextMenuItem>
                     )}
                 </ContextMenuContent>

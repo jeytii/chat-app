@@ -6,7 +6,6 @@ import { toast, Toaster } from 'sonner'
 
 import AppSidebar from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppearance } from '@/hooks/use-appearance'
 import { useCurrentUrl } from '@/hooks/use-current-url'
 import type { FlashToast } from '@/types'
@@ -41,33 +40,31 @@ export default function AppLayout({ children }: { children: React.ReactNode; }) 
 
     return (
         <QueryClientProvider client={queryClient}>
-            <TooltipProvider delayDuration={0}>
-                <Main currentUrl={currentUrl}>{children}</Main>
+            <Main currentUrl={currentUrl}>{children}</Main>
 
-                <Toaster
-                    theme={appearance}
-                    className='toaster group'
-                    position='top-right'
-                    icons={{
-                        loading: null,
-                        info: null,
-                        success: null,
-                        error: null,
-                    }}
-                    visibleToasts={1}
-                    richColors
-                    toastOptions={{
-                        className: 'py-2!',
-                    }}
-                    style={
-                        {
-                            '--normal-bg': 'var(--popover)',
-                            '--normal-text': 'var(--popover-foreground)',
-                            '--normal-border': 'var(--border)',
-                        } as CSSProperties
-                    }
-                />
-            </TooltipProvider>
+            <Toaster
+                theme={appearance}
+                className='toaster group'
+                position='top-right'
+                icons={{
+                    loading: null,
+                    info: null,
+                    success: null,
+                    error: null,
+                }}
+                visibleToasts={1}
+                richColors
+                toastOptions={{
+                    className: 'py-2!',
+                }}
+                style={
+                    {
+                        '--normal-bg': 'var(--popover)',
+                        '--normal-text': 'var(--popover-foreground)',
+                        '--normal-border': 'var(--border)',
+                    } as CSSProperties
+                }
+            />
 
             {import.meta.env.MODE !== 'staging' && (
                 <ReactQueryDevtools position='right' buttonPosition='bottom-left' />

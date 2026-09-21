@@ -46,12 +46,7 @@ export default function Notifications({ className }: { className?: string }) {
                     {hasNewNotifications && <div className='absolute top-1 right-2 size-2 rounded-full bg-destructive' />}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent
-                align='end'
-                sideOffset={16}
-                asChild
-                className='w-auto! p-0'
-            >
+            <PopoverContent align='end' sideOffset={18} className='w-auto! p-0'>
                 <Content />
             </PopoverContent>
         </Popover>

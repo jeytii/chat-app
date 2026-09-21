@@ -71,6 +71,7 @@ export default function Login({
 
                             <Button
                                 type='submit'
+                                size='lg'
                                 className='mt-4 w-full'
                                 tabIndex={4}
                                 disabled={processing}

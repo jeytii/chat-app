@@ -91,7 +91,7 @@ export function ImageUploader({ src }: { src: string }) {
                 <div className='space-y-2'>
                     <p className='text-sm text-muted-foreground'><b>Dimensions</b>: at least 200x200</p>
                     <p className='text-sm text-muted-foreground'><b>Formats</b>: JPG, PNG, WEBP</p>
-                    <Button type='button' size='sm'>
+                    <Button type='button'>
                         <label className='flex size-full items-center justify-center gap-2 rounded-full'>
                             <input
                                 type='file'
@@ -101,7 +101,7 @@ export function ImageUploader({ src }: { src: string }) {
                                 onChange={upload}
                             />
 
-                            <Upload />
+                            <Upload size={16} />
                             <span>Upload</span>
                         </label>
                     </Button>

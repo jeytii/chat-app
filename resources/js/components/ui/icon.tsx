@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react'
 
 interface IconProps {
     iconNode?: LucideIcon | null;
@@ -6,9 +6,5 @@ interface IconProps {
 }
 
 export function Icon({ iconNode: IconComponent, className }: IconProps) {
-    if (!IconComponent) {
-        return null;
-    }
-
-    return <IconComponent className={className} />;
+    return IconComponent ? <IconComponent className={className} /> : null
 }

@@ -36,9 +36,8 @@ export default [
         ...react.configs.flat.recommended,
         ...react.configs.flat['jsx-runtime'], // Required for React 17+
         languageOptions: {
-            globals: {
-                ...globals.browser,
-            },
+            parser: typescript.parser,
+            globals: globals.browser,
         },
         rules: {
             'react/react-in-jsx-scope': 'off',
@@ -119,7 +118,6 @@ export default [
             'node_modules',
             'public',
             'bootstrap/ssr',
-            'resources/js/components/ui/*',
         ],
     },
 ]

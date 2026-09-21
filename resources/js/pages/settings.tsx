@@ -1,6 +1,6 @@
 import { Form, Head, usePage } from '@inertiajs/react'
 import { CheckCircle2, type LucideIcon, Monitor, Moon, Sun } from 'lucide-react'
-import { ChangeEvent, Fragment, useRef, useState } from 'react'
+import { ChangeEvent, useRef, useState } from 'react'
 
 // import DeleteUser from '@/components/delete-user'
 import Heading from '@/components/heading'
@@ -11,9 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { type Appearance, useAppearance } from '@/hooks/use-appearance'
 import { cn } from '@/lib/utils'
 
@@ -177,24 +175,32 @@ export default function Profile() {
                 <CardContent className='space-y-6'>
                     <Heading variant='small' title='Theme' />
 
-                    <ToggleGroup
-                        value={appearance}
-                        type='single'
-                        size='lg'
-                        className='w-full'
-                        onValueChange={updateAppearance}
-                    >
-                        {themes.map((theme, index, items) => (
-                            <Fragment key={theme.value}>
-                                <ToggleGroupItem value={theme.value} variant='outline' className='flex-1 cursor-pointer'>
-                                    <theme.icon size={16} />
-                                    <span>{theme.label}</span>
-                                </ToggleGroupItem>
+                    <div className='flex'>
+                        {themes.map((theme, index) => (
+                            <label
+                                key={theme.value}
+                                className={cn(
+                                    'flex flex-1 cursor-pointer items-center justify-center gap-2 border py-2 hover:bg-accent hover:text-accent-foreground',
+                                    {
+                                        'rounded-l-md': !index,
+                                        'rounded-r-md': index === 2,
+                                        'bg-accent text-accent-foreground': appearance === theme.value,
+                                    },
+                                )}
+                            >
+                                <input
+                                    type='radio'
+                                    value={theme.value}
+                                    className='hidden'
+                                    name='theme'
+                                    onChange={updateAppearance.bind(null, theme.value)}
+                                />
 
-                                {(index < items.length - 1) && <Separator orientation='vertical' />}
-                            </Fragment>
+                                <theme.icon size={16} />
+                                <span>{theme.label}</span>
+                            </label>
                         ))}
-                    </ToggleGroup>
+                    </div>
                 </CardContent>
             </Card>
 

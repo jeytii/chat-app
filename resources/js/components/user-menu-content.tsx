@@ -20,30 +20,30 @@ export function UserMenuContent() {
 
     return (
         <>
-            <DropdownMenuItem asChild className='rounded-xs hover:bg-muted! hover:text-foreground!'>
+            <DropdownMenuItem asChild className='rounded-b-xs'>
                 <Link
-                    className='block w-full cursor-pointer'
+                    className='flex w-full cursor-pointer items-center gap-1 p-2!'
                     href='/settings'
                     prefetch
                     onClick={cleanup}
                     onSuccess={setOpenMobile.bind(null, false)}
                 >
-                    <Settings className='mr-2' />
-                    Settings
+                    <Settings size={16} className='mr-2' />
+                    <span>Settings</span>
                 </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className='rounded-t-xs hover:bg-muted! hover:text-foreground!'>
+            <DropdownMenuItem asChild className='rounded-t-xs' variant='destructive'>
                 <Link
-                    className='block w-full cursor-pointer'
+                    className='flex w-full cursor-pointer items-center gap-1 p-2!'
                     href='/logout'
                     method='post'
                     as='button'
                     onClick={handleLogout}
                     data-test='logout-button'
                 >
-                    <LogOut className='mr-2' />
-                    Log out
+                    <LogOut size={16} className='mr-2' />
+                    <span>Log out</span>
                 </Link>
             </DropdownMenuItem>
         </>

@@ -56,7 +56,7 @@ export default function Home({ tab = 'chats', chatsCount, receivedRequestsCount,
                             <Search />
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className='top-[10%] translate-y-0 overflow-hidden p-0 [&>button]:top-[21px] [&>button]:right-5 [&>button]:rounded-full'>
+                    <DialogContent className='top-[10%] translate-y-0 overflow-hidden p-0 [&>button]:top-3.5 [&>button]:right-4'>
                         <SearchBox />
                     </DialogContent>
                 </Dialog>
@@ -73,7 +73,7 @@ export default function Home({ tab = 'chats', chatsCount, receivedRequestsCount,
                         />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
-                        className='w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-t-none rounded-b-lg'
+                        className='w-(--radix-dropdown-menu-trigger-width) min-w-56 border'
                         align='end'
                         sideOffset={16}
                     >
@@ -240,7 +240,7 @@ function SearchResult({ result }: { result: User & { request_sent: boolean; is_a
                             className='ml-auto hover:text-foreground!'
                             onClick={toggle.bind(null, 'cancel', false, debouncedCancel, canStopDebouncedAdd, stopDebouncedAdd)}
                         >
-                            <UserMinus />
+                            <UserMinus size={16} />
                         </Button>
                     ) : (
                         <Button
@@ -249,7 +249,7 @@ function SearchResult({ result }: { result: User & { request_sent: boolean; is_a
                             className='ml-auto text-accent-foreground/80 dark:hover:bg-accent'
                             onClick={toggle.bind(null, 'request', true, debouncedAdd, canStopDebouncedCancel, stopDebouncedCancel)}
                         >
-                            <UserPlus />
+                            <UserPlus size={16} />
                         </Button>
                     )}
                 </Fragment>
